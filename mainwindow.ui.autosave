@@ -1372,9 +1372,9 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>89</y>
+         <y>99</y>
          <width>111</width>
-         <height>31</height>
+         <height>21</height>
         </rect>
        </property>
        <property name="styleSheet">
