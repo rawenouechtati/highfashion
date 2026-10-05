@@ -92,3 +92,7 @@ QLabel {
     color: #5F707D;
     font-size: 9pt;
 }
+
+QWidget#sidebar {
+    background-color: #1F3A4D;
+}
