@@ -1,23 +1,24 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef GCLIENTS_H
+#define GCLIENTS_H
 
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class MainWindow;
+class GClients;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class GClients : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
+    explicit GClients(QWidget *parent = nullptr);
+    ~GClients() override;
 
 private:
-    Ui::MainWindow *ui;
+    void creerDiagramme();
+    Ui::GClients *ui;
 };
-#endif // MAINWINDOW_H
+#endif // GCLIENTS_H

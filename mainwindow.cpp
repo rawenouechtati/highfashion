@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "notificationsdialog.h"
-MainWindow::MainWindow(QWidget *parent)
+GServices::GServices(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::GServices)
 {
     ui->setupUi(this);
 
@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
             });
 }
 
-MainWindow::~MainWindow()
+GServices::~GServices()
 {
     delete ui;
 }

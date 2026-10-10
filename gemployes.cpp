@@ -12,6 +12,18 @@ GEmployes::GEmployes(QWidget *parent)
     , ui(new Ui::GEmployes)
 {
     ui->setupUi(this);
+    connect(ui->navServices, &QPushButton::clicked, this, [this]() {
+        if (!fenetreServices) fenetreServices = new GServices();
+        fenetreServices->show();
+        fenetreServices->raise();
+    });
+
+    connect(ui->navClients, &QPushButton::clicked, this, [this]() {
+        if (!fenetreClients) fenetreClients = new GClients();
+        fenetreClients->show();
+        fenetreClients->raise();
+    });
+
     ui->tableEmployes->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     QBarSet *set = new QBarSet("Services traités");
     *set << 9 << 5 << 11 << 14 << 4 << 7 << 8;

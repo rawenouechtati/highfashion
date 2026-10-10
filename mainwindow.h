@@ -1,23 +1,23 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef GSERVICES_H
+#define GSERVICES_H
 
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class MainWindow;
+class GServices;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class GServices : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
+    explicit GServices(QWidget *parent = nullptr);
+    ~GServices() override;
 
 private:
-    Ui::MainWindow *ui;
+    Ui::GServices *ui;
 };
-#endif // MAINWINDOW_H
+#endif // GSERVICES_H

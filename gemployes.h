@@ -2,6 +2,8 @@
 #define GEMPLOYES_H
 
 #include <QMainWindow>
+#include "mainwindow.h"
+#include "mainwindow1.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,5 +21,7 @@ public:
 
 private:
     Ui::GEmployes *ui;
+    GServices *fenetreServices = nullptr;
+    GClients *fenetreClients = nullptr;
 };
 #endif // GEMPLOYES_H

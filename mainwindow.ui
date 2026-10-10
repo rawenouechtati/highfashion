@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>GServices</class>
+ <widget class="QMainWindow" name="GServices">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>GServices</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: #1F3A4D;</string>
@@ -673,8 +673,7 @@
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">
-</string>
+      <string notr="true"/>
      </property>
      <property name="text">
       <string>Service le plus demandé</string>
@@ -807,7 +806,7 @@ border-radius: 4px;</string>
      <x>0</x>
      <y>0</y>
      <width>1810</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

@@ -1,23 +1,29 @@
-QT += widgets
+QT += widgets charts
 
 CONFIG += c++17
 
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
 SOURCES += \
     main.cpp \
+    gemployes.cpp \
     mainwindow.cpp \
-    mainwindow1.cpp
+    mainwindow1.cpp \
+    notificationsdialog.cpp
 
 HEADERS += \
-    mainwindow.h
+    gemployes.h \
+    mainwindow.h \
+    mainwindow1.h \
+    notificationsdialog.h
 
 FORMS += \
-    mainwindow.ui
+    gemployes.ui \
+    mainwindow.ui \
+    mainwindow1.ui \
+    notificationsdialog.ui
 
-# Default rules for deployment.
+RESOURCES += \
+    resources.qrc
+
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target

@@ -1,3 +1,6 @@
+#include "mainwindow1.h"
+#include "ui_mainwindow1.h"
+
 #include <QChart>
 #include <QChartView>
 #include <QBarSeries>
@@ -5,8 +8,22 @@
 #include <QBarCategoryAxis>
 #include <QValueAxis>
 #include <QVBoxLayout>
+#include <QPainter>
 
-void MainWindow::creerDiagramme()
+GClients::GClients(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::GClients)
+{
+    ui->setupUi(this);
+    creerDiagramme();
+}
+
+GClients::~GClients()
+{
+    delete ui;
+}
+
+void GClients::creerDiagramme()
 {
     // Données
     QStringList categories = {"0-99", "100-199", "200-299", "300-499", "500+"};
@@ -63,6 +80,5 @@ void MainWindow::creerDiagramme()
 
     auto *layout = new QVBoxLayout(ui->widgetChart);
     layout->setContentsMargins(0, 0, 0, 0);
-    v
     layout->addWidget(vue);
-}s
+}

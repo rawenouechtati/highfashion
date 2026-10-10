@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>GClients</class>
+ <widget class="QMainWindow" name="GClients">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>834</width>
-    <height>461</height>
+    <width>1315</width>
+    <height>809</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>GClients</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QStackedWidget" name="stackedWidget">
@@ -20,7 +20,7 @@
       <x>0</x>
       <y>0</y>
       <width>841</width>
-      <height>501</height>
+      <height>481</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -586,6 +586,16 @@ color: rgb(31, 58, 77);</string>
        </property>
        <property name="role" stdset="0">
         <string>h2</string>
+       </property>
+      </widget>
+      <widget class="QChartView" name="widgetChart" native="true">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>40</y>
+         <width>251</width>
+         <height>131</height>
+        </rect>
        </property>
       </widget>
      </widget>
@@ -1397,13 +1407,21 @@ background-color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>834</width>
-     <height>17</height>
+     <width>1315</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QWidget</extends>
+   <header location="global">qchartview</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
