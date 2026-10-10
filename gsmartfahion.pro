@@ -6,19 +6,24 @@ SOURCES += \
     main.cpp \
     gemployes.cpp \
     mainwindow.cpp \
-    mainwindow1.cpp \
+    clientsmainwindow.cpp \
+    gevenements.cpp \
+    evolutionchart.cpp \
     notificationsdialog.cpp
 
 HEADERS += \
     gemployes.h \
     mainwindow.h \
-    mainwindow1.h \
+    clientsmainwindow.h \
+    gevenements.h \
+    evolutionchart.h \
     notificationsdialog.h
 
 FORMS += \
     gemployes.ui \
     mainwindow.ui \
-    mainwindow1.ui \
+    clientsmainwindow.ui \
+    gevenements.ui \
     notificationsdialog.ui
 
 RESOURCES += \

@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "gevenements.h"
 #include "ui_gevenements.h"
 #include "evolutionchart.h"
 

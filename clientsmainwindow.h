@@ -5,19 +5,19 @@
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class MainWindow;
+class GClients;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class GClients : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
+    explicit GClients(QWidget *parent = nullptr);
+    ~GClients() override;
 
 private:
-    Ui::MainWindow *ui;
+    Ui::GClients *ui;
 };
 #endif // CLIENTSMAINWINDOW_H

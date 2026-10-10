@@ -1,14 +1,14 @@
 #include "clientsmainwindow.h"
 #include "ui_clientsmainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
+GClients::GClients(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::GClients)
 {
     ui->setupUi(this);
 }
 
-MainWindow::~MainWindow()
+GClients::~GClients()
 {
     delete ui;
 }

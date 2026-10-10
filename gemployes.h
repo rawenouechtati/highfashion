@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "mainwindow.h"
-#include "mainwindow1.h"
+#include "clientsmainwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
