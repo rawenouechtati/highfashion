@@ -1,0 +1,2845 @@
+<?xml version="1.0" ?>
+<ui version="4.0">
+ <class>GEvenements</class>
+ <widget class="QMainWindow" name="GEvenements">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1600</width>
+    <height>960</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>GEvents</string>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1280</width>
+    <height>800</height>
+   </size>
+  </property>
+  <property name="styleSheet">
+   <string>/* ===== GEvents – thème &quot;Atelier Vintage Couture&quot; (design photo 1) ===== */
+* { font-family: &quot;Segoe UI&quot;, &quot;Inter&quot;, &quot;Helvetica Neue&quot;, Arial; font-size: 13px; color: #1c2b3a; }
+QMainWindow, QFrame#contentFrame { background: #f5f3ef; }
+/* ---------- Sidebar ---------- */
+QFrame#sidebar { background: #17375e; }
+QFrame#sidebar QLabel { color: #ffffff; }
+QLabel#lblUserName { font-weight: 600; font-size: 13px; }
+QLabel#lblUserRole { color: #b7c6d9; font-size: 12px; }
+QFrame#sidebar QPushButton {
+    color: #e8eef6; background: transparent; border: none; text-align: left;
+    padding: 12px 16px; border-radius: 8px; font-size: 14px;
+}
+QFrame#sidebar QPushButton:hover { background: rgba(255, 255, 255, 0.10); }
+QFrame#sidebar QPushButton:checked { background: #2c527f; color: #ffffff; font-weight: 600; }
+/* ---------- En-tête ---------- */
+QLabel#lblHeaderIcon { font-size: 34px; color: #17375e; }
+QLabel#lblTitle { font-size: 24px; font-weight: 700; color: #17375e; }
+QLabel#lblSubtitle { color: #6b7785; }
+/* ---------- Champs ---------- */
+QLineEdit, QComboBox, QDateEdit, QTimeEdit, QPlainTextEdit {
+    background: #ffffff; border: 1px solid #d9d5ce; border-radius: 8px;
+    padding: 6px 10px; min-height: 22px;
+    selection-background-color: #2c527f; selection-color: #ffffff;
+}
+QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus, QPlainTextEdit:focus { border: 1px solid #17375e; }
+QComboBox QAbstractItemView {
+    background: #ffffff; border: 1px solid #d9d5ce;
+    selection-background-color: #dce9f7; selection-color: #17375e; outline: 0;
+}
+QLineEdit#lineSearch { min-height: 26px; }
+/* ---------- Boutons ---------- */
+QPushButton { background: #ffffff; border: 1px solid #17375e; color: #17375e; border-radius: 8px; padding: 8px 16px; font-weight: 600; }
+QPushButton:hover { background: #eef3f9; }
+QPushButton:pressed { background: #dce9f7; }
+QPushButton#btnAjouter, QPushButton#btnEnregistrer { background: #9b2335; border: 1px solid #9b2335; color: #ffffff; }
+QPushButton#btnAjouter:hover, QPushButton#btnEnregistrer:hover { background: #831c2c; }
+QPushButton#btnSupprimer { border: 1px solid #c0392b; color: #c0392b; }
+QPushButton#btnSupprimer:hover { background: #fdecea; }
+QPushButton#btnReinitialiser { border: 1px solid #d9d5ce; color: #4a5a6b; font-weight: 500; }
+QPushButton#btnChoisirImage { text-align: left; font-weight: 500; color: #4a5a6b; border: 1px solid #d9d5ce; }
+/* ---------- Cartes / panneaux ---------- */
+QFrame[cssClass=&quot;card&quot;] { background: #ffffff; border: 1px solid #e3e0da; border-radius: 12px; }
+QFrame#cardTotal   { border-left: 4px solid #17375e; }
+QFrame#cardAVenir  { border-left: 4px solid #2f80d1; }
+QFrame#cardProgramme { border-left: 4px solid #2e9e5b; }
+QFrame#cardPlanifie  { border-left: 4px solid #e0a81e; }
+QLabel[cssClass=&quot;cardIcon&quot;] { font-size: 26px; }
+QLabel[cssClass=&quot;cardTitle&quot;] { color: #6b7785; font-size: 12px; }
+QLabel[cssClass=&quot;cardValue&quot;] { font-size: 26px; font-weight: 700; color: #17375e; }
+QLabel[cssClass=&quot;panelTitle&quot;] { font-weight: 700; font-size: 14px; color: #17375e; }
+QLabel[cssClass=&quot;field&quot;] { font-size: 12px; font-weight: 600; color: #4a5a6b; }
+QLabel[cssClass=&quot;imagePreview&quot;] { background: #f5f3ef; border: 1px dashed #c9c4bb; border-radius: 8px; font-size: 22px; }
+/* ---------- Tableau ---------- */
+QTableWidget {
+    background: #ffffff; border: 1px solid #e3e0da; border-radius: 12px;
+    gridline-color: transparent; outline: 0;
+    selection-background-color: #dce9f7; selection-color: #1c2b3a;
+}
+QTableWidget::item { padding: 4px 8px; border-bottom: 1px solid #f0ede8; }
+QTableWidget::item:selected { background: #dce9f7; color: #1c2b3a; }
+QHeaderView::section { background: #17375e; color: #ffffff; padding: 10px 8px; border: none; font-weight: 600; text-align: left; }
+/* ---------- Badges de statut ---------- */
+QLabel[badge] { border-radius: 10px; padding: 3px 12px; font-weight: 600; font-size: 12px; }
+QLabel[badge=&quot;programme&quot;] { background: #d4f0dc; color: #1e7e3e; }
+QLabel[badge=&quot;avenir&quot;]    { background: #d6e8fb; color: #1f5fa8; }
+QLabel[badge=&quot;planifie&quot;]  { background: #fdf0c4; color: #a07a00; }
+QLabel[badge=&quot;encours&quot;]   { background: #fbd9c3; color: #b4531a; }
+QLabel[badge=&quot;termine&quot;]   { background: #e1e4e8; color: #4b5563; }
+/* ---------- Liste des lieux ---------- */
+QListWidget { background: transparent; border: none; outline: 0; }
+QListWidget::item { padding: 7px 4px; border-bottom: 1px solid #f0ede8; }
+QListWidget::item:selected { background: #dce9f7; color: #17375e; }
+/* ---------- Calendrier ---------- */
+QCalendarWidget QWidget#qt_calendar_navigationbar { background: #17375e; border-radius: 6px; }
+QCalendarWidget QToolButton { color: #ffffff; background: transparent; border: none; font-weight: 600; padding: 4px 8px; }
+QCalendarWidget QToolButton:hover { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+QCalendarWidget QSpinBox { color: #ffffff; background: transparent; border: none; }
+QCalendarWidget QAbstractItemView:enabled {
+    background: #ffffff; color: #1c2b3a; outline: 0;
+    selection-background-color: #17375e; selection-color: #ffffff;
+}
+QCalendarWidget QAbstractItemView:disabled { color: #b5bcc5; }
+/* ---------- Scrollbars ---------- */
+QScrollBar:vertical { background: transparent; width: 8px; margin: 0; }
+QScrollBar::handle:vertical { background: #c9c4bb; border-radius: 4px; min-height: 30px; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar:horizontal { background: transparent; height: 8px; }
+QScrollBar::handle:horizontal { background: #c9c4bb; border-radius: 4px; min-width: 30px; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+/* ---------- Graphiques (barres) ---------- */
+QProgressBar { background: #eef1f5; border: none; border-radius: 4px; min-width: 22px; max-width: 30px; }
+QProgressBar::chunk { background: #17375e; border-radius: 4px; }
+QProgressBar[cssClass=&quot;evolBar&quot;] { min-width: 14px; max-width: 20px; }
+QProgressBar[cssClass=&quot;evolBar&quot;]::chunk { background: #9b2335; }
+QLabel[cssClass=&quot;barValue&quot;] { font-weight: 700; color: #17375e; font-size: 12px; }
+QLabel[cssClass=&quot;barName&quot;] { color: #6b7785; font-size: 10px; }
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="mainLayout" stretch="0,1">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="sidebar">
+      <property name="minimumSize">
+       <size>
+        <width>260</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>260</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="layout3">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>14</number>
+       </property>
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>14</number>
+       </property>
+       <property name="bottomMargin">
+        <number>20</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblLogo">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="pixmap">
+          <pixmap resource="resources.qrc">:/images/images/logo.png</pixmap>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>232</width>
+           <height>93</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>232</width>
+           <height>93</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spacer1">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>24</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavEvenements">
+         <property name="text">
+          <string>📅   Événements</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavArticles">
+         <property name="text">
+          <string>👗   Articles</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavServices">
+         <property name="text">
+          <string>⚙️   Services</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavClients">
+         <property name="text">
+          <string>👥   Clients</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavEmployes">
+         <property name="text">
+          <string>👤   Employés</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnNavDeconnexion">
+         <property name="text">
+          <string>🚪   Déconnexion</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spacer2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblUserName">
+         <property name="text">
+          <string>Mouma Ayari</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblUserRole">
+         <property name="text">
+          <string>Employée</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="contentFrame">
+      <layout class="QVBoxLayout" name="contentLayout">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <property name="leftMargin">
+        <number>24</number>
+       </property>
+       <property name="topMargin">
+        <number>18</number>
+       </property>
+       <property name="rightMargin">
+        <number>24</number>
+       </property>
+       <property name="bottomMargin">
+        <number>18</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="layout6">
+         <property name="spacing">
+          <number>14</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lblHeaderIcon">
+           <property name="text">
+            <string>📅</string>
+           </property>
+           <property name="cssClass" stdset="0">
+            <string>headerIcon</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="layout4">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblTitle">
+             <property name="text">
+              <string>Gestion des événements</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblSubtitle">
+             <property name="text">
+              <string>Organisez, gérez et faites briller vos événements ✨</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="spacer5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layout7" stretch="1,0,0,0,0">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="lineSearch">
+           <property name="placeholderText">
+            <string>🔍  Rechercher par nom, type, lieu ou client…</string>
+           </property>
+           <property name="clearButtonEnabled">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboStatut">
+           <item>
+            <property name="text">
+             <string>Tous</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Programmé</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>À venir</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Planifié</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>En cours</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Terminé</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAjouter">
+           <property name="text">
+            <string>➕  Ajouter</string>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnModifier">
+           <property name="text">
+            <string>✏️  Modifier</string>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnSupprimer">
+           <property name="text">
+            <string>🗑  Supprimer</string>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layout9">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QComboBox" name="comboType">
+           <item>
+            <property name="text">
+             <string>Tous les types</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Défilé</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Atelier</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Vente</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Salon</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lancement</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Autre</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboLieu">
+           <item>
+            <property name="text">
+             <string>Tous les lieux</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Atelier Vintage</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Salle El Manar</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Boutique</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Parc des Expositions</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hôtel Laico</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Salle El Mouradi</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboClient">
+           <item>
+            <property name="text">
+             <string>Tous les clients</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 6</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Client 7</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <spacer name="spacer8">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblTri">
+           <property name="text">
+            <string>Trier par :</string>
+           </property>
+           <property name="cssClass" stdset="0">
+            <string>field</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboTri">
+           <item>
+            <property name="text">
+             <string>Date : la plus proche → la plus lointaine</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Date : la plus lointaine → la plus proche</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lieu : le plus d'événements d'abord</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lieu : ordre alphabétique (A → Z)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Nom : ordre alphabétique (A → Z)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Nom : ordre inverse (Z → A)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReinitialiser">
+           <property name="text">
+            <string>↺  Réinitialiser</string>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layout22">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="cardTotal">
+           <property name="cssClass" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QHBoxLayout" name="layout12">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblIconTotal">
+              <property name="text">
+               <string>📅</string>
+              </property>
+              <property name="cssClass" stdset="0">
+               <string>cardIcon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="layout10">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblTotalTitle">
+                <property name="text">
+                 <string>Total événements</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardTitle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblTotalValue">
+                <property name="text">
+                 <string>7</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardValue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="spacer11">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="cardAVenir">
+           <property name="cssClass" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QHBoxLayout" name="layout15">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblIconAVenir">
+              <property name="text">
+               <string>🕒</string>
+              </property>
+              <property name="cssClass" stdset="0">
+               <string>cardIcon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="layout13">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblAVenirTitle">
+                <property name="text">
+                 <string>À venir</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardTitle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblAVenirValue">
+                <property name="text">
+                 <string>3</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardValue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="spacer14">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="cardProgramme">
+           <property name="cssClass" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QHBoxLayout" name="layout18">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblIconProgramme">
+              <property name="text">
+               <string>✅</string>
+              </property>
+              <property name="cssClass" stdset="0">
+               <string>cardIcon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="layout16">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblProgrammeTitle">
+                <property name="text">
+                 <string>Programmés</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardTitle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblProgrammeValue">
+                <property name="text">
+                 <string>2</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardValue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="spacer17">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="cardPlanifie">
+           <property name="cssClass" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QHBoxLayout" name="layout21">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblIconPlanifie">
+              <property name="text">
+               <string>📋</string>
+              </property>
+              <property name="cssClass" stdset="0">
+               <string>cardIcon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="layout19">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblPlanifieTitle">
+                <property name="text">
+                 <string>Planifiés</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardTitle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblPlanifieValue">
+                <property name="text">
+                 <string>2</string>
+                </property>
+                <property name="cssClass" stdset="0">
+                 <string>cardValue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="spacer20">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layout38" stretch="1,0">
+         <property name="spacing">
+          <number>14</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="layout34" stretch="3,2">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTableWidget" name="tableEvents">
+             <property name="selectionBehavior">
+              <enum>QAbstractItemView::SelectRows</enum>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::SingleSelection</enum>
+             </property>
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+             <property name="showGrid">
+              <bool>false</bool>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOff</enum>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>250</height>
+              </size>
+             </property>
+             <attribute name="horizontalHeaderDefaultSectionSize">
+              <number>150</number>
+             </attribute>
+             <attribute name="horizontalHeaderStretchLastSection">
+              <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderVisible">
+              <bool>false</bool>
+             </attribute>
+             <attribute name="verticalHeaderDefaultSectionSize">
+              <number>44</number>
+             </attribute>
+             <column>
+              <property name="text">
+               <string>ID</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Nom</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Type</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Date</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Lieu</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Statut</string>
+              </property>
+             </column>
+             <row>
+              <property name="text">
+               <string>1</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>2</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>3</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>4</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>5</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>6</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>7</string>
+              </property>
+             </row>
+             <item row="0" column="0">
+              <property name="text">
+               <string>1</string>
+              </property>
+             </item>
+             <item row="0" column="1">
+              <property name="text">
+               <string>Défilé de mode Printemps</string>
+              </property>
+             </item>
+             <item row="0" column="2">
+              <property name="text">
+               <string>Défilé</string>
+              </property>
+             </item>
+             <item row="0" column="3">
+              <property name="text">
+               <string>2025-05-10</string>
+              </property>
+             </item>
+             <item row="0" column="4">
+              <property name="text">
+               <string>Salle El Manar</string>
+              </property>
+             </item>
+             <item row="0" column="5">
+              <property name="text">
+               <string>Programmé</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>212</red>
+                 <green>240</green>
+                 <blue>220</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>30</red>
+                 <green>126</green>
+                 <blue>62</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="1" column="0">
+              <property name="text">
+               <string>2</string>
+              </property>
+             </item>
+             <item row="1" column="1">
+              <property name="text">
+               <string>Atelier Couture</string>
+              </property>
+             </item>
+             <item row="1" column="2">
+              <property name="text">
+               <string>Atelier</string>
+              </property>
+             </item>
+             <item row="1" column="3">
+              <property name="text">
+               <string>2025-05-15</string>
+              </property>
+             </item>
+             <item row="1" column="4">
+              <property name="text">
+               <string>Atelier Vintage</string>
+              </property>
+             </item>
+             <item row="1" column="5">
+              <property name="text">
+               <string>Programmé</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>212</red>
+                 <green>240</green>
+                 <blue>220</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>30</red>
+                 <green>126</green>
+                 <blue>62</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="2" column="0">
+              <property name="text">
+               <string>3</string>
+              </property>
+             </item>
+             <item row="2" column="1">
+              <property name="text">
+               <string>Vente Privée</string>
+              </property>
+             </item>
+             <item row="2" column="2">
+              <property name="text">
+               <string>Vente</string>
+              </property>
+             </item>
+             <item row="2" column="3">
+              <property name="text">
+               <string>2025-06-01</string>
+              </property>
+             </item>
+             <item row="2" column="4">
+              <property name="text">
+               <string>Boutique</string>
+              </property>
+             </item>
+             <item row="2" column="5">
+              <property name="text">
+               <string>À venir</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>214</red>
+                 <green>232</green>
+                 <blue>251</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>31</red>
+                 <green>95</green>
+                 <blue>168</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="3" column="0">
+              <property name="text">
+               <string>4</string>
+              </property>
+             </item>
+             <item row="3" column="1">
+              <property name="text">
+               <string>Salon du Mariage</string>
+              </property>
+             </item>
+             <item row="3" column="2">
+              <property name="text">
+               <string>Salon</string>
+              </property>
+             </item>
+             <item row="3" column="3">
+              <property name="text">
+               <string>2025-06-20</string>
+              </property>
+             </item>
+             <item row="3" column="4">
+              <property name="text">
+               <string>Parc des Expositions</string>
+              </property>
+             </item>
+             <item row="3" column="5">
+              <property name="text">
+               <string>À venir</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>214</red>
+                 <green>232</green>
+                 <blue>251</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>31</red>
+                 <green>95</green>
+                 <blue>168</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="4" column="0">
+              <property name="text">
+               <string>5</string>
+              </property>
+             </item>
+             <item row="4" column="1">
+              <property name="text">
+               <string>Lancement Collection</string>
+              </property>
+             </item>
+             <item row="4" column="2">
+              <property name="text">
+               <string>Lancement</string>
+              </property>
+             </item>
+             <item row="4" column="3">
+              <property name="text">
+               <string>2025-07-05</string>
+              </property>
+             </item>
+             <item row="4" column="4">
+              <property name="text">
+               <string>Hôtel Laico</string>
+              </property>
+             </item>
+             <item row="4" column="5">
+              <property name="text">
+               <string>À venir</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>214</red>
+                 <green>232</green>
+                 <blue>251</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>31</red>
+                 <green>95</green>
+                 <blue>168</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="5" column="0">
+              <property name="text">
+               <string>6</string>
+              </property>
+             </item>
+             <item row="5" column="1">
+              <property name="text">
+               <string>Défilé d'Hiver</string>
+              </property>
+             </item>
+             <item row="5" column="2">
+              <property name="text">
+               <string>Défilé</string>
+              </property>
+             </item>
+             <item row="5" column="3">
+              <property name="text">
+               <string>2025-12-15</string>
+              </property>
+             </item>
+             <item row="5" column="4">
+              <property name="text">
+               <string>Salle El Mouradi</string>
+              </property>
+             </item>
+             <item row="5" column="5">
+              <property name="text">
+               <string>Planifié</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>253</red>
+                 <green>240</green>
+                 <blue>196</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>160</red>
+                 <green>122</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+             <item row="6" column="0">
+              <property name="text">
+               <string>7</string>
+              </property>
+             </item>
+             <item row="6" column="1">
+              <property name="text">
+               <string>Journée Portes Ouvertes</string>
+              </property>
+             </item>
+             <item row="6" column="2">
+              <property name="text">
+               <string>Autre</string>
+              </property>
+             </item>
+             <item row="6" column="3">
+              <property name="text">
+               <string>2025-09-10</string>
+              </property>
+             </item>
+             <item row="6" column="4">
+              <property name="text">
+               <string>Atelier Vintage</string>
+              </property>
+             </item>
+             <item row="6" column="5">
+              <property name="text">
+               <string>Planifié</string>
+              </property>
+              <property name="background">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>253</red>
+                 <green>240</green>
+                 <blue>196</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>160</red>
+                 <green>122</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="layout33" stretch="1,1,1">
+             <property name="spacing">
+              <number>12</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QFrame" name="frameChartType">
+               <property name="cssClass" stdset="0">
+                <string>card</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>250</height>
+                </size>
+               </property>
+               <layout class="QVBoxLayout" name="layout30">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>14</number>
+                </property>
+                <property name="topMargin">
+                 <number>10</number>
+                </property>
+                <property name="rightMargin">
+                 <number>14</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="lblChartTypeTitle">
+                  <property name="text">
+                   <string>📊  Événements par type</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>panelTitle</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QWidget" name="chartTypeHost">
+                  <layout class="QHBoxLayout" name="layout29">
+                   <property name="spacing">
+                    <number>6</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout23">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT0">
+                       <property name="text">
+                        <string>2</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT0">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>2</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT0">
+                       <property name="text">
+                        <string>Défilé</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout24">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT1">
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT1">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>1</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT1">
+                       <property name="text">
+                        <string>Atelier</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout25">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT2">
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT2">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>1</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT2">
+                       <property name="text">
+                        <string>Vente</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout26">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT3">
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT3">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>1</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT3">
+                       <property name="text">
+                        <string>Salon</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout27">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT4">
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT4">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>1</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT4">
+                       <property name="text">
+                        <string>Lancement</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QVBoxLayout" name="layout28">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="lblValT5">
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barValue</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QProgressBar" name="barT5">
+                       <property name="maximum">
+                        <number>4</number>
+                       </property>
+                       <property name="value">
+                        <number>1</number>
+                       </property>
+                       <property name="textVisible">
+                        <bool>false</bool>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>typeBar</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lblNameT5">
+                       <property name="text">
+                        <string>Autre</string>
+                       </property>
+                       <property name="cssClass" stdset="0">
+                        <string>barName</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="frameLieux">
+               <property name="cssClass" stdset="0">
+                <string>card</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>250</height>
+                </size>
+               </property>
+               <layout class="QVBoxLayout" name="layout31">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>14</number>
+                </property>
+                <property name="topMargin">
+                 <number>10</number>
+                </property>
+                <property name="rightMargin">
+                 <number>14</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="lblLieuxTitle">
+                  <property name="text">
+                   <string>📍  Événements par lieu</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>panelTitle</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QListWidget" name="listLieux">
+                  <property name="horizontalScrollBarPolicy">
+                   <enum>Qt::ScrollBarAlwaysOff</enum>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>📍  Atelier Vintage   ·   2 événements</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>📍  Salle El Manar   ·   1 événement</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>📍  Boutique   ·   1 événement</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>📍  Parc des Expositions   ·   1 événement</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>📍  Hôtel Laico   ·   1 événement</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>📍  Salle El Mouradi   ·   1 événement</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="frameChartEvol">
+               <property name="cssClass" stdset="0">
+                <string>card</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>250</height>
+                </size>
+               </property>
+               <layout class="QVBoxLayout" name="layout32">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>14</number>
+                </property>
+                <property name="topMargin">
+                 <number>10</number>
+                </property>
+                <property name="rightMargin">
+                 <number>14</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="lblEvolTitle">
+                  <property name="text">
+                   <string>📈  Évolution des événements (2025)</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>panelTitle</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="EvolutionChart" name="chartEvolHost">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>150</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QScrollArea" name="scrollRight">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>360</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>380</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <widget class="QWidget" name="scrollContents">
+            <layout class="QVBoxLayout" name="rightLayout">
+             <property name="spacing">
+              <number>12</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>6</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QFrame" name="frameCalendar">
+               <property name="cssClass" stdset="0">
+                <string>card</string>
+               </property>
+               <layout class="QVBoxLayout" name="layout35">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>14</number>
+                </property>
+                <property name="topMargin">
+                 <number>10</number>
+                </property>
+                <property name="rightMargin">
+                 <number>14</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="lblCalTitle">
+                  <property name="text">
+                   <string>📅  Calendrier des événements</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>panelTitle</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCalendarWidget" name="calendar">
+                  <property name="gridVisible">
+                   <bool>false</bool>
+                  </property>
+                  <property name="verticalHeaderFormat">
+                   <enum>QCalendarWidget::NoVerticalHeader</enum>
+                  </property>
+                  <property name="horizontalHeaderFormat">
+                   <enum>QCalendarWidget::ShortDayNames</enum>
+                  </property>
+                  <property name="selectedDate">
+                   <date>
+                    <year>2025</year>
+                    <month>5</month>
+                    <day>10</day>
+                   </date>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>210</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="frameFiche">
+               <property name="cssClass" stdset="0">
+                <string>card</string>
+               </property>
+               <layout class="QGridLayout" name="gridFiche">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <property name="leftMargin">
+                 <number>14</number>
+                </property>
+                <property name="topMargin">
+                 <number>12</number>
+                </property>
+                <property name="rightMargin">
+                 <number>14</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>14</number>
+                </property>
+                <item row="0" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFicheTitle">
+                  <property name="text">
+                   <string>📅  Fiche événement</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>panelTitle</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFNom">
+                  <property name="text">
+                   <string>Nom de l'événement</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" rowspan="1" colspan="2">
+                 <widget class="QLineEdit" name="lineNom">
+                  <property name="text">
+                   <string>Défilé de mode Printemps</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0" rowspan="1" colspan="1">
+                 <widget class="QLabel" name="lblFType">
+                  <property name="text">
+                   <string>Type</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" rowspan="1" colspan="1">
+                 <widget class="QLabel" name="lblFStatut">
+                  <property name="text">
+                   <string>Statut</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0" rowspan="1" colspan="1">
+                 <widget class="QComboBox" name="comboTypeForm">
+                  <item>
+                   <property name="text">
+                    <string>Défilé</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Atelier</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Vente</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Salon</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Lancement</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Autre</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="4" column="1" rowspan="1" colspan="1">
+                 <widget class="QComboBox" name="comboStatutForm">
+                  <item>
+                   <property name="text">
+                    <string>Programmé</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>À venir</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Planifié</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>En cours</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Terminé</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="5" column="0" rowspan="1" colspan="1">
+                 <widget class="QLabel" name="lblFDate">
+                  <property name="text">
+                   <string>Date</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1" rowspan="1" colspan="1">
+                 <widget class="QLabel" name="lblFHeure">
+                  <property name="text">
+                   <string>Heure</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="0" rowspan="1" colspan="1">
+                 <widget class="QDateEdit" name="dateEdit">
+                  <property name="displayFormat">
+                   <string>yyyy-MM-dd</string>
+                  </property>
+                  <property name="calendarPopup">
+                   <bool>true</bool>
+                  </property>
+                  <property name="date">
+                   <date>
+                    <year>2025</year>
+                    <month>5</month>
+                    <day>10</day>
+                   </date>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1" rowspan="1" colspan="1">
+                 <widget class="QTimeEdit" name="timeEdit">
+                  <property name="displayFormat">
+                   <string>HH:mm</string>
+                  </property>
+                  <property name="time">
+                   <time>
+                    <hour>18</hour>
+                    <minute>0</minute>
+                    <second>0</second>
+                   </time>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFLieu">
+                  <property name="text">
+                   <string>Lieu</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="0" rowspan="1" colspan="2">
+                 <widget class="QLineEdit" name="lineLieu">
+                  <property name="text">
+                   <string>Salle El Manar</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFClient">
+                  <property name="text">
+                   <string>Client</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="10" column="0" rowspan="1" colspan="2">
+                 <widget class="QLineEdit" name="lineClient">
+                  <property name="text">
+                   <string>Client 1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="11" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFDesc">
+                  <property name="text">
+                   <string>Description</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="12" column="0" rowspan="1" colspan="2">
+                 <widget class="QPlainTextEdit" name="textDescription">
+                  <property name="placeholderText">
+                   <string>Description de l'événement…</string>
+                  </property>
+                  <property name="plainText">
+                   <string>Défilé de mode pour la nouvelle collection printemps. Présence de plusieurs influenceurs et médias.</string>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>70</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>90</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="13" column="0" rowspan="1" colspan="2">
+                 <widget class="QLabel" name="lblFImage">
+                  <property name="text">
+                   <string>Image / Affiche</string>
+                  </property>
+                  <property name="cssClass" stdset="0">
+                   <string>field</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="14" column="0" rowspan="1" colspan="2">
+                 <layout class="QHBoxLayout" name="layout36" stretch="0,1">
+                  <property name="spacing">
+                   <number>8</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblImagePreview">
+                    <property name="text">
+                     <string>🖼</string>
+                    </property>
+                    <property name="cssClass" stdset="0">
+                     <string>imagePreview</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>56</width>
+                      <height>56</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>56</width>
+                      <height>56</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btnChoisirImage">
+                    <property name="text">
+                     <string>Choisir une image…</string>
+                    </property>
+                    <property name="cursor">
+                     <cursorShape>PointingHandCursor</cursorShape>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="15" column="0" rowspan="1" colspan="1">
+                 <widget class="QPushButton" name="btnEnregistrer">
+                  <property name="text">
+                   <string>💾  Enregistrer</string>
+                  </property>
+                  <property name="cursor">
+                   <cursorShape>PointingHandCursor</cursorShape>
+                  </property>
+                 </widget>
+                </item>
+                <item row="15" column="1" rowspan="1" colspan="1">
+                 <widget class="QPushButton" name="btnAnnuler">
+                  <property name="text">
+                   <string>✖  Annuler</string>
+                  </property>
+                  <property name="cursor">
+                   <cursorShape>PointingHandCursor</cursorShape>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <spacer name="spacer37">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>10</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>EvolutionChart</class>
+   <extends>QWidget</extends>
+   <header>evolutionchart.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>btnAjouter</sender>
+   <signal>clicked()</signal>
+   <receiver>lineNom</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAjouter</sender>
+   <signal>clicked()</signal>
+   <receiver>lineLieu</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAjouter</sender>
+   <signal>clicked()</signal>
+   <receiver>lineClient</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAjouter</sender>
+   <signal>clicked()</signal>
+   <receiver>textDescription</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAnnuler</sender>
+   <signal>clicked()</signal>
+   <receiver>lineNom</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAnnuler</sender>
+   <signal>clicked()</signal>
+   <receiver>lineLieu</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAnnuler</sender>
+   <signal>clicked()</signal>
+   <receiver>lineClient</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAnnuler</sender>
+   <signal>clicked()</signal>
+   <receiver>textDescription</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnAjouter</sender>
+   <signal>clicked()</signal>
+   <receiver>lineNom</receiver>
+   <slot>setFocus()</slot>
+  </connection>
+  <connection>
+   <sender>btnModifier</sender>
+   <signal>clicked()</signal>
+   <receiver>lineNom</receiver>
+   <slot>setFocus()</slot>
+  </connection>
+  <connection>
+   <sender>btnModifier</sender>
+   <signal>clicked()</signal>
+   <receiver>lineNom</receiver>
+   <slot>selectAll()</slot>
+  </connection>
+  <connection>
+   <sender>btnReinitialiser</sender>
+   <signal>clicked()</signal>
+   <receiver>lineSearch</receiver>
+   <slot>clear()</slot>
+  </connection>
+  <connection>
+   <sender>btnNavDeconnexion</sender>
+   <signal>clicked()</signal>
+   <receiver>GEvenements</receiver>
+   <slot>close()</slot>
+  </connection>
+  <connection>
+   <sender>calendar</sender>
+   <signal>clicked(QDate)</signal>
+   <receiver>dateEdit</receiver>
+   <slot>setDate(QDate)</slot>
+  </connection>
+  <connection>
+   <sender>btnEnregistrer</sender>
+   <signal>clicked()</signal>
+   <receiver>GEvenements</receiver>
+   <slot>enregistrerEvenement()</slot>
+  </connection>
+  <connection>
+   <sender>btnSupprimer</sender>
+   <signal>clicked()</signal>
+   <receiver>GEvenements</receiver>
+   <slot>supprimerEvenement()</slot>
+  </connection>
+  <connection>
+   <sender>btnModifier</sender>
+   <signal>clicked()</signal>
+   <receiver>GEvenements</receiver>
+   <slot>modifierEvenement()</slot>
+  </connection>
+  <connection>
+   <sender>btnChoisirImage</sender>
+   <signal>clicked()</signal>
+   <receiver>GEvenements</receiver>
+   <slot>choisirImage()</slot>
+  </connection>
+  <connection>
+   <sender>lineSearch</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>rechercher(QString)</slot>
+  </connection>
+  <connection>
+   <sender>comboTri</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>trierEvenements(int)</slot>
+  </connection>
+  <connection>
+   <sender>comboStatut</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>filtrerEvenements(int)</slot>
+  </connection>
+  <connection>
+   <sender>comboType</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>filtrerEvenements(int)</slot>
+  </connection>
+  <connection>
+   <sender>comboLieu</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>filtrerEvenements(int)</slot>
+  </connection>
+  <connection>
+   <sender>comboClient</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GEvenements</receiver>
+   <slot>filtrerEvenements(int)</slot>
+  </connection>
+ </connections>
+ <slots>
+  <slot>enregistrerEvenement()</slot>
+  <slot>supprimerEvenement()</slot>
+  <slot>modifierEvenement()</slot>
+  <slot>choisirImage()</slot>
+  <slot>rechercher(QString)</slot>
+  <slot>trierEvenements(int)</slot>
+  <slot>filtrerEvenements(int)</slot>
+ </slots>
+</ui>

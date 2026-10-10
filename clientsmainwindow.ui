@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>GClients</class>
- <widget class="QMainWindow" name="GClients">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1315</width>
-    <height>809</height>
+    <width>857</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>GClients</string>
+   <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QStackedWidget" name="stackedWidget">
@@ -20,7 +20,7 @@
       <x>0</x>
       <y>0</y>
       <width>841</width>
-      <height>481</height>
+      <height>501</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -35,17 +35,17 @@ color: rgb(0, 0, 0);
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
        <rect>
-        <x>630</x>
-        <y>100</y>
+        <x>670</x>
+        <y>130</y>
         <width>161</width>
-        <height>301</height>
+        <height>311</height>
        </rect>
       </property>
       <property name="styleSheet">
        <string notr="true">color: rgb(64, 64, 64);</string>
       </property>
       <property name="title">
-       <string>fiche client </string>
+       <string>Fiche client </string>
       </property>
       <widget class="QLabel" name="label_2">
        <property name="geometry">
@@ -346,10 +346,10 @@ font: 6pt &quot;Segoe UI&quot;;</string>
      <widget class="QFrame" name="frame">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>0</y>
+        <x>150</x>
+        <y>20</y>
         <width>681</width>
-        <height>41</height>
+        <height>51</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -379,7 +379,7 @@ font: 16pt &quot;Bell MT&quot;;
       <widget class="QLabel" name="label_10">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>30</x>
          <y>20</y>
          <width>281</width>
          <height>16</height>
@@ -426,8 +426,8 @@ color: rgb(64, 64, 64);
      <widget class="QFrame" name="frame_2">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>50</y>
+        <x>150</x>
+        <y>80</y>
         <width>681</width>
         <height>41</height>
        </rect>
@@ -554,277 +554,13 @@ color: rgb(31, 58, 77);</string>
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_4">
-      <property name="geometry">
-       <rect>
-        <x>110</x>
-        <y>230</y>
-        <width>251</width>
-        <height>171</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
-      </property>
-      <widget class="QLabel" name="lblRecoTitle_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>221</width>
-         <height>18</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Répartition par points</string>
-       </property>
-       <property name="role" stdset="0">
-        <string>h2</string>
-       </property>
-      </widget>
-      <widget class="QChartView" name="widgetChart" native="true">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>40</y>
-         <width>251</width>
-         <height>131</height>
-        </rect>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QFrame" name="frame_5">
-      <property name="geometry">
-       <rect>
-        <x>370</x>
-        <y>230</y>
-        <width>251</width>
-        <height>171</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
-      </property>
-      <widget class="QLabel" name="lblRecoTitle">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>221</width>
-         <height>18</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Recommandations · Sarra Ben Ali</string>
-       </property>
-       <property name="role" stdset="0">
-        <string>h2</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblPiece1">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>219</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;b&gt;Robe cocktail « New Look »&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Dior 1950 · 3 200 DT&lt;/span&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::TextFormat::RichText</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblPiece2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>60</y>
-         <width>219</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;b&gt;Robe du soir&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Givenchy 1950 · 2 600 DT&lt;/span&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::TextFormat::RichText</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblPiece3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>90</y>
-         <width>219</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;b&gt;Robe corolle&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Balmain 1950 · 1 950 DT&lt;/span&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::TextFormat::RichText</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblPiece4">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>120</y>
-         <width>219</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;b&gt;Ensemble jupe-veste&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Dior 1950 · 2 800 DT&lt;/span&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::TextFormat::RichText</enum>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_16">
-       <property name="geometry">
-        <rect>
-         <x>130</x>
-         <y>30</y>
-         <width>80</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(139, 30, 45);
-background-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="text">
-        <string>Démonstration</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_17">
-       <property name="geometry">
-        <rect>
-         <x>130</x>
-         <y>70</y>
-         <width>80</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(139, 30, 45);
-background-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="text">
-        <string>Démonstration</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_18">
-       <property name="geometry">
-        <rect>
-         <x>130</x>
-         <y>100</y>
-         <width>80</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(139, 30, 45);
-background-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="text">
-        <string>Démonstration </string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_19">
-       <property name="geometry">
-        <rect>
-         <x>130</x>
-         <y>130</y>
-         <width>80</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(139, 30, 45);
-background-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="text">
-        <string>Démonstration </string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_12">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>30</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>96 %</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_13">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>70</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>91 %</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_14">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>100</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>84 %</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_15">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>130</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>78 %</string>
-       </property>
-      </widget>
-     </widget>
      <widget class="QFrame" name="frame_6">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>101</width>
-        <height>401</height>
+        <x>10</x>
+        <y>20</y>
+        <width>131</width>
+        <height>421</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -840,8 +576,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>60</y>
-         <width>80</width>
+         <y>100</y>
+         <width>101</width>
          <height>18</height>
         </rect>
        </property>
@@ -856,8 +592,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>80</y>
-         <width>80</width>
+         <y>120</y>
+         <width>101</width>
          <height>18</height>
         </rect>
        </property>
@@ -872,8 +608,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>100</y>
-         <width>80</width>
+         <y>140</y>
+         <width>101</width>
          <height>18</height>
         </rect>
        </property>
@@ -888,8 +624,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>150</y>
-         <width>80</width>
+         <y>180</y>
+         <width>101</width>
          <height>18</height>
         </rect>
        </property>
@@ -904,8 +640,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>370</y>
-         <width>80</width>
+         <y>380</y>
+         <width>91</width>
          <height>18</height>
         </rect>
        </property>
@@ -917,8 +653,8 @@ background-color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>120</y>
-         <width>80</width>
+         <y>160</y>
+         <width>101</width>
          <height>18</height>
         </rect>
        </property>
@@ -934,7 +670,7 @@ color: rgb(255, 255, 255);</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>340</y>
+         <y>350</y>
          <width>150</width>
          <height>27</height>
         </rect>
@@ -949,10 +685,10 @@ color: rgb(255, 255, 255);</string>
       <widget class="QLabel" name="lblLogo">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>0</y>
-         <width>91</width>
-         <height>54</height>
+         <x>40</x>
+         <y>20</y>
+         <width>101</width>
+         <height>41</height>
         </rect>
        </property>
        <property name="text">
@@ -966,8 +702,8 @@ color: rgb(255, 255, 255);</string>
      <widget class="QFrame" name="frame_7">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>100</y>
+        <x>150</x>
+        <y>130</y>
         <width>511</width>
         <height>121</height>
        </rect>
@@ -981,6 +717,25 @@ color: rgb(255, 255, 255);</string>
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
       </property>
+      <widget class="QLabel" name="lblCount">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>99</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(121, 121, 121);</string>
+       </property>
+       <property name="text">
+        <string>9 clients affichés sur 69</string>
+       </property>
+       <property name="role" stdset="0">
+        <string>muted</string>
+       </property>
+      </widget>
       <widget class="QTableWidget" name="tableWidget">
        <property name="geometry">
         <rect>
@@ -1361,13 +1116,39 @@ color: rgb(255, 255, 255);
         </property>
        </item>
       </widget>
-      <widget class="QPushButton" name="pushButton_15">
+     </widget>
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>260</y>
+        <width>251</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Répartition</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_3">
+      <property name="geometry">
+       <rect>
+        <x>410</x>
+        <y>260</y>
+        <width>251</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Recommandations : Sarra ben ali</string>
+      </property>
+      <widget class="QPushButton" name="pushButton_19">
        <property name="geometry">
         <rect>
-         <x>350</x>
-         <y>90</y>
-         <width>161</width>
-         <height>31</height>
+         <x>130</x>
+         <y>130</y>
+         <width>80</width>
+         <height>21</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -1375,26 +1156,174 @@ color: rgb(255, 255, 255);
 background-color: rgb(255, 255, 255);</string>
        </property>
        <property name="text">
-        <string>exporter la liste en pdf ⎙</string>
+        <string>Démonstration </string>
        </property>
       </widget>
-      <widget class="QLabel" name="lblCount">
+      <widget class="QPushButton" name="pushButton_18">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>99</y>
-         <width>111</width>
+         <x>130</x>
+         <y>100</y>
+         <width>80</width>
          <height>21</height>
         </rect>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(121, 121, 121);</string>
+        <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
        </property>
        <property name="text">
-        <string>9 clients affichés sur 69</string>
+        <string>Démonstration </string>
        </property>
-       <property name="role" stdset="0">
-        <string>muted</string>
+      </widget>
+      <widget class="QPushButton" name="pushButton_17">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>70</y>
+         <width>80</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+       </property>
+       <property name="text">
+        <string>Démonstration</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_16">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>40</y>
+         <width>80</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+       </property>
+       <property name="text">
+        <string>Démonstration</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_16">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>130</y>
+         <width>21</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>78 %</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_17">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>40</y>
+         <width>21</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>96 %</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_18">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>100</y>
+         <width>21</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>84 %</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_19">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>70</y>
+         <width>21</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>91 %</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPiece1_5">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>111</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;b&gt;Robe cocktail « New Look »&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Dior 1950 · 3 200 DT&lt;/span&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::TextFormat::RichText</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPiece4_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>130</y>
+         <width>91</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;b&gt;Ensemble jupe-veste&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Dior 1950 · 2 800 DT&lt;/span&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::TextFormat::RichText</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPiece2_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>101</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;b&gt;Robe du soir&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Givenchy 1950 · 2 600 DT&lt;/span&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::TextFormat::RichText</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPiece3_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>91</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;b&gt;Robe corolle&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#7d8591;&quot;&gt;Balmain 1950 · 1 950 DT&lt;/span&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::TextFormat::RichText</enum>
        </property>
       </widget>
      </widget>
@@ -1407,21 +1336,13 @@ background-color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1315</width>
-     <height>26</height>
+     <width>857</width>
+     <height>17</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QChartView</class>
-   <extends>QWidget</extends>
-   <header location="global">qchartview</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
