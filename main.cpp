@@ -32,6 +32,6 @@ int main(int argc, char *argv[])
     a.setWindowIcon(QIcon(":/images/icone.png"));
 
     GEmployes w;
-    w.show();
+    w.showMaximized();
     return a.exec();
 }

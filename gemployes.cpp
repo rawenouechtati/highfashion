@@ -14,13 +14,13 @@ GEmployes::GEmployes(QWidget *parent)
     ui->setupUi(this);
     connect(ui->navServices, &QPushButton::clicked, this, [this]() {
         if (!fenetreServices) fenetreServices = new GServices();
-        fenetreServices->show();
+        fenetreServices->showMaximized();
         fenetreServices->raise();
     });
 
     connect(ui->navClients, &QPushButton::clicked, this, [this]() {
         if (!fenetreClients) fenetreClients = new GClients();
-        fenetreClients->show();
+        fenetreClients->showMaximized();
         fenetreClients->raise();
     });
 
