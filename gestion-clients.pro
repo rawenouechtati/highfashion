@@ -3,7 +3,7 @@ QT += core gui widgets
 CONFIG += c++17
 
 SOURCES += \
-    main.cpp \
+    main2.cpp \
     clientsmainwindow.cpp
 
 HEADERS += \
