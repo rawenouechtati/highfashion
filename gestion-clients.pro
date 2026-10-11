@@ -1,7 +1,8 @@
-QT += widgets
+QT += widgets charts
 
 CONFIG += c++17
 
+<<<<<<< HEAD:gestion-clients.pro
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -16,8 +17,35 @@ HEADERS += \
 
 FORMS += \
     clientsmainwindow.ui
+=======
+SOURCES += \
+    main.cpp \
+    gemployes.cpp \
+    mainwindow.cpp \
+    clientsmainwindow.cpp \
+    gevenements.cpp \
+    evolutionchart.cpp \
+    notificationsdialog.cpp
 
-# Default rules for deployment.
+HEADERS += \
+    gemployes.h \
+    mainwindow.h \
+    clientsmainwindow.h \
+    gevenements.h \
+    evolutionchart.h \
+    notificationsdialog.h
+
+FORMS += \
+    gemployes.ui \
+    mainwindow.ui \
+    clientsmainwindow.ui \
+    gevenements.ui \
+    notificationsdialog.ui
+
+RESOURCES += \
+    resources.qrc
+>>>>>>> origin/integration:gsmartfahion.pro
+
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
