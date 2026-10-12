@@ -76,7 +76,7 @@ color: rgb(0, 0, 0);
         <string notr="true">color: rgb(121, 121, 121);</string>
        </property>
        <property name="text">
-        <string>sarra ben ali </string>
+        <string/>
        </property>
       </widget>
       <widget class="QLabel" name="label_6">
@@ -140,7 +140,7 @@ color: rgb(0, 0, 0);
         <string notr="true">color: rgb(121, 121, 121);</string>
        </property>
        <property name="text">
-        <string>sarra.benali@mail.tn </string>
+        <string> </string>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditTel">
@@ -156,7 +156,7 @@ color: rgb(0, 0, 0);
         <string notr="true">color: rgb(121, 121, 121);</string>
        </property>
        <property name="text">
-        <string>22 345 678</string>
+        <string/>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditCin">
@@ -172,7 +172,7 @@ color: rgb(0, 0, 0);
         <string notr="true">color: rgb(121, 121, 121);</string>
        </property>
        <property name="text">
-        <string>09128457</string>
+        <string/>
        </property>
       </widget>
       <widget class="QPushButton" name="pushButton_6">
@@ -291,7 +291,7 @@ font: 10pt &quot;Segoe UI&quot;;</string>
          <string>contrat en pdf  </string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushButton_7">
+       <widget class="QPushButton" name="pushButtonOuvrir">
         <property name="geometry">
          <rect>
           <x>80</x>
@@ -326,7 +326,7 @@ font: 6pt &quot;Segoe UI&quot;;</string>
        </widget>
        <zorder>label_8</zorder>
        <zorder>label_4</zorder>
-       <zorder>pushButton_7</zorder>
+       <zorder>pushButtonOuvrir</zorder>
       </widget>
       <zorder>label_2</zorder>
       <zorder>lineEditNom</zorder>
@@ -441,7 +441,7 @@ color: rgb(64, 64, 64);
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
       </property>
-      <widget class="QLineEdit" name="lineEdit">
+      <widget class="QLineEdit" name="lineEditRecherche">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -476,12 +476,17 @@ color: rgb(64, 64, 64);
        </item>
        <item>
         <property name="text">
-         <string>cin </string>
+         <string>niveaux </string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>niveaux </string>
+         <string>points </string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string/>
         </property>
        </item>
       </widget>
@@ -693,22 +698,6 @@ color: rgb(255, 255, 255);</string>
        </property>
        <property name="text">
         <string/>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblLogo">
-       <property name="geometry">
-        <rect>
-         <x>40</x>
-         <y>10</y>
-         <width>81</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Atelier Vintage&lt;br/&gt;Couture&lt;br/&gt;&lt;span style=&quot; font-size:8pt; color:#d9b3b8;&quot;&gt;ÉLÉGANCE &amp;amp; TRADITION&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::TextFormat::RichText</enum>
        </property>
       </widget>
       <widget class="QLabel" name="label_13">
@@ -1378,9 +1367,9 @@ background-color: rgb(255, 255, 255);</string>
   <tabstop>pushButton_6</tabstop>
   <tabstop>lineEditNom</tabstop>
   <tabstop>lineEditEmail</tabstop>
-  <tabstop>pushButton_7</tabstop>
+  <tabstop>pushButtonOuvrir</tabstop>
   <tabstop>dateTimeEdit</tabstop>
-  <tabstop>lineEdit</tabstop>
+  <tabstop>lineEditRecherche</tabstop>
   <tabstop>comboBox</tabstop>
   <tabstop>pushButton_2</tabstop>
   <tabstop>pushButton_5</tabstop>
