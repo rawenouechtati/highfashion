@@ -13,7 +13,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDate>
-
+#include <QHeaderView>
 #include <QLineEdit>
 
 #include <QTextDocument>
@@ -44,9 +44,6 @@ public:
     }
 };
 
-
-
-
 static int rangNiveau(const QString &niveau)
 {
     const QString n = niveau.trimmed().toLower();
@@ -55,13 +52,44 @@ static int rangNiveau(const QString &niveau)
     return 1;               // bronze
 }
 
+static void colorerNiveaux(QTableWidget *t)
+{
+    for (int r = 0; r < t->rowCount(); ++r) {
+        QTableWidgetItem *it = t->item(r, 6);
+        if (!it) continue;
+        const QString n = it->text().trimmed().toLower();
+        QColor fond("#F4D9C2"), texte("#8A4B1F");                   // bronze
+        if (n == "or")          { fond = QColor("#F7E3A1"); texte = QColor("#8A6D1F"); }
+        else if (n == "argent") { fond = QColor("#E4E7EB"); texte = QColor("#4A5560"); }
+        it->setBackground(fond);
+        it->setForeground(texte);
+        it->setTextAlignment(Qt::AlignCenter);
+    }
+}
 #include <QWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
+    ui->setupUi(this);          // <-- TOUJOURS en premier
+
+    QTableWidget *t = ui->tableWidget;
+    t->verticalHeader()->setVisible(false);                         // enlève les numéros 1, 2, 3
+    t->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // toutes les colonnes tiennent
+    t->horizontalHeader()->setHighlightSections(false);
+    t->verticalHeader()->setDefaultSectionSize(26);
+    t->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    t->setAlternatingRowColors(true);
+    t->setShowGrid(false);
+    t->setFrameShape(QFrame::NoFrame);
+    t->setStyleSheet(
+        "QTableWidget { background:#FFFFFF; alternate-background-color:#FAF6EC;"
+        "  color:#1F3A4D; border:none; selection-background-color:#F6D9DC;"
+        "  selection-color:#1F3A4D; }"
+        "QTableWidget::item { padding-left:6px; border:none; }"
+        "QHeaderView::section { background:#1F3A4D; color:#FFFFFF; border:none;"
+        "  padding:6px; font-weight:bold; }");
 
     ui->tableWidget->setColumnCount(7);
     ui->tableWidget->setHorizontalHeaderLabels(
@@ -69,6 +97,36 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int){ trierClients(); });
+
+    struct Client { const char *id, *nom, *email, *tel, *cin; int pts; const char *niv; };
+    const Client clients[] = {
+        {"C001","Sarra Ben Ali","sarra.benali@mail.tn","22 345 678","09128457",540,"Or"},
+        {"C002","Yassine Trabelsi","y.trabelsi@mail.tn","98 120 647","11234689",320,"Argent"},
+        {"C003","Ines Mansouri","ines.mansouri@mail.tn","55 908 231","07468215",85,"Bronze"},
+        {"C004","Karim Jebali","karim.jebali@mail.tn","29 774 610","10983264",510,"Or"},
+        {"C005","Nour Gharbi","nour.gharbi@mail.tn","50 231 889","04871530",210,"Argent"},
+        {"C006","Amine Chaouch","a.chaouch@mail.tn","23 456 019","12056738",45,"Bronze"},
+        {"C007","Rim Belhaj","rim.belhaj@mail.tn","97 665 302","09345617",455,"Argent"},
+        {"C008","Sami Dridi","sami.dridi@mail.tn","54 018 776","11590824",130,"Bronze"},
+        {"C009","Lina Hamdi","lina.hamdi@mail.tn","26 590 143","08762094",275,"Argent"}
+    };
+    ui->tableWidget->setRowCount(0);
+    for (const Client &c : clients) {
+        const int r = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(r);
+        ui->tableWidget->setItem(r, 0, new QTableWidgetItem(c.id));
+        ui->tableWidget->setItem(r, 1, new QTableWidgetItem(c.nom));
+        ui->tableWidget->setItem(r, 2, new QTableWidgetItem(c.email));
+        ui->tableWidget->setItem(r, 3, new QTableWidgetItem(c.tel));
+        ui->tableWidget->setItem(r, 4, new QTableWidgetItem(c.cin));
+        auto *ip = new ItemTri(QString::number(c.pts));
+        ip->setData(Qt::UserRole, c.pts);
+        ui->tableWidget->setItem(r, 5, ip);
+        auto *in = new ItemTri(c.niv);
+        in->setData(Qt::UserRole, rangNiveau(c.niv));
+        ui->tableWidget->setItem(r, 6, in);
+    }
+
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->lineEditRecherche, &QLineEdit::textChanged,
             this, &MainWindow::rechercherClients);
@@ -107,7 +165,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->tableWidget, &QTableWidget::currentCellChanged,
             this, [this](int, int, int, int){ majDiagramme(); });
-
+     colorerNiveaux(ui->tableWidget);
     majDiagramme();
 
 }
@@ -201,6 +259,8 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
     modeAjout = false;
     ui->groupBox->setTitle("Fiche client");
     majDiagramme();
+
+    colorerNiveaux(ui->tableWidget);
 }
 
 void MainWindow::on_pushButtonAnnuler_clicked()
@@ -247,29 +307,7 @@ void MainWindow::on_pushButton_4_clicked()
     }
     majDiagramme();
 }
-void MainWindow::trierClients()
-{
-    for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
-        QTableWidgetItem *ip = ui->tableWidget->item(r, 5);
-        QTableWidgetItem *in = ui->tableWidget->item(r, 6);
-        if (!ip || !in) continue;
 
-        const QString pts = ip->text();
-        const QString niv = in->text();
-
-        ItemTri *p = new ItemTri(pts);
-        p->setData(Qt::UserRole, pts.toInt());
-        ui->tableWidget->setItem(r, 5, p);
-
-        ItemTri *n = new ItemTri(niv);
-        n->setData(Qt::UserRole, rangNiveau(niv));
-        ui->tableWidget->setItem(r, 6, n);
-    }
-
-    const bool parNiveau = ui->comboBox->currentText().toLower().contains("niveau");
-    ui->tableWidget->sortItems(parNiveau ? 6 : 5, Qt::DescendingOrder);
-    ui->tableWidget->scrollToTop();
-}
 void MainWindow::rechercherClients(const QString &texte)
 {
     const QString recherche = texte.trimmed().toLower();
@@ -722,4 +760,30 @@ void DiagrammeWidget::paintEvent(QPaintEvent *)
     }
 }
 
+
+
+void MainWindow::trierClients()
+{
+    for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
+        QTableWidgetItem *ip = ui->tableWidget->item(r, 5);
+        QTableWidgetItem *in = ui->tableWidget->item(r, 6);
+        if (!ip || !in) continue;
+
+        const QString pts = ip->text();
+        const QString niv = in->text();
+
+        ItemTri *p = new ItemTri(pts);
+        p->setData(Qt::UserRole, pts.toInt());
+        ui->tableWidget->setItem(r, 5, p);
+
+        ItemTri *n = new ItemTri(niv);
+        n->setData(Qt::UserRole, rangNiveau(niv));
+        ui->tableWidget->setItem(r, 6, n);
+    }
+
+    const bool parNiveau = ui->comboBox->currentText().toLower().contains("niveau");
+    ui->tableWidget->sortItems(parNiveau ? 6 : 5, Qt::DescendingOrder);
+    ui->tableWidget->scrollToTop();
+    colorerNiveaux(ui->tableWidget);
+}
 
