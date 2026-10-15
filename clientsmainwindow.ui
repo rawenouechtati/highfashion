@@ -19,8 +19,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>841</width>
-      <height>501</height>
+      <width>861</width>
+      <height>541</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -140,7 +140,7 @@ color: rgb(0, 0, 0);
         <string notr="true">color: rgb(121, 121, 121);</string>
        </property>
        <property name="text">
-        <string> </string>
+        <string/>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditTel">
@@ -565,7 +565,7 @@ color: rgb(31, 58, 77);</string>
         <x>10</x>
         <y>20</y>
         <width>131</width>
-        <height>481</height>
+        <height>421</height>
        </rect>
       </property>
       <property name="styleSheet">

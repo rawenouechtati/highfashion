@@ -15,3 +15,6 @@ FORMS += \
 RESOURCES += \
     LOGO.qrc
 QT += core gui widgets printsupport
+QT += core gui widgets sql
+
+QT += core gui widgets

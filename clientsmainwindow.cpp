@@ -28,7 +28,10 @@
 #include <QPainter>
 
 #include <QInputDialog>
+#include <QDateTime>
+#include <QPixmap>
 
+#include <QVBoxLayout>
 // Item qui se trie selon un nombre (stocké dans Qt::UserRole)
 class ItemTri : public QTableWidgetItem
 {
@@ -52,6 +55,8 @@ static int rangNiveau(const QString &niveau)
     return 1;               // bronze
 }
 
+#include <QWidget>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -67,6 +72,43 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->lineEditRecherche, &QLineEdit::textChanged,
             this, &MainWindow::rechercherClients);
+    QPixmap logo(":/logo_atelier.jpeg");
+    ui->label_13->setGeometry(10, 20, 111, 60);
+    ui->label_13->setAlignment(Qt::AlignCenter);
+    ui->label_13->setPixmap(logo.scaled(ui->label_13->size(),
+                                        Qt::KeepAspectRatio,
+                                        Qt::SmoothTransformation));
+    ui->label_13->raise();
+
+    connect(ui->pushButton_2, &QPushButton::clicked,
+            this, &MainWindow::onAjouterClicked);
+
+    connect(ui->pushButton_3, &QPushButton::clicked,
+            this, &MainWindow::onModifierClicked);
+
+    // date et heure automatiques
+    ui->dateTimeEdit->setDisplayFormat("dd.MM.yyyy HH:mm");
+    ui->dateTimeEdit->setDateTime(QDateTime::currentDateTime());
+    ui->dateTimeEdit->setReadOnly(true);                          // l'utilisateur ne la modifie pas
+    ui->dateTimeEdit->setButtonSymbols(QAbstractSpinBox::NoButtons); // enlève les flèches ^ v
+
+    timerHorloge = new QTimer(this);
+    connect(timerHorloge, &QTimer::timeout, this, [this]() {
+        ui->dateTimeEdit->setDateTime(QDateTime::currentDateTime());
+    });
+    timerHorloge->start(1000);   // mise à jour chaque seconde
+
+
+    // diagramme dans le cadre "Répartition"
+    diagramme = new DiagrammeWidget(ui->groupBox_2);
+    diagramme->setGeometry(8, 22, ui->groupBox_2->width() - 16,
+                           ui->groupBox_2->height() - 30);
+    diagramme->show();
+
+    connect(ui->tableWidget, &QTableWidget::currentCellChanged,
+            this, [this](int, int, int, int){ majDiagramme(); });
+
+    majDiagramme();
 
 }
 
@@ -102,7 +144,10 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
         return;
     }
 
+    // vérification de doublon (on ignore la ligne en cours de modification)
     for (int i = 0; i < ui->tableWidget->rowCount(); ++i) {
+        if (modeModif && i == ligneModif)
+            continue;
         QTableWidgetItem *it = ui->tableWidget->item(i, 4);
         if (it && it->text() == cin) {
             QMessageBox::warning(this, "Doublon", "Un client avec ce CIN existe déjà.");
@@ -110,6 +155,22 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
         }
     }
 
+    // ----- MODE MODIFICATION -----
+    if (modeModif && ligneModif >= 0) {
+        ui->tableWidget->item(ligneModif, 1)->setText(nom);
+        ui->tableWidget->item(ligneModif, 2)->setText(email);
+        ui->tableWidget->item(ligneModif, 3)->setText(tel);
+        ui->tableWidget->item(ligneModif, 4)->setText(cin);
+
+        QMessageBox::information(this, "Succès", "Client modifié avec succès.");
+        viderChamps();
+        modeModif = false;
+        ligneModif = -1;
+        ui->groupBox->setTitle("Fiche client");
+        return;
+    }
+
+    // ----- MODE AJOUT -----
     const int row = ui->tableWidget->rowCount();
     ui->tableWidget->insertRow(row);
 
@@ -137,12 +198,23 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
 
     QMessageBox::information(this, "Succès", "Client enregistré avec succès.");
     viderChamps();
+    modeAjout = false;
+    ui->groupBox->setTitle("Fiche client");
+    majDiagramme();
 }
 
 void MainWindow::on_pushButtonAnnuler_clicked()
 {
+
+
+    modeAjout = false;
+    modeModif = false;
+    ligneModif = -1;
     viderChamps();
+    ui->groupBox->setTitle("Fiche client");
 }
+
+
 
 void MainWindow::viderChamps() {
     ui->lineEditNom->clear();
@@ -173,6 +245,7 @@ void MainWindow::on_pushButton_4_clicked()
         ui->tableWidget->removeRow(row);
         QMessageBox::information(this, "Succès", "Client supprimé.");
     }
+    majDiagramme();
 }
 void MainWindow::trierClients()
 {
@@ -217,39 +290,39 @@ void MainWindow::rechercherClients(const QString &texte)
         ui->tableWidget->setRowHidden(r, !trouve);
     }
 }
-    void MainWindow::on_pushButtonOuvrir_clicked()
-    {
-        // infos du formulaire, sinon du client sélectionné dans le tableau
-        QString nom   = ui->lineEditNom->text().trimmed();
-        QString email = ui->lineEditEmail->text().trimmed();
-        QString tel   = ui->lineEditTel->text().trimmed();
-        QString cin   = ui->lineEditCin->text().trimmed();
+void MainWindow::on_pushButtonOuvrir_clicked()
+{
+    // infos du formulaire, sinon du client sélectionné dans le tableau
+    QString nom   = ui->lineEditNom->text().trimmed();
+    QString email = ui->lineEditEmail->text().trimmed();
+    QString tel   = ui->lineEditTel->text().trimmed();
+    QString cin   = ui->lineEditCin->text().trimmed();
 
-        const int row = ui->tableWidget->currentRow();
-        if (nom.isEmpty() && row >= 0) {
-            auto texte = [&](int c) {
-                QTableWidgetItem *it = ui->tableWidget->item(row, c);
-                return it ? it->text() : QString();
-            };
-            nom   = texte(1);
-            email = texte(2);
-            tel   = texte(3);
-            cin   = texte(4);
-        }
+    const int row = ui->tableWidget->currentRow();
+    if (nom.isEmpty() && row >= 0) {
+        auto texte = [&](int c) {
+            QTableWidgetItem *it = ui->tableWidget->item(row, c);
+            return it ? it->text() : QString();
+        };
+        nom   = texte(1);
+        email = texte(2);
+        tel   = texte(3);
+        cin   = texte(4);
+    }
 
-        if (nom.isEmpty()) {
-            QMessageBox::warning(this, "Contrat",
-                                 "Remplissez le formulaire ou sélectionnez un client dans le tableau.");
-            return;
-        }
+    if (nom.isEmpty()) {
+        QMessageBox::warning(this, "Contrat",
+                             "Remplissez le formulaire ou sélectionnez un client dans le tableau.");
+        return;
+    }
 
-        const QString fichier = QFileDialog::getSaveFileName(
-            this, "Enregistrer le contrat",
-            "contrat_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
-        if (fichier.isEmpty())
-            return;
+    const QString fichier = QFileDialog::getSaveFileName(
+        this, "Enregistrer le contrat",
+        "contrat_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
+    if (fichier.isEmpty())
+        return;
 
-        const QString html = QString(R"HTML(
+    const QString html = QString(R"HTML(
 <body style="font-family:'Segoe UI','Arial',sans-serif; color:#1F3A4D; font-size:10pt;">
 
 <table width="100%" cellpadding="18" cellspacing="0" bgcolor="#1F3A4D">
@@ -331,90 +404,90 @@ void MainWindow::rechercherClients(const QString &texte)
 </td></tr></table>
 </body>
 )HTML")
-                                 .arg(QDate::currentDate().toString("dd/MM/yyyy"),
-                                      nom.toHtmlEscaped(), email.toHtmlEscaped(),
-                                      tel.toHtmlEscaped(), cin.toHtmlEscaped());
+                             .arg(QDate::currentDate().toString("dd/MM/yyyy"),
+                                  nom.toHtmlEscaped(), email.toHtmlEscaped(),
+                                  tel.toHtmlEscaped(), cin.toHtmlEscaped());
 
-        QPdfWriter pdf(fichier);
-        pdf.setPageSize(QPageSize(QPageSize::A4));
-        pdf.setPageMargins(QMarginsF(0, 0, 0, 0));
-        pdf.setResolution(96);
+    QPdfWriter pdf(fichier);
+    pdf.setPageSize(QPageSize(QPageSize::A4));
+    pdf.setPageMargins(QMarginsF(0, 0, 0, 0));
+    pdf.setResolution(96);
 
-        QTextDocument doc;
-        doc.setHtml(html);
-        doc.setPageSize(QSizeF(pdf.width(), pdf.height()));
+    QTextDocument doc;
+    doc.setHtml(html);
+    doc.setPageSize(QSizeF(pdf.width(), pdf.height()));
 
-        // fond crème sur toute la page
-        QTextFrameFormat ff = doc.rootFrame()->frameFormat();
-        ff.setBackground(QColor("#F5F1E8"));
-        ff.setMargin(0);
-        doc.rootFrame()->setFrameFormat(ff);
+    // fond crème sur toute la page
+    QTextFrameFormat ff = doc.rootFrame()->frameFormat();
+    ff.setBackground(QColor("#F5F1E8"));
+    ff.setMargin(0);
+    doc.rootFrame()->setFrameFormat(ff);
 
-        // échelle : si le contenu dépasse la page, on le réduit pour tenir sur 1 page
-        const qreal hauteurDoc  = doc.size().height();
-        const qreal hauteurPage = pdf.height();
-        qreal echelle = 1.0;
-        if (hauteurDoc > hauteurPage)
-            echelle = hauteurPage / hauteurDoc;
+    // échelle : si le contenu dépasse la page, on le réduit pour tenir sur 1 page
+    const qreal hauteurDoc  = doc.size().height();
+    const qreal hauteurPage = pdf.height();
+    qreal echelle = 1.0;
+    if (hauteurDoc > hauteurPage)
+        echelle = hauteurPage / hauteurDoc;
 
-        QPainter painter(&pdf);
-        painter.fillRect(QRectF(0, 0, pdf.width(), pdf.height()), QColor("#F5F1E8"));
-        painter.scale(echelle, echelle);
-        doc.drawContents(&painter);
-        painter.end();
+    QPainter painter(&pdf);
+    painter.fillRect(QRectF(0, 0, pdf.width(), pdf.height()), QColor("#F5F1E8"));
+    painter.scale(echelle, echelle);
+    doc.drawContents(&painter);
+    painter.end();
 
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
+}
+
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    // infos du formulaire, sinon du client sélectionné dans le tableau
+    QString nom = ui->lineEditNom->text().trimmed();
+    QString cin = ui->lineEditCin->text().trimmed();
+
+    const int row = ui->tableWidget->currentRow();
+    if (nom.isEmpty() && row >= 0) {
+        QTableWidgetItem *n = ui->tableWidget->item(row, 1);
+        QTableWidgetItem *c = ui->tableWidget->item(row, 4);
+        nom = n ? n->text() : QString();
+        cin = c ? c->text() : QString();
     }
 
+    if (nom.isEmpty()) {
+        QMessageBox::warning(this, "Reçu",
+                             "Remplissez le formulaire ou sélectionnez un client dans le tableau.");
+        return;
+    }
 
-    void MainWindow::on_pushButton_6_clicked()
-    {
-        // infos du formulaire, sinon du client sélectionné dans le tableau
-        QString nom = ui->lineEditNom->text().trimmed();
-        QString cin = ui->lineEditCin->text().trimmed();
+    // montant
+    bool ok = false;
+    const double montant = QInputDialog::getDouble(
+        this, "Reçu de paiement", "Montant payé (DT) :",
+        0.0, 0.0, 1000000.0, 3, &ok);
+    if (!ok || montant <= 0) {
+        if (ok)
+            QMessageBox::warning(this, "Reçu", "Le montant doit être supérieur à 0.");
+        return;
+    }
 
-        const int row = ui->tableWidget->currentRow();
-        if (nom.isEmpty() && row >= 0) {
-            QTableWidgetItem *n = ui->tableWidget->item(row, 1);
-            QTableWidgetItem *c = ui->tableWidget->item(row, 4);
-            nom = n ? n->text() : QString();
-            cin = c ? c->text() : QString();
-        }
+    // mode de paiement
+    const QStringList modes = {"Espèces", "Carte bancaire", "Chèque", "Virement"};
+    const QString mode = QInputDialog::getItem(
+        this, "Reçu de paiement", "Mode de paiement :", modes, 0, false, &ok);
+    if (!ok)
+        return;
 
-        if (nom.isEmpty()) {
-            QMessageBox::warning(this, "Reçu",
-                                 "Remplissez le formulaire ou sélectionnez un client dans le tableau.");
-            return;
-        }
+    const QString fichier = QFileDialog::getSaveFileName(
+        this, "Enregistrer le reçu",
+        "recu_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
+    if (fichier.isEmpty())
+        return;
 
-        // montant
-        bool ok = false;
-        const double montant = QInputDialog::getDouble(
-            this, "Reçu de paiement", "Montant payé (DT) :",
-            0.0, 0.0, 1000000.0, 3, &ok);
-        if (!ok || montant <= 0) {
-            if (ok)
-                QMessageBox::warning(this, "Reçu", "Le montant doit être supérieur à 0.");
-            return;
-        }
+    const QString numero = "RC-" + QDate::currentDate().toString("yyyyMMdd")
+                           + "-" + cin.right(4);
 
-        // mode de paiement
-        const QStringList modes = {"Espèces", "Carte bancaire", "Chèque", "Virement"};
-        const QString mode = QInputDialog::getItem(
-            this, "Reçu de paiement", "Mode de paiement :", modes, 0, false, &ok);
-        if (!ok)
-            return;
-
-        const QString fichier = QFileDialog::getSaveFileName(
-            this, "Enregistrer le reçu",
-            "recu_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
-        if (fichier.isEmpty())
-            return;
-
-        const QString numero = "RC-" + QDate::currentDate().toString("yyyyMMdd")
-                               + "-" + cin.right(4);
-
-        const QString html = QString(R"HTML(
+    const QString html = QString(R"HTML(
 <body style="font-family:'Segoe UI','Arial',sans-serif; color:#1F3A4D; font-size:10pt;">
 
 <table width="100%" cellpadding="18" cellspacing="0" bgcolor="#1F3A4D">
@@ -491,39 +564,162 @@ void MainWindow::rechercherClients(const QString &texte)
 </td></tr></table>
 </body>
 )HTML")
-                                 .arg(QDate::currentDate().toString("dd/MM/yyyy"),
-                                      numero,
-                                      nom.toHtmlEscaped(),
-                                      cin.toHtmlEscaped(),
-                                      QString::number(montant, 'f', 3) + " DT",
-                                      mode.toHtmlEscaped());
+                             .arg(QDate::currentDate().toString("dd/MM/yyyy"),
+                                  numero,
+                                  nom.toHtmlEscaped(),
+                                  cin.toHtmlEscaped(),
+                                  QString::number(montant, 'f', 3) + " DT",
+                                  mode.toHtmlEscaped());
 
-        QPdfWriter pdf(fichier);
-        pdf.setPageSize(QPageSize(QPageSize::A4));
-        pdf.setPageMargins(QMarginsF(0, 0, 0, 0));
-        pdf.setResolution(96);
+    QPdfWriter pdf(fichier);
+    pdf.setPageSize(QPageSize(QPageSize::A4));
+    pdf.setPageMargins(QMarginsF(0, 0, 0, 0));
+    pdf.setResolution(96);
 
-        QTextDocument doc;
-        doc.setHtml(html);
-        doc.setPageSize(QSizeF(pdf.width(), pdf.height()));
+    QTextDocument doc;
+    doc.setHtml(html);
+    doc.setPageSize(QSizeF(pdf.width(), pdf.height()));
 
-        QTextFrameFormat ff = doc.rootFrame()->frameFormat();
-        ff.setBackground(QColor("#F5F1E8"));
-        ff.setMargin(0);
-        doc.rootFrame()->setFrameFormat(ff);
+    QTextFrameFormat ff = doc.rootFrame()->frameFormat();
+    ff.setBackground(QColor("#F5F1E8"));
+    ff.setMargin(0);
+    doc.rootFrame()->setFrameFormat(ff);
 
-        const qreal hauteurDoc  = doc.size().height();
-        const qreal hauteurPage = pdf.height();
-        qreal echelle = 1.0;
-        if (hauteurDoc > hauteurPage)
-            echelle = hauteurPage / hauteurDoc;
+    const qreal hauteurDoc  = doc.size().height();
+    const qreal hauteurPage = pdf.height();
+    qreal echelle = 1.0;
+    if (hauteurDoc > hauteurPage)
+        echelle = hauteurPage / hauteurDoc;
 
-        QPainter painter(&pdf);
-        painter.fillRect(QRectF(0, 0, pdf.width(), pdf.height()), QColor("#F5F1E8"));
-        painter.scale(echelle, echelle);
-        doc.drawContents(&painter);
-        painter.end();
+    QPainter painter(&pdf);
+    painter.fillRect(QRectF(0, 0, pdf.width(), pdf.height()), QColor("#F5F1E8"));
+    painter.scale(echelle, echelle);
+    doc.drawContents(&painter);
+    painter.end();
 
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
+}
+
+
+void MainWindow::on_pushButton_13_clicked()
+{
+    QMessageBox::StandardButton rep = QMessageBox::question(
+        this, "Déconnexion",
+        "Voulez-vous vraiment vous déconnecter ?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (rep == QMessageBox::Yes)
+        close();
+}
+
+
+void MainWindow::onAjouterClicked()
+{
+    modeModif = false;
+    ligneModif = -1;
+    modeAjout = true;
+    viderChamps();                       // vide les champs + focus sur "nom et prenom"
+    ui->tableWidget->clearSelection();   // désélectionne la ligne du tableau
+
+    const QString nouvelId = QString("C%1").arg(prochainId, 3, 10, QChar('0'));
+    ui->groupBox->setTitle("Fiche client  " + nouvelId + "  (nouveau)");
+}
+void MainWindow::onModifierClicked()
+{
+    const int row = ui->tableWidget->currentRow();
+    if (row < 0) {
+        QMessageBox::warning(this, "Aucune sélection",
+                             "Veuillez sélectionner un client dans le tableau.");
+        return;
     }
+
+    auto texte = [&](int c) {
+        QTableWidgetItem *it = ui->tableWidget->item(row, c);
+        return it ? it->text() : QString();
+    };
+
+    // remplir la fiche avec les coordonnées du client
+    ui->lineEditNom->setText(texte(1));
+    ui->lineEditEmail->setText(texte(2));
+    ui->lineEditTel->setText(texte(3));
+    ui->lineEditCin->setText(texte(4));
+
+    modeAjout = false;
+    modeModif = true;
+    ligneModif = row;
+
+    ui->groupBox->setTitle("Fiche client  " + texte(0) + "  (modification)");
+    ui->lineEditNom->setFocus();
+}
+
+void MainWindow::majDiagramme()
+{
+    auto tranche = [](int pts) {
+        if (pts < 100) return 0;
+        if (pts < 200) return 1;
+        if (pts < 300) return 2;
+        if (pts < 500) return 3;
+        return 4;
+    };
+
+    QVector<int> comptes(5, 0);
+    for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
+        QTableWidgetItem *it = ui->tableWidget->item(r, 5);
+        if (it)
+            comptes[tranche(it->text().toInt())]++;
+    }
+
+    int sel = -1;
+    const int row = ui->tableWidget->currentRow();
+    if (row >= 0 && ui->tableWidget->item(row, 5))
+        sel = tranche(ui->tableWidget->item(row, 5)->text().toInt());
+
+    diagramme->setDonnees(comptes, sel);
+}
+
+void DiagrammeWidget::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    const QStringList noms = {"0-99", "100-199", "200-299", "300-499", "500+"};
+    int maxVal = 4;
+    for (int v : comptes) maxVal = qMax(maxVal, v);
+
+    const int margeG = 30, margeB = 25, margeH = 10, margeD = 10;
+    const QRect zone(margeG, margeH, width() - margeG - margeD,
+                     height() - margeH - margeB);
+
+    // lignes de repère
+    p.setPen(QColor("#D9CFB8"));
+    for (int i = 0; i <= 4; ++i) {
+        const int y = zone.bottom() - i * zone.height() / 4;
+        p.drawLine(zone.left(), y, zone.right(), y);
+        p.setPen(QColor("#1F3A4D"));
+        p.drawText(0, y - 8, margeG - 5, 16, Qt::AlignRight | Qt::AlignVCenter,
+                   QString::number(i * maxVal / 4));
+        p.setPen(QColor("#D9CFB8"));
+    }
+
+    // barres
+    const int n = comptes.size();
+    const int largeurCase = zone.width() / n;
+    const int largeurBarre = largeurCase * 6 / 10;
+
+    for (int i = 0; i < n; ++i) {
+        const int h = comptes[i] * zone.height() / maxVal;
+        const QRect barre(zone.left() + i * largeurCase + (largeurCase - largeurBarre) / 2,
+                          zone.bottom() - h, largeurBarre, h);
+        p.setPen(Qt::NoPen);
+        p.setBrush(QColor(i == trancheSel ? "#8B1E2D" : "#1F3A4D"));
+        p.drawRoundedRect(barre, 3, 3);
+
+        p.setPen(QColor("#1F3A4D"));
+        p.drawText(barre.left() - 10, barre.top() - 16, largeurBarre + 20, 14,
+                   Qt::AlignCenter, QString::number(comptes[i]));
+        p.drawText(zone.left() + i * largeurCase, zone.bottom() + 4, largeurCase, 16,
+                   Qt::AlignCenter, noms[i]);
+    }
+}
+
 

@@ -1,3 +1,6 @@
 <RCC>
     <qresource lang="LOGO_INTERFACE_-removebg-preview.png" prefix="/"/>
+    <qresource prefix="/">
+        <file>logo_atelier.jpeg</file>
+    </qresource>
 </RCC>
