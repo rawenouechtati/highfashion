@@ -1,20 +1,20 @@
-QT += core gui widgets
-
+QT += core gui widgets printsupport sql
 CONFIG += c++17
+# CONFIG += console   # facultatif : pour voir qDebug dans une console
 
 SOURCES += \
+    client.cpp \
     main2.cpp \
-    clientsmainwindow.cpp
+    clientsmainwindow.cpp \
+    connection.cpp
 
 HEADERS += \
-    clientsmainwindow.h
+    client.h \
+    clientsmainwindow.h \
+    connection.h
 
 FORMS += \
     clientsmainwindow.ui
 
 RESOURCES += \
     LOGO.qrc
-QT += core gui widgets printsupport
-QT += core gui widgets sql
-
-QT += core gui widgets

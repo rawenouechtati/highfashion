@@ -53,14 +53,13 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    int prochainId = 10;
     void viderChamps();
     bool emailValide(const QString &email) const;
     bool modeAjout = false;
     bool modeModif = false;
     int ligneModif = -1;
     QTimer *timerHorloge;
-
+   void chargerClients();
 
     DiagrammeWidget *diagramme;
     void majDiagramme();

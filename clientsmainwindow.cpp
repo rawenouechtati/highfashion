@@ -1,5 +1,6 @@
 #include "clientsmainwindow.h"
 #include "ui_clientsmainwindow.h"
+#include "client.h"
 
 #include <QMessageBox>
 #include <QRegularExpression>
@@ -15,23 +16,19 @@
 #include <QDate>
 #include <QHeaderView>
 #include <QLineEdit>
-
-#include <QTextDocument>
+#include <QSqlQuery>
+#include <QSqlError>
 #include <QTextFrame>
-#include <QPdfWriter>
-#include <QPageSize>
-#include <QFileDialog>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QDate>
 #include <QColor>
 #include <QPainter>
-
 #include <QInputDialog>
 #include <QDateTime>
 #include <QPixmap>
-
 #include <QVBoxLayout>
+#include <QWidget>
+
+
+
 // Item qui se trie selon un nombre (stocké dans Qt::UserRole)
 class ItemTri : public QTableWidgetItem
 {
@@ -66,7 +63,6 @@ static void colorerNiveaux(QTableWidget *t)
         it->setTextAlignment(Qt::AlignCenter);
     }
 }
-#include <QWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -98,34 +94,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int){ trierClients(); });
 
-    struct Client { const char *id, *nom, *email, *tel, *cin; int pts; const char *niv; };
-    const Client clients[] = {
-        {"C001","Sarra Ben Ali","sarra.benali@mail.tn","22 345 678","09128457",540,"Or"},
-        {"C002","Yassine Trabelsi","y.trabelsi@mail.tn","98 120 647","11234689",320,"Argent"},
-        {"C003","Ines Mansouri","ines.mansouri@mail.tn","55 908 231","07468215",85,"Bronze"},
-        {"C004","Karim Jebali","karim.jebali@mail.tn","29 774 610","10983264",510,"Or"},
-        {"C005","Nour Gharbi","nour.gharbi@mail.tn","50 231 889","04871530",210,"Argent"},
-        {"C006","Amine Chaouch","a.chaouch@mail.tn","23 456 019","12056738",45,"Bronze"},
-        {"C007","Rim Belhaj","rim.belhaj@mail.tn","97 665 302","09345617",455,"Argent"},
-        {"C008","Sami Dridi","sami.dridi@mail.tn","54 018 776","11590824",130,"Bronze"},
-        {"C009","Lina Hamdi","lina.hamdi@mail.tn","26 590 143","08762094",275,"Argent"}
-    };
     ui->tableWidget->setRowCount(0);
-    for (const Client &c : clients) {
-        const int r = ui->tableWidget->rowCount();
-        ui->tableWidget->insertRow(r);
-        ui->tableWidget->setItem(r, 0, new QTableWidgetItem(c.id));
-        ui->tableWidget->setItem(r, 1, new QTableWidgetItem(c.nom));
-        ui->tableWidget->setItem(r, 2, new QTableWidgetItem(c.email));
-        ui->tableWidget->setItem(r, 3, new QTableWidgetItem(c.tel));
-        ui->tableWidget->setItem(r, 4, new QTableWidgetItem(c.cin));
-        auto *ip = new ItemTri(QString::number(c.pts));
-        ip->setData(Qt::UserRole, c.pts);
-        ui->tableWidget->setItem(r, 5, ip);
-        auto *in = new ItemTri(c.niv);
-        in->setData(Qt::UserRole, rangNiveau(c.niv));
-        ui->tableWidget->setItem(r, 6, in);
-    }
 
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->lineEditRecherche, &QLineEdit::textChanged,
@@ -165,8 +134,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->tableWidget, &QTableWidget::currentCellChanged,
             this, [this](int, int, int, int){ majDiagramme(); });
-     colorerNiveaux(ui->tableWidget);
-    majDiagramme();
+     chargerClients();
 
 }
 
@@ -202,65 +170,29 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
         return;
     }
 
-    // vérification de doublon (on ignore la ligne en cours de modification)
-    for (int i = 0; i < ui->tableWidget->rowCount(); ++i) {
-        if (modeModif && i == ligneModif)
-            continue;
-        QTableWidgetItem *it = ui->tableWidget->item(i, 4);
-        if (it && it->text() == cin) {
+    const bool modification = (modeModif && ligneModif >= 0);
+    int id = 0;
+    if (modification)
+        id = ui->tableWidget->item(ligneModif, 0)->text().mid(1).toInt();
+
+    Client c(id, nom, email, tel, cin);
+    const bool ok = modification ? c.modifier() : c.ajouter();
+    if (!ok) {
+        const QString err = c.derniereErreur();
+        if (err.contains("ORA-00001"))
             QMessageBox::warning(this, "Doublon", "Un client avec ce CIN existe déjà.");
-            return;
-        }
-    }
-
-    // ----- MODE MODIFICATION -----
-    if (modeModif && ligneModif >= 0) {
-        ui->tableWidget->item(ligneModif, 1)->setText(nom);
-        ui->tableWidget->item(ligneModif, 2)->setText(email);
-        ui->tableWidget->item(ligneModif, 3)->setText(tel);
-        ui->tableWidget->item(ligneModif, 4)->setText(cin);
-
-        QMessageBox::information(this, "Succès", "Client modifié avec succès.");
-        viderChamps();
-        modeModif = false;
-        ligneModif = -1;
-        ui->groupBox->setTitle("Fiche client");
+        else
+            QMessageBox::critical(this, "Erreur", err);
         return;
     }
-
-    // ----- MODE AJOUT -----
-    const int row = ui->tableWidget->rowCount();
-    ui->tableWidget->insertRow(row);
-
-    const QString id = QString("C%1").arg(prochainId++, 3, 10, QChar('0'));
-
-    ui->tableWidget->setItem(row, 0, new QTableWidgetItem(id));
-    ui->tableWidget->setItem(row, 1, new QTableWidgetItem(nom));
-    ui->tableWidget->setItem(row, 2, new QTableWidgetItem(email));
-    ui->tableWidget->setItem(row, 3, new QTableWidgetItem(tel));
-    ui->tableWidget->setItem(row, 4, new QTableWidgetItem(cin));
-
-    // points et niveau : ItemTri pour que le tri soit numérique
-    const int points = 0;
-    const QString niveau = "bronze";
-
-    ItemTri *itemPoints = new ItemTri(QString::number(points));
-    itemPoints->setData(Qt::UserRole, points);
-    ui->tableWidget->setItem(row, 5, itemPoints);
-
-    ItemTri *itemNiveau = new ItemTri(niveau);
-    itemNiveau->setData(Qt::UserRole, rangNiveau(niveau));
-    ui->tableWidget->setItem(row, 6, itemNiveau);
-
-    ui->tableWidget->scrollToBottom();
-
-    QMessageBox::information(this, "Succès", "Client enregistré avec succès.");
+    chargerClients();
+    QMessageBox::information(this, "Succès",
+                             modification ? "Client modifié avec succès." : "Client enregistré avec succès.");
     viderChamps();
     modeAjout = false;
+    modeModif = false;
+    ligneModif = -1;
     ui->groupBox->setTitle("Fiche client");
-    majDiagramme();
-
-    colorerNiveaux(ui->tableWidget);
 }
 
 void MainWindow::on_pushButtonAnnuler_clicked()
@@ -302,7 +234,14 @@ void MainWindow::on_pushButton_4_clicked()
         QMessageBox::Yes | QMessageBox::No);
 
     if (rep == QMessageBox::Yes) {
-        ui->tableWidget->removeRow(row);
+        const int id = ui->tableWidget->item(row, 0)->text().mid(1).toInt();
+
+        Client c(id);
+        if (!c.supprimer()) {
+            QMessageBox::critical(this, "Erreur", c.derniereErreur());
+            return;
+        }
+        chargerClients();
         QMessageBox::information(this, "Succès", "Client supprimé.");
     }
     majDiagramme();
@@ -311,7 +250,7 @@ void MainWindow::on_pushButton_4_clicked()
 void MainWindow::rechercherClients(const QString &texte)
 {
     const QString recherche = texte.trimmed().toLower();
-
+    int visibles = 0;
     for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
         bool trouve = recherche.isEmpty();   // champ vide : tout afficher
 
@@ -326,7 +265,14 @@ void MainWindow::rechercherClients(const QString &texte)
         }
 
         ui->tableWidget->setRowHidden(r, !trouve);
+        if (trouve) ++visibles;
+
     }
+
+    ui->lblCount->setText(QString("%1 clients affichés sur %2")
+                              .arg(visibles).arg(ui->tableWidget->rowCount()));
+
+
 }
 void MainWindow::on_pushButtonOuvrir_clicked()
 {
@@ -659,8 +605,8 @@ void MainWindow::onAjouterClicked()
     viderChamps();                       // vide les champs + focus sur "nom et prenom"
     ui->tableWidget->clearSelection();   // désélectionne la ligne du tableau
 
-    const QString nouvelId = QString("C%1").arg(prochainId, 3, 10, QChar('0'));
-    ui->groupBox->setTitle("Fiche client  " + nouvelId + "  (nouveau)");
+    ui->groupBox->setTitle("Fiche client  (nouveau)");
+
 }
 void MainWindow::onModifierClicked()
 {
@@ -785,5 +731,42 @@ void MainWindow::trierClients()
     ui->tableWidget->sortItems(parNiveau ? 6 : 5, Qt::DescendingOrder);
     ui->tableWidget->scrollToTop();
     colorerNiveaux(ui->tableWidget);
+}
+
+void MainWindow::chargerClients()
+{
+    ui->tableWidget->setRowCount(0);
+
+    QSqlQuery q;
+    if (!Client::afficher(q))  {
+        QMessageBox::critical(this, "Base de données", q.lastError().text());
+        return;
+    }
+
+    while (q.next()) {
+        const int r = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(r);
+
+        ui->tableWidget->setItem(r, 0, new QTableWidgetItem(
+                                           QString("C%1").arg(q.value(0).toInt(), 3, 10, QChar('0'))));
+        ui->tableWidget->setItem(r, 1, new QTableWidgetItem(q.value(1).toString()));
+        ui->tableWidget->setItem(r, 2, new QTableWidgetItem(q.value(2).toString()));
+        ui->tableWidget->setItem(r, 3, new QTableWidgetItem(q.value(3).toString()));
+        ui->tableWidget->setItem(r, 4, new QTableWidgetItem(q.value(4).toString()));
+
+        const int pts = q.value(5).toInt();
+        auto *ip = new ItemTri(QString::number(pts));
+        ip->setData(Qt::UserRole, pts);
+        ui->tableWidget->setItem(r, 5, ip);
+
+        const QString niv = q.value(6).toString();
+        auto *in = new ItemTri(niv);
+        in->setData(Qt::UserRole, rangNiveau(niv));
+        ui->tableWidget->setItem(r, 6, in);
+    }
+    colorerNiveaux(ui->tableWidget);
+    const int total = ui->tableWidget->rowCount();
+    ui->lblCount->setText(QString("%1 clients affichés sur %2").arg(total).arg(total));
+    majDiagramme();
 }
 
