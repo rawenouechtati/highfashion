@@ -1,12 +1,19 @@
 #ifndef CLIENTSMAINWINDOW_H
 #define CLIENTSMAINWINDOW_H
-
 #include <QMainWindow>
 #include <QTimer>
 #include <QWidget>
 #include <QVector>
 
+#include <QList>
+#include <QPushButton>
 
+#include <QHash>
+#include <QRect>
+#include <QSize>
+
+#include <QResizeEvent>
+#include <QShowEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -37,7 +44,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-
+    void resizeEvent(QResizeEvent *ev) override;
+    void showEvent(QShowEvent *ev) override;
 private slots:
 
     void on_pushButton_13_clicked();
@@ -50,7 +58,7 @@ private slots:
     void trierClients();
     void onAjouterClicked();
     void onModifierClicked();
-
+    void exporterListePdf();
 private:
     Ui::MainWindow *ui;
     void viderChamps();
@@ -60,10 +68,21 @@ private:
     int ligneModif = -1;
     QTimer *timerHorloge;
    void chargerClients();
-
+    int idModif = -1;
+   QList<QPushButton*> boutonsMenu;
+   QString styleMenuActif;
+   QString styleMenuNormal;
+   void activerMenu(QPushButton *actif);
     DiagrammeWidget *diagramme;
     void majDiagramme();
 
+    QHash<QWidget*, QRect> geomOrig;
+
+    QSize baseSize;
+    void collecterGeometries(QWidget *parent);
+    void appliquerEchelle();
+
 };
+
 
 #endif // CLIENTSMAINWINDOW_H

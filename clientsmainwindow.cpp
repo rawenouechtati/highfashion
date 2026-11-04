@@ -26,8 +26,17 @@
 #include <QPixmap>
 #include <QVBoxLayout>
 #include <QWidget>
-
-
+#include <QDebug>
+#include <QLabel>
+#include <QGroupBox>
+#include <QEvent>
+#include <QTimer>
+#include <QFont>
+#include <QFrame>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QStatusBar>
+#include <functional>
 
 // Item qui se trie selon un nombre (stocké dans Qt::UserRole)
 class ItemTri : public QTableWidgetItem
@@ -99,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->lineEditRecherche, &QLineEdit::textChanged,
             this, &MainWindow::rechercherClients);
+
     QPixmap logo(":/logo_atelier.jpeg");
     ui->label_13->setGeometry(10, 20, 111, 60);
     ui->label_13->setAlignment(Qt::AlignCenter);
@@ -116,7 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
     // date et heure automatiques
     ui->dateTimeEdit->setDisplayFormat("dd.MM.yyyy HH:mm");
     ui->dateTimeEdit->setDateTime(QDateTime::currentDateTime());
-    ui->dateTimeEdit->setReadOnly(true);                          // l'utilisateur ne la modifie pas
+    ui->dateTimeEdit->setReadOnly(true);                             // l'utilisateur ne la modifie pas
     ui->dateTimeEdit->setButtonSymbols(QAbstractSpinBox::NoButtons); // enlève les flèches ^ v
 
     timerHorloge = new QTimer(this);
@@ -125,6 +135,8 @@ MainWindow::MainWindow(QWidget *parent)
     });
     timerHorloge->start(1000);   // mise à jour chaque seconde
 
+    connect(ui->pushButton_5, &QPushButton::clicked,
+            this, &MainWindow::exporterListePdf);
 
     // diagramme dans le cadre "Répartition"
     diagramme = new DiagrammeWidget(ui->groupBox_2);
@@ -134,9 +146,389 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->tableWidget, &QTableWidget::currentCellChanged,
             this, [this](int, int, int, int){ majDiagramme(); });
-     chargerClients();
 
-}
+    // couleurs du menu définies directement ici
+    styleMenuActif =
+        "QPushButton { background:#8B1E2D; color:#FFFFFF;"
+        " border:1px solid #8B1E2D; border-radius:4px; padding:4px; }";
+    styleMenuNormal =
+        "QPushButton { background:#2A4B63; color:#FFFFFF;"
+        " border:1px solid #3C5A70; border-radius:4px; padding:4px; }"
+        "QPushButton:hover { background:#355F7C; }";
+
+    const QStringList titres = {"tableau de bord", "article", "service", "client", "employ"};
+    const auto boutons = ui->centralwidget->findChildren<QPushButton*>();
+    for (QPushButton *b : boutons) {
+        const QString tx = b->text().trimmed().toLower();
+        for (const QString &titre : titres) {
+            if (tx.startsWith(titre)) { boutonsMenu.append(b); break; }
+        }
+    }
+
+    qDebug() << "boutons du menu trouves :" << boutonsMenu.size();
+
+    for (QPushButton *b : boutonsMenu)
+        connect(b, &QPushButton::clicked, this, [this, b]() { activerMenu(b); });
+
+    for (QPushButton *b : boutonsMenu)                       // "Client" actif au démarrage
+        if (b->text().trimmed().toLower() == "client")
+            activerMenu(b);
+
+    chargerClients();
+
+    // =====================================================================
+    //  NOUVELLE INTERFACE : vrais layouts, occupe toute la fenêtre
+    // =====================================================================
+    const QString cadreCarte =
+        "#carte { background:#FFFFFF; border:1px solid #D9CFB8; border-radius:8px; }";
+    auto carte = [cadreCarte]() {
+        QFrame *f = new QFrame;
+        f->setObjectName("carte");
+        f->setStyleSheet(cadreCarte);
+        return f;
+    };
+
+    const QString styleGroupe =
+        "QGroupBox { background:#FFFFFF; border:1px solid #D9CFB8; border-radius:8px;"
+        "  margin-top:12px; color:#1F3A4D; }"
+        "QGroupBox::title { subcontrol-origin:margin; left:14px; padding:0 6px; }";
+
+    const QString btnPlein =
+        "QPushButton { background:#8B1E2D; color:#FFFFFF; border:1px solid #8B1E2D;"
+        "  border-radius:6px; padding:8px 16px; font-weight:bold; }"
+        "QPushButton:hover { background:#A02437; }";
+    const QString btnContour =
+        "QPushButton { background:#FFFFFF; color:#1F3A4D; border:1px solid #C9BFA8;"
+        "  border-radius:6px; padding:8px 16px; }"
+        "QPushButton:hover { background:#F5F1E8; }";
+    const QString btnRouge =
+        "QPushButton { background:#FFFFFF; color:#8B1E2D; border:1px solid #E3B8BE;"
+        "  border-radius:6px; padding:8px 16px; }"
+        "QPushButton:hover { background:#FBEFF1; }";
+    const QString btnMarine =
+        "QPushButton { background:#1F3A4D; color:#FFFFFF; border:1px solid #1F3A4D;"
+        "  border-radius:6px; padding:8px 16px; font-weight:bold; }"
+        "QPushButton:hover { background:#2A4B63; }";
+    const QString styleChamp =
+        "QLineEdit { background:#FFFFFF; border:1px solid #D9CFB8; border-radius:6px;"
+        "  padding:6px 10px; color:#1F3A4D; }"
+        "QLineEdit:focus { border:1px solid #8B1E2D; }";
+
+    // cache les anciens widgets posés à la main dans un conteneur
+    auto nettoyer = [](QWidget *conteneur, const QList<QWidget*> &garder) {
+        const auto enfants = conteneur->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
+        for (QWidget *w : enfants)
+            if (!garder.contains(w))
+                w->hide();
+    };
+    nettoyer(ui->groupBox, {ui->lineEditNom, ui->lineEditEmail, ui->lineEditTel,
+                            ui->lineEditCin, ui->pushButton_6, ui->pushButtonOuvrir,
+                            ui->pushButtonEnregistrer, ui->pushButtonAnnuler});
+    nettoyer(ui->groupBox_2, {diagramme});
+    delete ui->groupBox->layout();
+    delete ui->groupBox_2->layout();
+
+    // un champ de saisie avec son libellé et son message d'erreur
+    auto ajouterChamp = [this, styleChamp](QVBoxLayout *lay, const QString &libelle,
+                                           QLineEdit *champ,
+                                           std::function<QString(const QString &)> verif) {
+        QLabel *lbl = new QLabel(libelle);
+        lbl->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+        QLabel *err = new QLabel;
+        err->setStyleSheet("color:#C0392B; font-size:8pt; background:transparent;");
+        err->setWordWrap(true);
+        err->hide();
+        champ->setStyleSheet(styleChamp);
+        champ->setMinimumHeight(34);
+        lay->addWidget(lbl);
+        lay->addWidget(champ);
+        lay->addWidget(err);
+        connect(champ, &QLineEdit::textChanged, this, [err, verif](const QString &texte) {
+            const QString v = texte.trimmed();
+            const QString msg = v.isEmpty() ? QString() : verif(v);
+            err->setText(msg);
+            err->setVisible(!msg.isEmpty());
+        });
+    };
+
+    QWidget *racine = new QWidget;
+    racine->setObjectName("racine");
+    racine->setStyleSheet("#racine { background:#F5F1E8; }");
+    QHBoxLayout *principal = new QHBoxLayout(racine);
+    principal->setContentsMargins(0, 0, 0, 0);
+    principal->setSpacing(0);
+
+    // ---------------- barre latérale ----------------
+    QFrame *side = new QFrame;
+    side->setObjectName("side");
+    side->setStyleSheet("#side { background:#1F3A4D; }");
+    side->setMinimumWidth(190);
+    side->setMaximumWidth(250);
+    QVBoxLayout *ls = new QVBoxLayout(side);
+    ls->setContentsMargins(12, 16, 12, 14);
+    ls->setSpacing(8);
+
+    const QPixmap logoRedim = logo.scaledToWidth(170, Qt::SmoothTransformation);
+    ui->label_13->setPixmap(logoRedim);
+    ui->label_13->setAlignment(Qt::AlignCenter);
+    ui->label_13->setFixedHeight(qMax(60, logoRedim.height() + 4));
+    ls->addWidget(ui->label_13);
+    ls->addSpacing(14);
+
+    QList<QPushButton*> ordre;
+    for (const QString &nomMenu : titres)
+        for (QPushButton *bm : boutonsMenu)
+            if (bm->text().trimmed().toLower().startsWith(nomMenu) && !ordre.contains(bm))
+                ordre.append(bm);
+    for (QPushButton *bm : ordre) {
+        bm->setMinimumHeight(40);
+        bm->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        ls->addWidget(bm);
+    }
+    ls->addStretch();
+
+    QLabel *lblUser = new QLabel("r.clientele");
+    lblUser->setStyleSheet("color:#FFFFFF; font-weight:bold; background:transparent;");
+    QLabel *lblRole = new QLabel("Responsable clientèle");
+    lblRole->setStyleSheet("color:#B39B6A; background:transparent;");
+    ls->addWidget(lblUser);
+    ls->addWidget(lblRole);
+    ui->pushButton_13->setText("Déconnexion");
+    ui->pushButton_13->setMinimumHeight(36);
+    ui->pushButton_13->setStyleSheet(
+        "QPushButton { background:transparent; color:#FFFFFF; border:1px solid #3C5A70;"
+        "  border-radius:6px; padding:6px; }"
+        "QPushButton:hover { background:#2A4B63; }");
+    ls->addWidget(ui->pushButton_13);
+    principal->addWidget(side);
+
+    // styles du menu (texte aligné à gauche)
+    styleMenuActif =
+        "QPushButton { background:#8B1E2D; color:#FFFFFF; border:none; border-radius:6px;"
+        "  padding:8px 14px; text-align:left; font-weight:bold; }";
+    styleMenuNormal =
+        "QPushButton { background:transparent; color:#E8E2D2; border:none; border-radius:6px;"
+        "  padding:8px 14px; text-align:left; }"
+        "QPushButton:hover { background:#2A4B63; }";
+    for (QPushButton *bm : boutonsMenu)
+        if (bm->text().trimmed().toLower() == "client")
+            activerMenu(bm);
+
+    // ---------------- colonne principale ----------------
+    QVBoxLayout *colonne = new QVBoxLayout;
+    colonne->setContentsMargins(20, 16, 20, 10);
+    colonne->setSpacing(12);
+    principal->addLayout(colonne, 1);
+
+    // en-tête
+    QHBoxLayout *entete = new QHBoxLayout;
+    QVBoxLayout *blocTitre = new QVBoxLayout;
+    QLabel *lblTitre = new QLabel("Gestion des clients");
+    lblTitre->setStyleSheet("font-family:'Georgia','Times New Roman',serif; font-size:22pt;"
+                            " font-weight:bold; color:#1F3A4D; background:transparent;");
+    QLabel *lblSous = new QLabel("Fichier clientèle, fidélité et recommandations personnalisées");
+    lblSous->setStyleSheet("color:#5C6B77; background:transparent;");
+    blocTitre->addWidget(lblTitre);
+    blocTitre->addWidget(lblSous);
+    entete->addLayout(blocTitre);
+    entete->addStretch();
+
+    QVBoxLayout *blocDate = new QVBoxLayout;
+    ui->dateTimeEdit->setFixedWidth(170);
+    ui->dateTimeEdit->setAlignment(Qt::AlignRight);
+    ui->dateTimeEdit->setStyleSheet("QDateTimeEdit { border:none; background:transparent;"
+                                    " color:#1F3A4D; font-weight:bold; }");
+    QLabel *lblSession = new QLabel("Session ouverte - Responsable clientèle");
+    lblSession->setAlignment(Qt::AlignRight);
+    lblSession->setStyleSheet("color:#5C6B77; background:transparent;");
+    blocDate->addWidget(ui->dateTimeEdit, 0, Qt::AlignRight);
+    blocDate->addWidget(lblSession);
+    entete->addLayout(blocDate);
+    colonne->addLayout(entete);
+
+    // corps : colonne gauche + fiche client
+    QHBoxLayout *corps = new QHBoxLayout;
+    corps->setSpacing(14);
+    QVBoxLayout *gauche = new QVBoxLayout;
+    gauche->setSpacing(12);
+
+    // barre d'outils
+    QFrame *barre = carte();
+    QHBoxLayout *lb = new QHBoxLayout(barre);
+    lb->setContentsMargins(10, 8, 10, 8);
+    lb->setSpacing(8);
+    ui->lineEditRecherche->setPlaceholderText("Rechercher par nom, email ou CIN...");
+    ui->lineEditRecherche->setStyleSheet(styleChamp);
+    ui->lineEditRecherche->setMinimumHeight(34);
+    ui->comboBox->setStyleSheet("QComboBox { background:#FFFFFF; border:1px solid #C9BFA8;"
+                                " border-radius:6px; padding:6px 10px; color:#1F3A4D; }");
+    ui->comboBox->setMinimumHeight(34);
+    ui->pushButton_2->setText("+ Ajouter");
+    ui->pushButton_3->setText("Modifier");
+    ui->pushButton_4->setText("Supprimer");
+    ui->pushButton_5->setText("Export PDF");
+    ui->pushButton_2->setStyleSheet(btnPlein);
+    ui->pushButton_3->setStyleSheet(btnContour);
+    ui->pushButton_4->setStyleSheet(btnRouge);
+    ui->pushButton_5->setStyleSheet(btnMarine);
+    lb->addWidget(ui->lineEditRecherche, 1);
+    lb->addWidget(ui->comboBox);
+    lb->addWidget(ui->pushButton_2);
+    lb->addWidget(ui->pushButton_3);
+    lb->addWidget(ui->pushButton_4);
+    lb->addWidget(ui->pushButton_5);
+    gauche->addWidget(barre);
+
+    // tableau
+    QFrame *cTable = carte();
+    QVBoxLayout *lt = new QVBoxLayout(cTable);
+    lt->setContentsMargins(10, 10, 10, 8);
+    ui->tableWidget->setMinimumHeight(150);
+    ui->tableWidget->verticalHeader()->setDefaultSectionSize(30);
+    ui->lblCount->setStyleSheet("color:#5C6B77; background:transparent;");
+    lt->addWidget(ui->tableWidget, 1);
+    lt->addWidget(ui->lblCount);
+    gauche->addWidget(cTable, 3);
+
+    // répartition + recommandations
+    QHBoxLayout *bas = new QHBoxLayout;
+    bas->setSpacing(12);
+
+    ui->groupBox_2->setTitle("Répartition par points");
+    ui->groupBox_2->setStyleSheet(styleGroupe);
+    QVBoxLayout *lg2 = new QVBoxLayout(ui->groupBox_2);
+    lg2->setContentsMargins(10, 22, 10, 10);
+    lg2->addWidget(diagramme);
+    bas->addWidget(ui->groupBox_2, 1);
+
+    QGroupBox *reco = new QGroupBox("Recommandations : Sarra ben ali");
+    reco->setStyleSheet(styleGroupe);
+    QGridLayout *lr = new QGridLayout(reco);
+    lr->setContentsMargins(14, 24, 14, 12);
+    lr->setHorizontalSpacing(10);
+    lr->setVerticalSpacing(2);
+    lr->setColumnStretch(0, 1);
+    struct Reco { QString nom, detail, taux; };
+    const Reco recos[] = {
+        {"Robe cocktail « New Look »", "Dior 1950 · 3 200 DT", "96 %"},
+        {"Robe du soir",               "Givenchy 1950 · 2 600 DT", "91 %"},
+        {"Robe corolle",               "Balmain 1950 · 1 950 DT", "84 %"},
+        {"Ensemble jupe-veste",        "Dior 1950 · 2 800 DT", "78 %"}
+    };
+    int ligne = 0;
+    for (const Reco &r : recos) {
+        QLabel *n = new QLabel(r.nom);
+        n->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+        QLabel *d = new QLabel(r.detail);
+        d->setStyleSheet("color:#7A8791; background:transparent;");
+        QPushButton *demo = new QPushButton("Démonstration");
+        demo->setStyleSheet(
+            "QPushButton { background:#FFFFFF; color:#8B1E2D; border:1px solid #D9B8BD;"
+            "  border-radius:5px; padding:5px 12px; }"
+            "QPushButton:hover { background:#FBEFF1; }");
+        QLabel *p = new QLabel(r.taux);
+        p->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+        lr->addWidget(n, ligne, 0);
+        lr->addWidget(d, ligne + 1, 0);
+        lr->addWidget(demo, ligne, 1, 2, 1, Qt::AlignVCenter);
+        lr->addWidget(p, ligne, 2, 2, 1, Qt::AlignVCenter);
+        ligne += 2;
+    }
+    QLabel *lblStyle = new QLabel("Style : années 50 · budget : 4 000 DT");
+    lblStyle->setStyleSheet("color:#7A8791; font-size:8pt; background:transparent;");
+    lr->addWidget(lblStyle, ligne, 0, 1, 3);
+    bas->addWidget(reco, 1);
+
+    gauche->addLayout(bas, 2);
+    corps->addLayout(gauche, 3);
+
+    // ---------------- fiche client ----------------
+    ui->groupBox->setStyleSheet(styleGroupe);
+    ui->groupBox->setMinimumWidth(300);
+    ui->groupBox->setMaximumWidth(430);
+    QVBoxLayout *lf = new QVBoxLayout(ui->groupBox);
+    lf->setContentsMargins(16, 26, 16, 16);
+    lf->setSpacing(4);
+
+    ajouterChamp(lf, "Nom et prénom", ui->lineEditNom, [](const QString &v) {
+        static const QRegularExpression re(R"(^[\p{L} '\-]+$)");
+        return re.match(v).hasMatch() ? QString()
+                                      : QString("Le nom ne doit contenir que des lettres");
+    });
+    ajouterChamp(lf, "Email", ui->lineEditEmail, [this](const QString &v) {
+        return emailValide(v) ? QString()
+                              : QString("Email invalide (ex : nom@domaine.com)");
+    });
+    ajouterChamp(lf, "Téléphone", ui->lineEditTel, [](const QString &v) {
+        static const QRegularExpression re(R"(^[0-9 ]{8,12}$)");
+        return re.match(v).hasMatch() ? QString()
+                                      : QString("Le téléphone doit contenir 8 à 12 chiffres");
+    });
+    ajouterChamp(lf, "CIN", ui->lineEditCin, [](const QString &v) {
+        static const QRegularExpression re(R"(^\d{8}$)");
+        return re.match(v).hasMatch() ? QString()
+                                      : QString("Le CIN doit contenir exactement 8 chiffres");
+    });
+    lf->addSpacing(6);
+
+    // carte reçu
+    QFrame *cRecu = carte();
+    QHBoxLayout *lrc = new QHBoxLayout(cRecu);
+    lrc->setContentsMargins(12, 10, 12, 10);
+    QVBoxLayout *trc = new QVBoxLayout;
+    QLabel *a1 = new QLabel("Reçu du paiement");
+    a1->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+    QLabel *a2 = new QLabel("Ticket : montant et mode");
+    a2->setStyleSheet("color:#7A8791; font-size:8pt; background:transparent;");
+    trc->addWidget(a1);
+    trc->addWidget(a2);
+    lrc->addLayout(trc, 1);
+    ui->pushButton_6->setText("Générer");
+    ui->pushButton_6->setStyleSheet(btnPlein);
+    lrc->addWidget(ui->pushButton_6);
+    lf->addWidget(cRecu);
+
+    // carte contrat
+    QFrame *cContrat = carte();
+    QHBoxLayout *lcc = new QHBoxLayout(cContrat);
+    lcc->setContentsMargins(12, 10, 12, 10);
+    QVBoxLayout *tcc = new QVBoxLayout;
+    QLabel *b1 = new QLabel("Contrat en PDF");
+    b1->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+    QLabel *b2 = new QLabel("Conditions et signature");
+    b2->setStyleSheet("color:#7A8791; font-size:8pt; background:transparent;");
+    tcc->addWidget(b1);
+    tcc->addWidget(b2);
+    lcc->addLayout(tcc, 1);
+    ui->pushButtonOuvrir->setText("Ouvrir");
+    ui->pushButtonOuvrir->setStyleSheet(btnContour);
+    lcc->addWidget(ui->pushButtonOuvrir);
+    lf->addWidget(cContrat);
+
+    lf->addStretch();
+    QHBoxLayout *lbtn = new QHBoxLayout;
+    ui->pushButtonEnregistrer->setText("Enregistrer");
+    ui->pushButtonAnnuler->setText("Annuler");
+    ui->pushButtonEnregistrer->setStyleSheet(btnPlein);
+    ui->pushButtonAnnuler->setStyleSheet(btnContour);
+    ui->pushButtonEnregistrer->setMinimumHeight(38);
+    ui->pushButtonAnnuler->setMinimumHeight(38);
+    lbtn->addWidget(ui->pushButtonEnregistrer, 1);
+    lbtn->addWidget(ui->pushButtonAnnuler, 1);
+    lf->addLayout(lbtn);
+
+    corps->addWidget(ui->groupBox, 1);
+    colonne->addLayout(corps, 1);
+
+    // on remplace l'ancien contenu par la nouvelle interface
+    QWidget *ancien = takeCentralWidget();
+    setCentralWidget(racine);
+    if (ancien) {
+        ancien->hide();
+        ancien->deleteLater();
+    }
+    statusBar()->showMessage("Base Oracle : connectée   |   Rôle : Responsable clientèle");
+}   // <-- fin du constructeur
 
 MainWindow::~MainWindow()
 {
@@ -165,26 +557,42 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
         QMessageBox::warning(this, "Email invalide", "Veuillez saisir un email valide.");
         return;
     }
-    if (cin.length() != 8 || cin.toInt() == 0) {
+
+    static const QRegularExpression reCin(R"(^\d{8}$)");
+    if (!reCin.match(cin).hasMatch()) {
         QMessageBox::warning(this, "CIN invalide", "Le CIN doit contenir 8 chiffres.");
         return;
     }
 
-    const bool modification = (modeModif && ligneModif >= 0);
-    int id = 0;
-    if (modification)
-        id = ui->tableWidget->item(ligneModif, 0)->text().mid(1).toInt();
+    static const QRegularExpression reTel(R"(^[0-9 ]{8,12}$)");
+    if (!reTel.match(tel).hasMatch()) {
+        QMessageBox::warning(this, "Téléphone invalide",
+                             "Le téléphone doit contenir entre 8 et 12 chiffres.");
+        return;
+    }
+
+    const bool modification = (modeModif && idModif > 0);
+    const int id = modification ? idModif : 0;
 
     Client c(id, nom, email, tel, cin);
     const bool ok = modification ? c.modifier() : c.ajouter();
+
     if (!ok) {
         const QString err = c.derniereErreur();
-        if (err.contains("ORA-00001"))
-            QMessageBox::warning(this, "Doublon", "Un client avec ce CIN existe déjà.");
-        else
+        if (err.contains("ORA-00001")) {
+            if (err.contains("UQ_CLIENT_EMAIL"))
+                QMessageBox::warning(this, "Doublon", "Cet email est déjà utilisé.");
+            else
+                QMessageBox::warning(this, "Doublon", "Un client avec ce CIN existe déjà.");
+        } else if (err.contains("ORA-02290")) {
+            QMessageBox::warning(this, "Données invalides",
+                                 "Une valeur ne respecte pas les règles de la base (CIN, téléphone, email...).");
+        } else {
             QMessageBox::critical(this, "Erreur", err);
+        }
         return;
     }
+
     chargerClients();
     QMessageBox::information(this, "Succès",
                              modification ? "Client modifié avec succès." : "Client enregistré avec succès.");
@@ -192,23 +600,22 @@ void MainWindow::on_pushButtonEnregistrer_clicked()
     modeAjout = false;
     modeModif = false;
     ligneModif = -1;
+    idModif = -1;
     ui->groupBox->setTitle("Fiche client");
 }
 
 void MainWindow::on_pushButtonAnnuler_clicked()
 {
-
-
     modeAjout = false;
     modeModif = false;
     ligneModif = -1;
     viderChamps();
     ui->groupBox->setTitle("Fiche client");
+    idModif = -1;
 }
 
-
-
-void MainWindow::viderChamps() {
+void MainWindow::viderChamps()
+{
     ui->lineEditNom->clear();
     ui->lineEditEmail->clear();
     ui->lineEditTel->clear();
@@ -218,7 +625,7 @@ void MainWindow::viderChamps() {
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    int row = ui->tableWidget->currentRow();
+    const int row = ui->tableWidget->currentRow();
 
     if (row < 0) {
         QMessageBox::warning(this, "Aucune sélection",
@@ -233,18 +640,24 @@ void MainWindow::on_pushButton_4_clicked()
         "Voulez-vous vraiment supprimer le client « " + nom + " » ?",
         QMessageBox::Yes | QMessageBox::No);
 
-    if (rep == QMessageBox::Yes) {
-        const int id = ui->tableWidget->item(row, 0)->text().mid(1).toInt();
+    if (rep != QMessageBox::Yes)
+        return;
 
-        Client c(id);
-        if (!c.supprimer()) {
-            QMessageBox::critical(this, "Erreur", c.derniereErreur());
-            return;
-        }
-        chargerClients();
-        QMessageBox::information(this, "Succès", "Client supprimé.");
+    const int id = ui->tableWidget->item(row, 0)->text().mid(1).toInt();
+
+    Client c(id);
+    if (!c.supprimer()) {
+        const QString err = c.derniereErreur();
+        if (err.contains("ORA-02292"))
+            QMessageBox::warning(this, "Suppression impossible",
+                                 "Ce client est lié à un service ou un événement.");
+        else
+            QMessageBox::critical(this, "Erreur", err);
+        return;
     }
-    majDiagramme();
+
+    chargerClients();                   // recharge aussi le diagramme
+    QMessageBox::information(this, "Succès", "Client supprimé.");
 }
 
 void MainWindow::rechercherClients(const QString &texte)
@@ -266,14 +679,12 @@ void MainWindow::rechercherClients(const QString &texte)
 
         ui->tableWidget->setRowHidden(r, !trouve);
         if (trouve) ++visibles;
-
     }
 
     ui->lblCount->setText(QString("%1 clients affichés sur %2")
                               .arg(visibles).arg(ui->tableWidget->rowCount()));
-
-
 }
+
 void MainWindow::on_pushButtonOuvrir_clicked()
 {
     // infos du formulaire, sinon du client sélectionné dans le tableau
@@ -422,7 +833,6 @@ void MainWindow::on_pushButtonOuvrir_clicked()
 
     QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
 }
-
 
 void MainWindow::on_pushButton_6_clicked()
 {
@@ -584,7 +994,6 @@ void MainWindow::on_pushButton_6_clicked()
     QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
 }
 
-
 void MainWindow::on_pushButton_13_clicked()
 {
     QMessageBox::StandardButton rep = QMessageBox::question(
@@ -596,7 +1005,6 @@ void MainWindow::on_pushButton_13_clicked()
         close();
 }
 
-
 void MainWindow::onAjouterClicked()
 {
     modeModif = false;
@@ -606,8 +1014,9 @@ void MainWindow::onAjouterClicked()
     ui->tableWidget->clearSelection();   // désélectionne la ligne du tableau
 
     ui->groupBox->setTitle("Fiche client  (nouveau)");
-
+    idModif = -1;
 }
+
 void MainWindow::onModifierClicked()
 {
     const int row = ui->tableWidget->currentRow();
@@ -631,6 +1040,7 @@ void MainWindow::onModifierClicked()
     modeAjout = false;
     modeModif = true;
     ligneModif = row;
+    idModif = texte(0).mid(1).toInt();   // l'id du client, ex. "C005" -> 5
 
     ui->groupBox->setTitle("Fiche client  " + texte(0) + "  (modification)");
     ui->lineEditNom->setFocus();
@@ -706,8 +1116,6 @@ void DiagrammeWidget::paintEvent(QPaintEvent *)
     }
 }
 
-
-
 void MainWindow::trierClients()
 {
     for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
@@ -767,6 +1175,185 @@ void MainWindow::chargerClients()
     colorerNiveaux(ui->tableWidget);
     const int total = ui->tableWidget->rowCount();
     ui->lblCount->setText(QString("%1 clients affichés sur %2").arg(total).arg(total));
+    //trierClients();                                           // réapplique le tri choisi
+    //rechercherClients(ui->lineEditRecherche->text());         // réapplique le filtre
     majDiagramme();
 }
 
+void MainWindow::exporterListePdf()
+{
+    // lignes visibles du tableau (respecte la recherche et le tri)
+    QString lignes;
+    int nb = 0;
+    for (int r = 0; r < ui->tableWidget->rowCount(); ++r) {
+        if (ui->tableWidget->isRowHidden(r))
+            continue;
+
+        auto txt = [&](int c) {
+            QTableWidgetItem *it = ui->tableWidget->item(r, c);
+            return it ? it->text().toHtmlEscaped() : QString();
+        };
+
+        const QString niv = txt(6).toLower();
+        QString fond = "#F4D9C2", couleur = "#8A4B1F";            // bronze
+        if (niv == "or")          { fond = "#F7E3A1"; couleur = "#8A6D1F"; }
+        else if (niv == "argent") { fond = "#E4E7EB"; couleur = "#4A5560"; }
+
+        const QString fondLigne = (nb % 2 == 0) ? "#FFFFFF" : "#FAF6EC";
+
+        lignes += "<tr bgcolor=\"" + fondLigne + "\">";
+        for (int c = 0; c < 6; ++c)
+            lignes += "<td>" + txt(c) + "</td>";
+        lignes += "<td align=\"center\" bgcolor=\"" + fond + "\">"
+                  "<span style=\"color:" + couleur + ";\"><b>" + txt(6) + "</b></span></td></tr>";
+        ++nb;
+    }
+
+    if (nb == 0) {
+        QMessageBox::warning(this, "Export PDF", "Aucun client à exporter.");
+        return;
+    }
+
+    const QString fichier = QFileDialog::getSaveFileName(
+        this, "Enregistrer la liste des clients",
+        "liste_clients_" + QDate::currentDate().toString("yyyyMMdd") + ".pdf",
+        "Fichiers PDF (*.pdf)");
+    if (fichier.isEmpty())
+        return;
+
+    QString html = R"HTML(
+<body style="font-family:'Segoe UI','Arial',sans-serif; color:#1F3A4D; font-size:10pt;">
+
+<table width="100%" cellpadding="18" cellspacing="0" bgcolor="#1F3A4D">
+<tr>
+  <td width="68%" bgcolor="#1F3A4D">
+    <span style="font-size:22pt; font-weight:bold; color:#F5F1E8;">ATELIER VINTAGE COUTURE</span><br>
+    <span style="font-size:9pt; color:#B39B6A;">ÉLÉGANCE &amp; TRADITION — GESTION DES SERVICES</span>
+  </td>
+  <td width="32%" align="right" bgcolor="#1F3A4D">
+    <table cellpadding="9" cellspacing="0"><tr>
+      <td bgcolor="#8B1E2D" align="center">
+        <span style="font-size:11pt; font-weight:bold; color:#F5F1E8;">LISTE DES CLIENTS</span>
+      </td></tr></table>
+  </td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#B39B6A" height="4"></td></tr></table>
+
+<table width="100%" cellpadding="14" cellspacing="0" bgcolor="#F5F1E8"><tr><td>
+
+<table width="100%" cellpadding="14" cellspacing="0" bgcolor="#FFFFFF" style="border:1px solid #D9CFB8;">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><span style="font-size:13pt; font-weight:bold; color:#6B1424;">FICHIER CLIENTÈLE</span></td>
+    <td align="right"><span style="font-size:9pt; color:#1F3A4D;">)HTML";
+
+    html += QDate::currentDate().toString("dd/MM/yyyy")
+            + " — " + QString::number(nb) + " client(s)</span></td>";
+
+    html += R"HTML(
+  </tr></table>
+  <table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#D9CFB8" height="1"></td></tr></table>
+  <br>
+  <table width="100%" cellpadding="6" cellspacing="0">
+    <tr bgcolor="#1F3A4D">
+      <td><span style="color:#F5F1E8;"><b>ID</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Nom et prénom</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Email</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Téléphone</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>CIN</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Points</b></span></td>
+      <td align="center"><span style="color:#F5F1E8;"><b>Niveau</b></span></td>
+    </tr>
+)HTML";
+
+    html += lignes;
+
+    html += R"HTML(
+  </table>
+</td></tr>
+</table>
+
+<p align="center" style="font-size:8pt; color:#B39B6A;">Atelier Vintage Couture — Document généré automatiquement.</p>
+
+</td></tr></table>
+</body>
+)HTML";
+
+    QPdfWriter pdf(fichier);
+    pdf.setPageSize(QPageSize(QPageSize::A4));
+    pdf.setPageMargins(QMarginsF(0, 0, 0, 0));
+    pdf.setResolution(96);
+
+    QTextDocument doc;
+    doc.setHtml(html);
+
+    QTextFrameFormat ff = doc.rootFrame()->frameFormat();
+    ff.setBackground(QColor("#F5F1E8"));
+    ff.setMargin(0);
+    doc.rootFrame()->setFrameFormat(ff);
+
+    doc.print(&pdf);        // gère aussi plusieurs pages si la liste est longue
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fichier));
+}
+
+void MainWindow::activerMenu(QPushButton *actif)
+{
+    for (QPushButton *b : boutonsMenu)
+        b->setStyleSheet(b == actif ? styleMenuActif : styleMenuNormal);
+}
+
+void MainWindow::collecterGeometries(QWidget *parent)
+{
+    for (QObject *o : parent->children()) {
+        QWidget *w = qobject_cast<QWidget*>(o);
+        if (!w || w->isWindow())
+            continue;
+
+        geomOrig.insert(w, w->geometry());
+
+        // on descend seulement dans les simples conteneurs
+        const QString classe = w->metaObject()->className();
+        if (classe == "QWidget" || classe == "QFrame" || classe == "QGroupBox")
+            collecterGeometries(w);
+    }
+}
+
+// UNE SEULE version de appliquerEchelle (géométrie + polices)
+void MainWindow::appliquerEchelle()
+{
+    static QHash<QWidget*, qreal> fontOrig;
+    if (baseSize.isEmpty() || geomOrig.isEmpty())
+        return;
+
+    const QSize s = ui->centralwidget->size();
+    const qreal sx = qreal(s.width())  / baseSize.width();
+    const qreal sy = qreal(s.height()) / baseSize.height();
+    const qreal sf = qMin(sx, sy);                       // échelle des polices
+
+    for (auto it = geomOrig.cbegin(); it != geomOrig.cend(); ++it) {
+        QWidget *w = it.key();
+        const QRect &g = it.value();
+        w->setGeometry(qRound(g.x() * sx), qRound(g.y() * sy),
+                       qRound(g.width() * sx), qRound(g.height() * sy));
+
+        if (!fontOrig.contains(w))
+            fontOrig.insert(w, w->font().pointSizeF());
+        if (fontOrig[w] > 0) {
+            QFont f = w->font();
+            f.setPointSizeF(fontOrig[w] * sf);
+            w->setFont(f);
+        }
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *ev)
+{
+    QMainWindow::resizeEvent(ev);
+}
+
+void MainWindow::showEvent(QShowEvent *ev)
+{
+    QMainWindow::showEvent(ev);
+}
