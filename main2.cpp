@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
     }
 
     MainWindow w;
-    w.show();
+    w.showMaximized();
+
     const int resultat = a.exec();
     c.closeConnection();
     return resultat;
