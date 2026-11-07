@@ -10,6 +10,9 @@ class QLabel;
 class QTextEdit;
 class QPushButton;
 class QComboBox;
+class QScrollArea;
+class QBoxLayout;
+class QResizeEvent;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,6 +24,9 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+protected:
+    void resizeEvent(QResizeEvent *e) override;
 
 private slots:
     void onRowSelected();
@@ -34,6 +40,7 @@ private slots:
     void onAjouter();
     void onModifier();
     void onSupprimer();
+    void onPlanning();
 
 private:
     void setupSidebar();
@@ -42,6 +49,8 @@ private:
     void setupTable();
     void setupChart();
     void setupStatusBar();
+    void setupLayout();
+    void applyResponsive();
 
     void loadDemoData();
     void fillRow(int row);
@@ -50,6 +59,8 @@ private:
     void updateChart();
     void updateBanner();
     void updateCount();
+    QVector<int> trouverConflits(const Service &s, int ignore) const;
+    void verifierConflit();
 
 
 
@@ -67,6 +78,12 @@ private:
     QPushButton *btnGenerer = nullptr;
     QPushButton *btnEnregistrer = nullptr;
     QPushButton *btnAnnuler = nullptr;
+
+    QLabel      *lblSousTitre = nullptr;
+    QLabel      *lblConflit = nullptr;
+    QScrollArea *scrollDetails = nullptr;
+    QBoxLayout  *m_content = nullptr;
+    int          m_layoutState = -1;
 };
 
 #endif // MAINWINDOW_H
