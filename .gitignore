@@ -1,10 +1,8 @@
 build/
 .qtcreator/
 *.user
-<<<<<<< HEAD
 *.autosave
 build/
-=======
 *.exe
 *.o
 *.obj
@@ -13,4 +11,3 @@ build/
 *.so
 *.pro.user
 2A25_Smart_Fashion_Management/
->>>>>>> highfashion/main
