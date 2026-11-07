@@ -6,8 +6,6 @@
 #include <QWidget>
 #include <QVector>
 
-
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -19,27 +17,22 @@ public:
         setMinimumHeight(120);
     }
     void setDonnees(const QVector<int> &c, int sel) { comptes = c; trancheSel = sel; update(); }
-
 protected:
     void paintEvent(QPaintEvent *) override;
-
 private:
     QVector<int> comptes = QVector<int>(5, 0);
     int trancheSel = -1;
 };
 
-
-
-class MainWindow : public QMainWindow
+class ClientsMainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ClientsMainWindow(QWidget *parent = nullptr);
+    ~ClientsMainWindow();
 
 private slots:
-
     void on_pushButton_13_clicked();
     void on_pushButton_6_clicked();            // bouton "générer" (reçu)
     void on_pushButtonOuvrir_clicked();        // bouton "ouvrir" (contrat)
@@ -59,11 +52,9 @@ private:
     bool modeModif = false;
     int ligneModif = -1;
     QTimer *timerHorloge;
-   void chargerClients();
-
+    void chargerClients();
     DiagrammeWidget *diagramme;
     void majDiagramme();
-
 };
 
 #endif // CLIENTSMAINWINDOW_H

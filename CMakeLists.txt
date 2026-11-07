@@ -20,10 +20,16 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    notificationsdialog.cpp
-    notificationsdialog.h
-    notificationsdialog.ui
+
+
+
     resources.qrc
+    # --- Maysam's Module ---
+    Maysam_Module/client.cpp
+    Maysam_Module/client.h
+    Maysam_Module/clientsmainwindow.cpp
+    Maysam_Module/clientsmainwindow.h
+    Maysam_Module/clientsmainwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
