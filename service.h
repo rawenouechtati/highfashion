@@ -1,0 +1,37 @@
+#ifndef SERVICE_H
+#define SERVICE_H
+
+#include <QString>
+#include <QDate>
+#include <QSqlQueryModel>
+#include <QVector>
+
+class Service
+{
+public:
+    // Attributs (données)
+    QString id, article, client, type, employe, statut;
+    QDate debut, fin;
+    double tarif, cout, acompte;
+
+    // Constructeurs
+    Service();
+    Service(QString id, QString article, QString client, QString type, QString employe,
+            QDate debut, QDate fin, double tarif, double cout, double acompte, QString statut);
+
+    // CRUD (Fonctionnalités de base)
+    bool ajouter();
+    bool modifier();
+    bool supprimer(QString id);
+
+    // Afficher (retourne un modèle pour la vue)
+    QSqlQueryModel* afficher();
+    static QVector<Service> chargerDepuisDb();
+
+    // Contrôle de saisie (validation avant enregistrement)
+    // Retourne true si le service est valide.
+    // En cas d'erreur, retourne false et remplit "erreur" avec un message clair.
+    bool valider(QString &erreur) const;
+};
+
+#endif // SERVICE_H
