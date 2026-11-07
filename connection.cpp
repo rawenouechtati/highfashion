@@ -11,9 +11,9 @@ Connection& Connection::createInstance()
 bool Connection::createconnect()
 {
     db = QSqlDatabase::addDatabase("QODBC");
-    db.setDatabaseName("Source_Projet2A");
-    db.setUserName("rawen");
-    db.setPassword("projet12");
+    db.setDatabaseName("Projet2A25");
+    db.setUserName("smartstitch");
+    db.setPassword("smart123");
 
     if (db.open()) {
         qDebug() << "Connexion reussie";
