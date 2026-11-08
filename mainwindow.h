@@ -5,6 +5,15 @@
 #include <QDate>
 #include <QVector>
 #include "service.h"
+#include <QTimer>
+#include <QWidget>
+#include <QList>
+#include <QPushButton>
+#include <QHash>
+#include <QRect>
+#include <QSize>
+#include <QString>
+#include <QShowEvent>
 
 class QLabel;
 class QTextEdit;
@@ -17,6 +26,24 @@ class QResizeEvent;
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+// === MODULE CLIENT : widget de diagramme (Maysam) ===
+class DiagrammeWidget : public QWidget
+{
+public:
+    explicit DiagrammeWidget(QWidget *parent = nullptr) : QWidget(parent) {
+        setMinimumHeight(120);
+    }
+    void setDonnees(const QVector<int> &c, int sel) { comptes = c; trancheSel = sel; update(); }
+
+protected:
+    void paintEvent(QPaintEvent *) override;
+
+private:
+    QVector<int> comptes = QVector<int>(5, 0);
+    int trancheSel = -1;
+};
+
 
 class MainWindow : public QMainWindow
 {
@@ -41,6 +68,22 @@ private slots:
     void onModifier();
     void onSupprimer();
     void onPlanning();
+
+    // ===================================================================
+    // === MODULE CLIENT (Maysam) : travailler ici uniquement ============
+    // ===================================================================
+
+    void on_cli_pushButton_13_clicked();
+    void on_cli_pushButton_6_clicked();            // bouton "générer" (reçu)
+    void on_cli_pushButtonOuvrir_clicked();        // bouton "ouvrir" (contrat)
+    void on_cli_pushButtonEnregistrer_clicked();
+    void on_cli_pushButtonAnnuler_clicked();
+    void on_cli_pushButton_4_clicked();            // bouton "supprimer"
+    void rechercherClients(const QString &texte);
+    void trierClients();
+    void onAjouterClicked();
+    void onModifierClicked();
+    void exporterListePdf();
 
 private:
     void setupSidebar();
@@ -84,6 +127,32 @@ private:
     QScrollArea *scrollDetails = nullptr;
     QBoxLayout  *m_content = nullptr;
     int          m_layoutState = -1;
+
+    // === SLOTS GÉNÉRAUX (navigation entre pages) ===
+    void setupNavigation();
+
+    // === MODULE CLIENT (Maysam) ===
+    void initModuleClients();
+        void viderChamps();
+    bool emailValide(const QString &email) const;
+    bool modeAjout = false;
+    bool modeModif = false;
+    int ligneModif = -1;
+    QTimer *timerHorloge;
+   void chargerClients();
+    int idModif = -1;
+   QList<QPushButton*> boutonsMenu;
+   QString styleMenuActif;
+   QString styleMenuNormal;
+   void activerMenu(QPushButton *actif);
+    DiagrammeWidget *diagramme;
+    void majDiagramme();
+
+    QHash<QWidget*, QRect> geomOrig;
+
+    QSize baseSize;
+    void collecterGeometries(QWidget *parent);
+    void appliquerEchelle();
 };
 
 #endif // MAINWINDOW_H
