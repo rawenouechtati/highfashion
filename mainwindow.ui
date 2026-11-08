@@ -13,14 +13,751 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">QMainWindow {
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayoutCentral">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QStackedWidget" name="SWSmartStitch">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="PEmpl">
+       <widget class="QStackedWidget" name="SMEmpl">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>70</y>
+          <width>1171</width>
+          <height>780</height>
+         </rect>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="pageGestionEmpl">
+         <widget class="QTableWidget" name="tableEmployes">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>60</y>
+            <width>701</width>
+            <height>371</height>
+           </rect>
+          </property>
+          <column>
+           <property name="text">
+            <string>Nom</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Prénom</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Poste</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Email</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Téléphone</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Statut</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QGroupBox" name="groupFiche">
+          <property name="geometry">
+           <rect>
+            <x>730</x>
+            <y>60</y>
+            <width>391</width>
+            <height>541</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QGroupBox {
+    border: 1px solid #B39B6A;
+    border-radius: 6px;
+    margin-top: 14px;
+    padding-top: 6px;
+}
+QGroupBox::title {
+    font-family: "Playfair Display";
+    font-size: 15pt;
+    font-weight: bold;
+    color: #1F3A4D;
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 6px;
+}</string>
+          </property>
+          <property name="title">
+           <string>Fiche employé</string>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QLabel" name="labelNomEmpl">
+             <property name="text">
+              <string>Nom </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="champNom"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelPrenomEmpl">
+             <property name="text">
+              <string>Prénom</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="champPrenom"/>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLabel" name="labelPosteEmpl">
+               <property name="text">
+                <string>Poste</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelStatutEmpl">
+               <property name="text">
+                <string>Statut</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QComboBox" name="comboPoste">
+               <item>
+                <property name="text">
+                 <string>Gerant</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Couturier</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Vendeur</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Styliste</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="comboStatut">
+               <item>
+                <property name="text">
+                 <string>Actif</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Inactif</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelEmailEmpl">
+             <property name="text">
+              <string>Email</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="champEmail"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelTelephoneEmpl">
+             <property name="text">
+              <string>Téléphone</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="champTelephone"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelPosteTravail">
+             <property name="text">
+              <string>Poste de travail</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboPosteTravail"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelMotDePasseEmpl">
+             <property name="text">
+              <string>Mot de passe</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="champMotDePasse">
+             <property name="echoMode">
+              <enum>QLineEdit::EchoMode::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QPushButton" name="btnEnregistrerEmploye">
+               <property name="text">
+                <string>Enregistrer</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnAnnulerEmploye">
+               <property name="text">
+                <string>Annuler</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QGroupBox" name="groupStatistiques">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>440</y>
+            <width>500</width>
+            <height>320</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Statistiques </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QChartView" name="widgetGraphique" native="true"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutBarreRechercheEmpl">
+          <property name="geometry">
+           <rect>
+            <x>11</x>
+            <y>16</y>
+            <width>1031</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLineEdit" name="champRecherche">
+             <property name="placeholderText">
+              <string>Rechercher par nom ou par poste...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboTriEmploye">
+             <item>
+              <property name="text">
+               <string>Nom</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Poste</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnAjouterEmploye">
+             <property name="text">
+              <string>Ajouter</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnModifierEmploye">
+             <property name="text">
+              <string>Modifier</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnSupprimerEmploye">
+             <property name="text">
+              <string>Supprimer</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="pageEspaceEmpl">
+         <widget class="QGroupBox" name="groupFileAttenteEmpl">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>1111</width>
+            <height>431</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>File d'attente intelligente</string>
+          </property>
+          <widget class="QLabel" name="labelFileAttenteEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>30</y>
+             <width>631</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Triée automatiquement par urgence (échéance proche) puis par client prioritaire (niveau Or)</string>
+           </property>
+          </widget>
+          <widget class="QTableWidget" name="tableFileAttenteEmpl">
+           <property name="geometry">
+            <rect>
+             <x>30</x>
+             <y>60</y>
+             <width>961</width>
+             <height>351</height>
+            </rect>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QGroupBox" name="groupProfilEmpl">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>460</y>
+            <width>391</width>
+            <height>251</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Mon profil</string>
+          </property>
+          <widget class="QLabel" name="labelProfilNomEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>111</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Nom et prénom</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lineProfilNomEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>361</width>
+             <height>31</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QLabel" name="labelProfilPosteEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>100</y>
+             <width>63</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Poste</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="labelProfilEmailEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>170</y>
+             <width>63</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Email</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lineProfilEmailEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>190</y>
+             <width>181</width>
+             <height>31</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QLabel" name="labelProfilTelEmpl">
+           <property name="geometry">
+            <rect>
+             <x>210</x>
+             <y>170</y>
+             <width>81</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Téléphone</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lineProfilTelEmpl">
+           <property name="geometry">
+            <rect>
+             <x>210</x>
+             <y>190</y>
+             <width>161</width>
+             <height>31</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="comboProfilPosteEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>120</y>
+             <width>361</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <item>
+            <property name="text">
+             <string>Gerant</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Couturier</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Vendeur</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Styliste</string>
+            </property>
+           </item>
+          </widget>
+         </widget>
+         <widget class="QGroupBox" name="groupDocumentsRHEmpl">
+          <property name="geometry">
+           <rect>
+            <x>420</x>
+            <y>460</y>
+            <width>341</width>
+            <height>251</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Mes documents RH</string>
+          </property>
+          <widget class="QLabel" name="labelDocumentRHEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>50</y>
+             <width>331</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Document pré-rempli avec mes informations</string>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="comboDocumentRHEmpl">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>80</y>
+             <width>301</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <item>
+            <property name="text">
+             <string>Demande de congé</string>
+            </property>
+           </item>
+          </widget>
+          <widget class="QLabel" name="labelDebutConge">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>122</y>
+             <width>150</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Du</string>
+           </property>
+          </widget>
+          <widget class="QDateEdit" name="dateDebutConge">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>140</y>
+             <width>150</width>
+             <height>28</height>
+            </rect>
+           </property>
+           <property name="calendarPopup">
+            <bool>true</bool>
+           </property>
+           <property name="displayFormat">
+            <string>dd/MM/yyyy</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="labelFinConge">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>122</y>
+             <width>150</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Au</string>
+           </property>
+          </widget>
+          <widget class="QDateEdit" name="dateFinConge">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>140</y>
+             <width>141</width>
+             <height>28</height>
+            </rect>
+           </property>
+           <property name="calendarPopup">
+            <bool>true</bool>
+           </property>
+           <property name="displayFormat">
+            <string>dd/MM/yyyy</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="champMotifConge">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>178</y>
+             <width>301</width>
+             <height>28</height>
+            </rect>
+           </property>
+           <property name="placeholderText">
+            <string>Motif (facultatif)</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btnExporterDocument">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>214</y>
+             <width>301</width>
+             <height>30</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Exporter en PDF</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QGroupBox" name="groupStatistiquesEmployeEmpl">
+          <property name="geometry">
+           <rect>
+            <x>770</x>
+            <y>460</y>
+            <width>391</width>
+            <height>251</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Mes statistiques</string>
+          </property>
+          <layout class="QVBoxLayout" name="layoutStatistiquesEmploye"/>
+         </widget>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="sidebarEmpl" native="true">
+        <property name="geometry">
+         <rect>
+          <x>-4</x>
+          <y>1</y>
+          <width>281</width>
+          <height>851</height>
+         </rect>
+        </property>
+        <widget class="QLabel" name="labelUtilisateurEmpl">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>640</y>
+           <width>211</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Mouna Ayari
+Employée</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="btnDeconnexionEmpl">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>710</y>
+           <width>231</width>
+           <height>29</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Déconnexion</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutNavigationEmpl">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>140</y>
+           <width>241</width>
+           <height>271</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QPushButton" name="navArticlesEmpl">
+            <property name="text">
+             <string>Articles</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="navServicesEmpl">
+            <property name="text">
+             <string>Services</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="navClientsEmpl">
+            <property name="text">
+             <string>Clients</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="navEmployesEmpl">
+            <property name="text">
+             <string>Employés</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QLabel" name="labelLogoEmpl">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>30</y>
+           <width>231</width>
+           <height>101</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QLabel" name="labelTitreEmpl">
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>29</y>
+          <width>271</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Gestion des employés</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="PServices">
+       <property name="styleSheet">
+        <string notr="true">QMainWindow {
     background-color: #F5F1E8;
 }
 
 QWidget {
     color: #1F3A4D;
-    font-family: &quot;Segoe UI&quot;;
+    font-family: "Segoe UI";
 }
 
 QPushButton {
@@ -84,764 +821,772 @@ QListWidget {
     border: 1px solid #B39B6A;
     border-radius: 6px;
 }</string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <property name="styleSheet">
-    <string notr="true">background-color: #F5F1E8;</string>
-   </property>
-   <widget class="QFrame" name="frameSidebar">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>-10</y>
-      <width>201</width>
-      <height>741</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: #1F3A4D;</string>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Shape::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Shadow::Raised</enum>
-    </property>
-    <widget class="QPushButton" name="pushButton">
-     <property name="geometry">
-      <rect>
-       <x>-10</x>
-       <y>40</y>
-       <width>211</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>14</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Tableau de bord</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_2">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>120</y>
-       <width>101</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Articles</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_3">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>180</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
+       </property>
+       <widget class="QWidget" name="contenuServices">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1810</width>
+          <height>775</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #F5F1E8;</string>
+        </property>
+        <widget class="QFrame" name="frameSidebar">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>-10</y>
+           <width>201</width>
+           <height>741</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: #1F3A4D;</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Raised</enum>
+         </property>
+         <widget class="QPushButton" name="navTableauBordServ">
+          <property name="geometry">
+           <rect>
+            <x>-10</x>
+            <y>40</y>
+            <width>211</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>14</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Tableau de bord</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="navArticlesServ">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>120</y>
+            <width>101</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Articles</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="navServicesServ">
+          <property name="geometry">
+           <rect>
+            <x>50</x>
+            <y>180</y>
+            <width>91</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
     background-color: #8B1E2D;
     color: white;
 }</string>
-     </property>
-     <property name="text">
-      <string>Services</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_4">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>240</y>
-       <width>101</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Clients</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pushButton_5">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>300</y>
-       <width>111</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Employés</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QLabel" name="lblTitle">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>-10</y>
-      <width>321</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Segoe UI</family>
-      <pointsize>20</pointsize>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Gestion des services</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="txtRecherche">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>50</y>
-      <width>331</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="placeholderText">
-     <string>Rechercher par client ou tarif...</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnAjouter">
-    <property name="geometry">
-     <rect>
-      <x>590</x>
-      <y>10</y>
-      <width>90</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
+          </property>
+          <property name="text">
+           <string>Services</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="navClientsServ">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>240</y>
+            <width>101</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Clients</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="navEmployesServ">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>300</y>
+            <width>111</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Employés</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QLabel" name="lblTitle">
+         <property name="geometry">
+          <rect>
+           <x>220</x>
+           <y>-10</y>
+           <width>321</width>
+           <height>61</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>20</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Gestion des services</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="txtRecherche">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>50</y>
+           <width>331</width>
+           <height>28</height>
+          </rect>
+         </property>
+         <property name="placeholderText">
+          <string>Rechercher par client ou tarif...</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="btnAjouter">
+         <property name="geometry">
+          <rect>
+           <x>590</x>
+           <y>10</y>
+           <width>90</width>
+           <height>29</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
     background-color: #8B1E2D;
     color: white;
 }</string>
-    </property>
-    <property name="text">
-     <string>+ Ajouter</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnModifier">
-    <property name="geometry">
-     <rect>
-      <x>730</x>
-      <y>10</y>
-      <width>90</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
+         </property>
+         <property name="text">
+          <string>+ Ajouter</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="btnModifier">
+         <property name="geometry">
+          <rect>
+           <x>730</x>
+           <y>10</y>
+           <width>90</width>
+           <height>29</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
     background-color: #1F3A4D;
     color: white;
 }</string>
-    </property>
-    <property name="text">
-     <string>Modifier</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnSupprimer">
-    <property name="geometry">
-     <rect>
-      <x>870</x>
-      <y>10</y>
-      <width>131</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
+         </property>
+         <property name="text">
+          <string>Modifier</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="btnSupprimer">
+         <property name="geometry">
+          <rect>
+           <x>870</x>
+           <y>10</y>
+           <width>131</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
     background-color: #1F3A4D;
     color: white;
 }</string>
-    </property>
-    <property name="text">
-     <string>Supprimer</string>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="tableServices">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>150</y>
-      <width>991</width>
-      <height>291</height>
-     </rect>
-    </property>
-    <property name="columnCount">
-     <number>8</number>
-    </property>
-    <column>
-     <property name="text">
-      <string>ID</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string> Article</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Client</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Type</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Employé</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Fin prévue</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Tarif</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Statut</string>
-     </property>
-    </column>
-   </widget>
-   <widget class="QGroupBox" name="frameDetails">
-    <property name="geometry">
-     <rect>
-      <x>1210</x>
-      <y>-10</y>
-      <width>521</width>
-      <height>791</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Segoe UI</family>
-      <pointsize>14</pointsize>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
+         </property>
+         <property name="text">
+          <string>Supprimer</string>
+         </property>
+        </widget>
+        <widget class="QTableWidget" name="tableServices">
+         <property name="geometry">
+          <rect>
+           <x>200</x>
+           <y>150</y>
+           <width>991</width>
+           <height>291</height>
+          </rect>
+         </property>
+         <property name="columnCount">
+          <number>8</number>
+         </property>
+         <column>
+          <property name="text">
+           <string>ID</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string> Article</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Client</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Type</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Employé</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Fin prévue</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Tarif</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Statut</string>
+          </property>
+         </column>
+        </widget>
+        <widget class="QGroupBox" name="frameDetails">
+         <property name="geometry">
+          <rect>
+           <x>1210</x>
+           <y>-10</y>
+           <width>521</width>
+           <height>791</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
     background-color: #8B1E2D;
     color: white;
 }</string>
-    </property>
-    <property name="title">
-     <string>Fiche service</string>
-    </property>
-    <widget class="QLabel" name="lblArticle">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>50</y>
-       <width>63</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Article</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="cmbArticle">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>90</y>
-       <width>211</width>
-       <height>28</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblClient">
-     <property name="geometry">
-      <rect>
-       <x>330</x>
-       <y>50</y>
-       <width>63</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Client</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="cmbClient">
-     <property name="geometry">
-      <rect>
-       <x>270</x>
-       <y>90</y>
-       <width>211</width>
-       <height>28</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblType">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>130</y>
-       <width>161</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Type de service</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="cmdType">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>170</y>
-       <width>211</width>
-       <height>28</height>
-      </rect>
-     </property>
-     <property name="editable">
-      <bool>false</bool>
-     </property>
-     <item>
-      <property name="text">
-       <string/>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Location</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Restauration</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Nettoyage</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Authentification</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="lblDateFin">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>210</y>
-       <width>161</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Date de fin prévue</string>
-     </property>
-    </widget>
-    <widget class="QDateEdit" name="dateFin">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>240</y>
-       <width>201</width>
-       <height>29</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblTarif">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>300</y>
-       <width>111</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Tarif (DT)</string>
-     </property>
-    </widget>
-    <widget class="QDoubleSpinBox" name="spinTarif">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>330</y>
-       <width>131</width>
-       <height>29</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblAcompte">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>370</y>
-       <width>181</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Acompte versé (DT)</string>
-     </property>
-    </widget>
-    <widget class="QDoubleSpinBox" name="spinAcompte">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>410</y>
-       <width>131</width>
-       <height>29</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblSoldeTitre">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>460</y>
-       <width>131</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Solde restant</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblSolde">
-     <property name="geometry">
-      <rect>
-       <x>170</x>
-       <y>460</y>
-       <width>63</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>0 DT</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblStatut">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>380</y>
-       <width>71</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Statut</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="cmbStatut">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>410</y>
-       <width>161</width>
-       <height>28</height>
-      </rect>
-     </property>
-     <item>
-      <property name="text">
-       <string/>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>En attente</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>En cours</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Terminé</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>En retard</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="lblDateDebut">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>220</y>
-       <width>151</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Date de début</string>
-     </property>
-    </widget>
-    <widget class="QDateEdit" name="dateDebutEdit">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>250</y>
-       <width>110</width>
-       <height>29</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblCout">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>290</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Coût du service</string>
-     </property>
-    </widget>
-    <widget class="QDoubleSpinBox" name="spinCout">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>330</y>
-       <width>141</width>
-       <height>29</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblBenefice">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>490</y>
-       <width>91</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Bénéfice</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblValeurBenefice">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>490</y>
-       <width>121</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>0.00 DT</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="frameAlertesEmail">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>540</y>
-       <width>401</width>
-       <height>151</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="title">
-      <string>Alertes e-mail</string>
-     </property>
-     <widget class="QCheckBox" name="chkEcheance">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>40</y>
-        <width>301</width>
-        <height>51</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Service proche de l'échéance</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="chkRetard">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>90</y>
-        <width>231</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Service en retard</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="btnConfigurerAlertes">
-      <property name="geometry">
-       <rect>
-        <x>220</x>
-        <y>110</y>
-        <width>171</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
+         </property>
+         <property name="title">
+          <string>Fiche service</string>
+         </property>
+         <widget class="QLabel" name="lblArticle">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>63</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Article</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="cmbArticle">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>90</y>
+            <width>211</width>
+            <height>28</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblClient">
+          <property name="geometry">
+           <rect>
+            <x>330</x>
+            <y>50</y>
+            <width>63</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Client</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="cmbClient">
+          <property name="geometry">
+           <rect>
+            <x>270</x>
+            <y>90</y>
+            <width>211</width>
+            <height>28</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblType">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>130</y>
+            <width>161</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Type de service</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="cmdType">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>170</y>
+            <width>211</width>
+            <height>28</height>
+           </rect>
+          </property>
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string/>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Location</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Restauration</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Nettoyage</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Authentification</string>
+           </property>
+          </item>
+         </widget>
+         <widget class="QLabel" name="lblDateFin">
+          <property name="geometry">
+           <rect>
+            <x>240</x>
+            <y>210</y>
+            <width>161</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Date de fin prévue</string>
+          </property>
+         </widget>
+         <widget class="QDateEdit" name="dateFin">
+          <property name="geometry">
+           <rect>
+            <x>240</x>
+            <y>240</y>
+            <width>201</width>
+            <height>29</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblTarif">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>300</y>
+            <width>111</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Tarif (DT)</string>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="spinTarif">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>330</y>
+            <width>131</width>
+            <height>29</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblAcompte">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>370</y>
+            <width>181</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Acompte versé (DT)</string>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="spinAcompte">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>410</y>
+            <width>131</width>
+            <height>29</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblSoldeTitre">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>460</y>
+            <width>131</width>
+            <height>21</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Solde restant</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblSolde">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>460</y>
+            <width>63</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0 DT</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblStatut">
+          <property name="geometry">
+           <rect>
+            <x>310</x>
+            <y>380</y>
+            <width>71</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Statut</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="cmbStatut">
+          <property name="geometry">
+           <rect>
+            <x>290</x>
+            <y>410</y>
+            <width>161</width>
+            <height>28</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string/>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>En attente</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>En cours</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Terminé</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>En retard</string>
+           </property>
+          </item>
+         </widget>
+         <widget class="QLabel" name="lblDateDebut">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>220</y>
+            <width>151</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Date de début</string>
+          </property>
+         </widget>
+         <widget class="QDateEdit" name="dateDebutEdit">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>250</y>
+            <width>110</width>
+            <height>29</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblCout">
+          <property name="geometry">
+           <rect>
+            <x>240</x>
+            <y>290</y>
+            <width>151</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Coût du service</string>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="spinCout">
+          <property name="geometry">
+           <rect>
+            <x>240</x>
+            <y>330</y>
+            <width>141</width>
+            <height>29</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblBenefice">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>490</y>
+            <width>91</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Bénéfice</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblValeurBenefice">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>490</y>
+            <width>121</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0.00 DT</string>
+          </property>
+         </widget>
+         <widget class="QGroupBox" name="frameAlertesEmail">
+          <property name="geometry">
+           <rect>
+            <x>50</x>
+            <y>540</y>
+            <width>401</width>
+            <height>151</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="title">
+           <string>Alertes e-mail</string>
+          </property>
+          <widget class="QCheckBox" name="chkEcheance">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>301</width>
+             <height>51</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Service proche de l'échéance</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="chkRetard">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>90</y>
+             <width>231</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Service en retard</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btnConfigurerAlertes">
+           <property name="geometry">
+            <rect>
+             <x>220</x>
+             <y>110</y>
+             <width>171</width>
+             <height>29</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
     background-color: #1F3A4D;
     color: white;
 }</string>
-      </property>
-      <property name="text">
-       <string>Configurer les alertes</string>
-      </property>
-     </widget>
-    </widget>
-   </widget>
-   <widget class="QLabel" name="lblAlerte">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>100</y>
-      <width>501</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QLabel#lblAlerte {
+           </property>
+           <property name="text">
+            <string>Configurer les alertes</string>
+           </property>
+          </widget>
+         </widget>
+        </widget>
+        <widget class="QLabel" name="lblAlerte">
+         <property name="geometry">
+          <rect>
+           <x>340</x>
+           <y>100</y>
+           <width>501</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel#lblAlerte {
     color: #8B1E2D;
     background-color: #F5F1E8;
     border: 1px solid #8B1E2D;
@@ -849,204 +1594,281 @@ QListWidget {
     padding: 8px;
     font-weight: bold;
 }</string>
-    </property>
-    <property name="text">
-     <string>⚠ 2 services dépassent leur date de fin prévue</string>
-    </property>
-   </widget>
-   <widget class="QGroupBox" name="frameStats">
-    <property name="geometry">
-     <rect>
-      <x>210</x>
-      <y>450</y>
-      <width>991</width>
-      <height>291</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Segoe UI</family>
-      <pointsize>14</pointsize>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="title">
-     <string>Statistiques annuelles : demande et rentabilité</string>
-    </property>
-    <widget class="QLabel" name="lblPlusDemande">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>50</y>
-       <width>221</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>Service le plus demandé</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblServiceDemande">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>90</y>
-       <width>101</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Location</string>
-     </property>
-    </widget>
-    <widget class="QFrame" name="barDemande">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>80</y>
-       <width>401</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: #8B1E2D;
+         </property>
+         <property name="text">
+          <string>⚠ 2 services dépassent leur date de fin prévue</string>
+         </property>
+        </widget>
+        <widget class="QGroupBox" name="frameStats">
+         <property name="geometry">
+          <rect>
+           <x>210</x>
+           <y>450</y>
+           <width>991</width>
+           <height>291</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="title">
+          <string>Statistiques annuelles : demande et rentabilité</string>
+         </property>
+         <widget class="QLabel" name="lblPlusDemande">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>221</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string>Service le plus demandé</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblServiceDemande">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>90</y>
+            <width>101</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Location</string>
+          </property>
+         </widget>
+         <widget class="QFrame" name="barDemande">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>80</y>
+            <width>401</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #8B1E2D;
 border: none;
 border-radius: 4px;</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblPlusRentable">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>150</y>
-       <width>211</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>11</pointsize>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Service le plus rentable</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="lblServiceRentable">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>180</y>
-       <width>131</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>12</pointsize>
-       <italic>false</italic>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Restauration</string>
-     </property>
-    </widget>
-    <widget class="QFrame" name="barRentabilite">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>190</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: #1F3A4D;
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblPlusRentable">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>150</y>
+            <width>211</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Service le plus rentable</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblServiceRentable">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>180</y>
+            <width>131</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>12</pointsize>
+            <italic>false</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Restauration</string>
+          </property>
+         </widget>
+         <widget class="QFrame" name="barRentabilite">
+          <property name="geometry">
+           <rect>
+            <x>180</x>
+            <y>190</y>
+            <width>151</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #1F3A4D;
 border: none;
 border-radius: 4px;</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QComboBox" name="cmbTri">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
-      <y>50</y>
-      <width>341</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="currentText">
-     <string> Trier par : Date de fin</string>
-    </property>
-    <item>
-     <property name="text">
-      <string> Trier par : Date de fin</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Tarif</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Statut</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="QPushButton" name="btnNotifications">
-    <property name="geometry">
-     <rect>
-      <x>1040</x>
-      <y>10</y>
-      <width>151</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QComboBox" name="cmbTri">
+         <property name="geometry">
+          <rect>
+           <x>610</x>
+           <y>50</y>
+           <width>341</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="currentText">
+          <string> Trier par : Date de fin</string>
+         </property>
+         <item>
+          <property name="text">
+           <string> Trier par : Date de fin</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Tarif</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Statut</string>
+          </property>
+         </item>
+        </widget>
+        <widget class="QPushButton" name="btnNotifications">
+         <property name="geometry">
+          <rect>
+           <x>1040</x>
+           <y>10</y>
+           <width>151</width>
+           <height>29</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
     background-color: #1F3A4D;
     color: white;
 }</string>
-    </property>
-    <property name="text">
-     <string>🔔 Notifications</string>
-    </property>
-   </widget>
+         </property>
+         <property name="text">
+          <string>🔔 Notifications</string>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="PClient">
+       <layout class="QVBoxLayout" name="layoutPClient">
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="labelPlaceholderClient">
+          <property name="text">
+           <string>Module Clients : page à intégrer par le membre de l'équipe concerné</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QPushButton" name="btnRetourClient">
+          <property name="text">
+           <string>← Retour</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="PArticle">
+       <layout class="QVBoxLayout" name="layoutPArticle">
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="labelPlaceholderArticle">
+          <property name="text">
+           <string>Module Articles : page à intégrer par le membre de l'équipe concerné</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QPushButton" name="btnRetourArticle">
+          <property name="text">
+           <string>← Retour</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="PMatiere">
+       <layout class="QVBoxLayout" name="layoutPMatiere">
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="labelPlaceholderMatiere">
+          <property name="text">
+           <string>Module Matières premières : page à intégrer par le membre de l'équipe concerné</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QPushButton" name="btnRetourMatiere">
+          <property name="text">
+           <string>← Retour</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="PEvenement">
+       <layout class="QVBoxLayout" name="layoutPEvenement">
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="labelPlaceholderEvenement">
+          <property name="text">
+           <string>Module Événements : page à intégrer par le membre de l'équipe concerné</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QPushButton" name="btnRetourEvenement">
+          <property name="text">
+           <string>← Retour</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1060,6 +1882,14 @@ border-radius: 4px;</string>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QWidget</extends>
+   <header location="global">QChartView</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

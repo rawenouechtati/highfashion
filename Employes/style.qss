@@ -1,0 +1,144 @@
+QMainWindow, #PEmpl {
+    background-color: #F5F1E8;
+}
+
+QLineEdit, QComboBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CDBF9F;
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-family: "Lato";
+    font-size: 10pt;
+    color: #1F3A4D;
+}
+QLineEdit:focus, QComboBox:focus {
+    border: 1px solid #B39B6A;
+}
+
+QPushButton {
+    border-radius: 7px;
+    padding: 7px 16px;
+    font-family: "Lato";
+    font-weight: bold;
+    font-size: 10pt;
+}
+
+QPushButton#btnAjouterEmploye, QPushButton#btnEnregistrerEmploye, QPushButton#btnExporterDocument {
+    background-color: #8B1E2D;
+    color: white;
+    border: none;
+}
+QPushButton#btnAjouterEmploye:hover, QPushButton#btnEnregistrerEmploye:hover, QPushButton#btnExporterDocument:hover {
+    background-color: #711824;
+}
+
+QPushButton#btnModifierEmploye {
+    background-color: #1F3A4D;
+    color: white;
+    border: none;
+}
+QPushButton#btnModifierEmploye:hover {
+    background-color: #2B4F68;
+}
+
+QPushButton#btnAnnulerEmploye {
+    background-color: white;
+    color: #1F3A4D;
+    border: 1px solid #1F3A4D;
+}
+QPushButton#btnAnnulerEmploye:hover {
+    background-color: #EEF1F4;
+}
+
+QPushButton#btnSupprimerEmploye {
+    background-color: white;
+    color: #8B1E2D;
+    border: 1px solid #8B1E2D;
+}
+QPushButton#btnSupprimerEmploye:hover {
+    background-color: #FBEEEF;
+}
+
+QTableWidget {
+    background-color: white;
+    gridline-color: #ECE4D0;
+    border: 1px solid #DCCFB0;
+    border-radius: 6px;
+    font-family: "Lato";
+}
+QHeaderView::section {
+    background-color: #1F3A4D;
+    color: white;
+    padding: 6px;
+    border: none;
+    font-weight: bold;
+}
+QTableWidget::item:selected {
+    background-color: #F4DFE2;
+    color: #1F3A4D;
+}
+
+QGroupBox {
+    border: 1px solid #B39B6A;
+    border-radius: 6px;
+    margin-top: 14px;
+    padding-top: 6px;
+    font-family: "Lato";
+}
+QGroupBox::title {
+    font-family: "Playfair Display";
+    font-size: 15pt;
+    font-weight: bold;
+    color: #1F3A4D;
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 6px;
+}
+
+QLabel {
+    font-family: "Lato";
+    font-weight: bold;
+    color: #5F707D;
+    font-size: 9pt;
+}
+
+QWidget#sidebarEmpl {
+    background-color: #1F3A4D;
+}
+
+QWidget#sidebarEmpl QPushButton {
+    background-color: transparent;
+    color: #F3ECE2;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: left;
+}
+QWidget#sidebarEmpl QPushButton:hover {
+    background-color: rgba(255, 255, 255, 30);
+}
+QWidget#sidebarEmpl QPushButton#btnDeconnexionEmpl {
+    border: 1px solid #B39B6A;
+    text-align: center;
+}
+QWidget#sidebarEmpl QPushButton#navEmployesEmpl {
+    background-color: #F5F1E8;
+    color: #1F3A4D;
+    border-left: 4px solid #8B1E2D;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+QWidget#sidebarEmpl QPushButton#navEmployesEmpl:hover {
+    background-color: #F5F1E8;
+}
+QWidget#sidebarEmpl QLabel#labelUtilisateurEmpl {
+    color: #E6DCC8;
+    font-weight: bold;
+}
+
+QPushButton#btnEnregistrerEmploye:disabled, QPushButton#btnExporterDocument:disabled {
+    background-color: #D8CFC4;
+    color: #8A8375;
+}

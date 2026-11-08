@@ -26,4 +26,4 @@ RESOURCES += resources.qrc
 INCLUDEPATH += $$PWD/Employes
 SOURCES += $$files($$PWD/Employes/*.cpp)
 HEADERS += $$files($$PWD/Employes/*.h)
-FORMS   += $$files($$PWD/Employes/*.ui)
+RESOURCES += Employes/ressources.qrc

@@ -37,7 +37,119 @@
 #include <QTextDocument>
 #include <QTextEdit>
 #include <QtMath>
+#include <QStackedWidget>
+#include <QStatusBar>
+// --- includes du module Employe ---
+#include "employe.h"
+#include <QHeaderView>
+#include <QBarSet>
+#include <QBarSeries>
+#include <QChart>
+#include <QBarCategoryAxis>
+#include <QValueAxis>
+#include <QMessageBox>
+#include <QTableWidgetItem>
+#include <QMap>
+#include <QFrame>
+#include <QGridLayout>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLayoutItem>
+#include <QLabel>
+#include <QGroupBox>
+#include <QTimer>
+#include <QSqlQueryModel>
+#include <QRegularExpression>
+#include "posteTravail.h"
+#include "planpostes.h"
+#include "validationui.h"
+#include "repartitionpostes.h"
+#include "pictogrammes.h"
+#include <QAction>
+#include <QIcon>
+#include <QComboBox>
+#include <QLabel>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QScrollArea>
+#include <QMenuBar>
+#include <QStatusBar>
+#include "documentrh.h"
+#include "radarstatistiques.h"
+#include <QChartView>
+#include <QDate>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
+#include <QPainter>
+#include <QPushButton>
+#include <QUrl>
 
+// ====================================================================================
+// === SLOTS GÉNÉRAUX ===
+// Construction de la fenetre principale et navigation entre les modules (stackedWidget principal).
+// Les boutons de navigation sont programmes ici, pas dans les modules.
+// ====================================================================================
+MainWindow::MainWindow(const Employe &employeConnecte, QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_employeConnecte(employeConnecte)
+{
+    ui->setupUi(this);
+    setWindowTitle("SmartStitch - Atelier Vintage Couture");
+    setMinimumSize(640, 480);
+    const QRect avail = screen()->availableGeometry();
+    resize(qMin(1600, avail.width()), qMin(860, avail.height()));
+
+    connecterNavigation();        // zone SLOTS GÉNÉRAUX
+    initialiserModuleService();   // zone MODULE SERVICE
+    initialiserModuleEmploye();   // zone MODULE EMPLOYE
+
+    // Page d'accueil : la page Employes (elle s'adapte au poste de l'employe connecte).
+    // La barre d'etat "Role : Responsable des services" ne concerne que la page Services.
+    ui->SWSmartStitch->setCurrentIndex(PageEmploye);
+    statusBar()->setVisible(false);
+}
+
+MainWindow::~MainWindow() { delete ui; }
+
+void MainWindow::connecterNavigation()
+{
+    // menu lateral du module Services
+    connect(ui->navTableauBordServ, &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->navArticlesServ,    &QPushButton::clicked, this, &MainWindow::allerVersArticles);
+    connect(ui->navServicesServ,    &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->navClientsServ,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
+    connect(ui->navEmployesServ,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+
+    // menu lateral du module Employes
+    connect(ui->navArticlesEmpl,    &QPushButton::clicked, this, &MainWindow::allerVersArticles);
+    connect(ui->navServicesEmpl,    &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->navClientsEmpl,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
+    connect(ui->navEmployesEmpl,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+
+    // pages des modules pas encore integres : bouton "Retour" vers l'accueil
+    connect(ui->btnRetourClient,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnRetourArticle,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnRetourMatiere,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnRetourEvenement, &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+
+    // la barre d'etat ne s'affiche pas sur la page Employes
+    connect(ui->SWSmartStitch, &QStackedWidget::currentChanged, this, [this](int index) {
+        statusBar()->setVisible(index != PageEmploye);
+    });
+}
+
+void MainWindow::allerVersEmployes()   { ui->SWSmartStitch->setCurrentIndex(PageEmploye); }
+void MainWindow::allerVersServices()   { ui->SWSmartStitch->setCurrentIndex(PageService); }
+void MainWindow::allerVersClients()    { ui->SWSmartStitch->setCurrentIndex(PageClient); }
+void MainWindow::allerVersArticles()   { ui->SWSmartStitch->setCurrentIndex(PageArticle); }
+void MainWindow::allerVersMatieres()   { ui->SWSmartStitch->setCurrentIndex(PageMatiere); }
+void MainWindow::allerVersEvenements() { ui->SWSmartStitch->setCurrentIndex(PageEvenement); }
+// === FIN SLOTS GÉNÉRAUX ===
+
+
+// ====================================================================================
+// === MODULE SERVICE ===
+// ====================================================================================
 // ---------- Badges colorés (colonnes Type et Statut) ----------
 class BadgeDelegate : public QStyledItemDelegate
 {
@@ -101,16 +213,8 @@ static QString dt(double v)
     return QString("%1 DT").arg(v, 0, 'f', (v == qFloor(v)) ? 0 : 2);
 }
 
-// ---------- Construction ----------
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+void MainWindow::initialiserModuleService()
 {
-    ui->setupUi(this);
-    setWindowTitle("Atelier Vintage Couture - Gestion des services");
-    setMinimumSize(640, 480);
-    const QRect avail = screen()->availableGeometry();
-    resize(qMin(1600, avail.width()), qMin(860, avail.height()));
-
     // métier innovant : planning intelligent (remplace les notifications système)
     ui->btnNotifications->setText("📅 Planning");
     connect(ui->btnNotifications, &QPushButton::clicked, this, &MainWindow::onPlanning);
@@ -134,8 +238,6 @@ MainWindow::MainWindow(QWidget *parent)
     if (ui->tableServices->rowCount() > 0)
         ui->tableServices->selectRow(0);
 }
-
-MainWindow::~MainWindow() { delete ui; }
 
 // ---------- Menu latéral : logo + navigation + profil (layout vertical) ----------
 void MainWindow::setupSidebar()
@@ -170,8 +272,8 @@ void MainWindow::setupSidebar()
     lay->addWidget(logo);
     lay->addSpacing(30);
 
-    const QList<QPushButton *> nav = {ui->pushButton, ui->pushButton_2, ui->pushButton_3,
-                                      ui->pushButton_4, ui->pushButton_5};
+    const QList<QPushButton *> nav = {ui->navTableauBordServ, ui->navArticlesServ, ui->navServicesServ,
+                                      ui->navClientsServ, ui->navEmployesServ};
     for (QPushButton *b : nav) {
         b->setMinimumHeight(46);
         b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -198,7 +300,7 @@ void MainWindow::setupSidebar()
     logout->setStyleSheet("QPushButton{background:transparent; color:#D8CFBC; text-align:left; padding-left:8px;}"
                           "QPushButton:hover{color:white; background:transparent;}");
     lay->addWidget(logout);
-    connect(logout, &QPushButton::clicked, this, &QWidget::close);
+    connect(logout, &QPushButton::clicked, this, &MainWindow::deconnexionDemandee);
 }
 
 // ---------- En-tête : création des widgets (placés par setupLayout) ----------
@@ -206,7 +308,7 @@ void MainWindow::setupHeader()
 {
     lblSousTitre = new QLabel("Location, restauration, nettoyage, authentification — "
                               "planning intelligent et alertes par e-mail",
-                              ui->centralwidget);
+                              ui->contenuServices);
     lblSousTitre->setWordWrap(true);
     lblSousTitre->setStyleSheet("color:#6B7A88; font-size:11px; background:transparent;");
 
@@ -216,13 +318,13 @@ void MainWindow::setupHeader()
     ui->cmbTri->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     ui->cmbTri->setMinimumContentsLength(10);
 
-    btnExportPDF = new QPushButton("Export PDF", ui->centralwidget);
+    btnExportPDF = new QPushButton("Export PDF", ui->contenuServices);
     btnExportPDF->setMinimumSize(130, 32);
     btnExportPDF->setStyleSheet("QPushButton{background-color:#1F3A4D; color:white; border-radius:6px;}"
                                 "QPushButton:hover{background-color:#8B1E2D;}");
     connect(btnExportPDF, &QPushButton::clicked, this, &MainWindow::exportPdf);
 
-    btnRappels = new QPushButton("✉ Envoyer les rappels", ui->centralwidget);
+    btnRappels = new QPushButton("✉ Envoyer les rappels", ui->contenuServices);
     btnRappels->setMinimumSize(170, 32);
     btnRappels->setStyleSheet("QPushButton{background-color:#8B1E2D; color:white;}");
     connect(btnRappels, &QPushButton::clicked, this, &MainWindow::envoyerRappels);
@@ -441,7 +543,7 @@ void MainWindow::setupTable()
         "QHeaderView::section{background:#1F3A4D; color:white; padding:6px; border:none; font-weight:bold;}"
         "QTableWidget::item:selected{background:#F3D9DD; color:#1F3A4D;}");
 
-    lblCount = new QLabel(ui->centralwidget);
+    lblCount = new QLabel(ui->contenuServices);
     lblCount->setWordWrap(true);
     lblCount->setStyleSheet("color:#6B7A88; font-size:10px; background:transparent;");
 
@@ -777,7 +879,7 @@ void MainWindow::updateChart()
 void MainWindow::setupLayout()
 {
     // colonne centrale : en-tête, tableau, statistiques
-    auto *mid = new QWidget(ui->centralwidget);
+    auto *mid = new QWidget(ui->contenuServices);
     auto *vm = new QVBoxLayout(mid);
     vm->setContentsMargins(14, 10, 14, 10);
     vm->setSpacing(8);
@@ -822,7 +924,7 @@ void MainWindow::setupLayout()
     vm->addWidget(ui->frameStats, 0);
 
     // panneau de droite : scrollable si la fenêtre est trop basse
-    scrollDetails = new QScrollArea(ui->centralwidget);
+    scrollDetails = new QScrollArea(ui->contenuServices);
     scrollDetails->setFrameShape(QFrame::NoFrame);
     scrollDetails->setWidgetResizable(true);
     scrollDetails->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -834,7 +936,7 @@ void MainWindow::setupLayout()
     m_content->addWidget(mid, 3);
     m_content->addWidget(scrollDetails, 1);
 
-    auto *main = new QHBoxLayout(ui->centralwidget);
+    auto *main = new QHBoxLayout(ui->contenuServices);
     main->setContentsMargins(0, 0, 10, 0);
     main->setSpacing(0);
     main->addWidget(ui->frameSidebar);
@@ -842,12 +944,14 @@ void MainWindow::setupLayout()
 
     // filet de sécurité : si la fenêtre est plus petite que le contenu minimal,
     // des barres de défilement apparaissent au lieu de déformer l'interface
-    QWidget *cw = takeCentralWidget();
-    auto *scroll = new QScrollArea(this);
+    // (le contenu du module Services est maintenant la page PServices du stackedWidget principal)
+    auto *scroll = new QScrollArea(ui->PServices);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setWidgetResizable(true);
-    scroll->setWidget(cw);
-    setCentralWidget(scroll);
+    scroll->setWidget(ui->contenuServices);
+    auto *pageServices = new QVBoxLayout(ui->PServices);
+    pageServices->setContentsMargins(0, 0, 0, 0);
+    pageServices->addWidget(scroll);
 
     applyResponsive();
 }
@@ -974,7 +1078,7 @@ protected:
 
 void MainWindow::onPlanning()
 {
-    QDialog dlg(this);
+    QDialog dlg(ui->PServices);   // garde la feuille de style de la page Services
     dlg.setWindowTitle("Planning intelligent des services");
     dlg.setStyleSheet("QDialog{background:#F5F1E8;}");
     dlg.resize(980, 600);
@@ -1251,3 +1355,830 @@ void MainWindow::onSupprimer()
         return;
     }
 }
+// === FIN MODULE SERVICE ===
+
+
+// ====================================================================================
+// === MODULE EMPLOYE ===
+// ====================================================================================
+// Note : plus aucune requete SQL ni acces direct a la base dans cette classe (Vue) --
+// tout est delegue aux classes Modele Employe / PosteTravail, cf. consigne de l'atelier
+// CRUD du tuteur ("Aucune requete SQL... en dehors de la classe C++").
+
+void MainWindow::initialiserModuleEmploye()
+{
+    QPixmap pixmap(":/images/logo.png");
+    ui->labelLogoEmpl->setPixmap(pixmap.scaled(
+        ui->labelLogoEmpl->size(),
+        Qt::KeepAspectRatio,
+        Qt::SmoothTransformation
+        ));
+    connect(ui->btnAjouterEmploye, &QPushButton::clicked, this, &MainWindow::onAjouterEmployeClicked);
+    connect(ui->btnModifierEmploye, &QPushButton::clicked, this, &MainWindow::onModifierEmployeClicked);
+    connect(ui->btnSupprimerEmploye, &QPushButton::clicked, this, &MainWindow::onSupprimerEmployeClicked);
+    connect(ui->btnEnregistrerEmploye, &QPushButton::clicked, this, &MainWindow::onEnregistrerEmployeClicked);
+    connect(ui->btnAnnulerEmploye, &QPushButton::clicked, this, &MainWindow::onAnnulerEmployeClicked);
+    connect(ui->tableEmployes, &QTableWidget::cellClicked, this, &MainWindow::onLigneEmployeSelectionnee);
+    connect(ui->champRecherche, &QLineEdit::textChanged, this, &MainWindow::onRechercheEmployeChanged);
+    connect(ui->btnDeconnexionEmpl, &QPushButton::clicked, this, &MainWindow::deconnexionDemandee);
+
+    ui->champMotDePasse->setEchoMode(QLineEdit::Password);
+
+    viderFormulaireEmploye();
+    chargerEmployesDepuisBase(); // charge les employes existants depuis Oracle (construit aussi le graphique)
+
+    // Plan de l'atelier : un seul tableau de bord, en lecture seule pour le gerant, avec
+    // "Prendre / Liberer mon poste" pour les autres employes.
+    m_planPostesGerant = new PlanPostes(false);
+    m_planPostesGerant->setDefilementInterne(false); // la page Gerant defile deja en entier
+    m_planPostesEmploye = new PlanPostes(true);
+    m_planPostesEmploye->setDefilementInterne(false); // pas de defilement : le plan prend la hauteur de ses cartes
+    connect(m_planPostesEmploye, &PlanPostes::changerPosteDemande, this, &MainWindow::changerMonPosteTravail);
+    adapterMiseEnPageEmploye();
+    configurerFormulaireEmploye();
+    connect(ui->btnExporterDocument, &QPushButton::clicked, this, &MainWindow::onExporterDocumentRHClicked);
+
+    chargerPostesTravailDepuisBase();
+    remplirComboPostesTravail();
+    construirePlanDisponibilitePostes();
+
+    // Plusieurs instances de l'application (un employe par poste) partagent la meme base :
+    // le plan se met a jour tout seul toutes les 15 s, en plus du rafraichissement fait
+    // juste apres chaque ajout/modification/suppression locale. Parente a "this" : le timer
+    // est detruit avec la fenetre.
+    m_timerPostes = new QTimer(this);
+    m_timerPostes->setInterval(15000);
+    connect(m_timerPostes, &QTimer::timeout, this, &MainWindow::rafraichirPostesTravail);
+    m_timerPostes->start();
+
+    ui->tableEmployes->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    appliquerRestrictionsSelonPosteEmploye();
+}
+
+void MainWindow::appliquerRestrictionsSelonPosteEmploye()
+{
+    // 2 pages dans "SMEmpl" :
+    //  - index 0 ("pageGestionEmpl") : gestion complete des employes -> reservee au Gerant
+    //  - index 1 ("pageEspaceEmpl") : espace personnel generique (Couturier, Vendeur, Styliste)
+    const QString poste = m_employeConnecte.poste();
+
+    const bool estGerant = poste.compare("Gérant", Qt::CaseInsensitive) == 0
+                            || poste.compare("Gerant", Qt::CaseInsensitive) == 0;
+
+    // Affiche dans la barre laterale, pour tout le monde (remplace le "Mouna Ayari" fige du .ui)
+    ui->labelUtilisateurEmpl->setText(m_employeConnecte.prenom() + " " + m_employeConnecte.nom()
+                                   + "\n" + poste);
+
+    if (estGerant) {
+        ui->SMEmpl->setCurrentIndex(0);
+        ui->labelTitreEmpl->setText("Gestion des employés");
+        ui->labelTitreEmpl->setVisible(false);   // le titre est deja dans la carte "Gestion des employés"
+        return;
+    }
+
+    // Couturier / Vendeur / Styliste : espace personnel generique.
+    // Seul le Gerant peut aller vers les autres modules : on masque ces boutons du menu lateral.
+    ui->navArticlesEmpl->hide();
+    ui->navServicesEmpl->hide();
+    ui->navClientsEmpl->hide();
+    ui->SMEmpl->setCurrentIndex(1);
+    ui->labelTitreEmpl->setText("Mon espace — " + poste);
+
+    // "Mon profil" : affichage en lecture seule des infos de l'employe connecte. On
+    // s'assure que son poste exact est bien dans la liste du combo avant de le
+    // selectionner (la liste pre-remplie dans le .ui peut differer legerement,
+    // ex. anciennes donnees "Couturier").
+    ui->lineProfilNomEmpl->setText(m_employeConnecte.prenom() + " " + m_employeConnecte.nom());
+    ui->lineProfilNomEmpl->setReadOnly(true);
+    if (ui->comboProfilPosteEmpl->findText(poste) < 0)
+        ui->comboProfilPosteEmpl->addItem(poste);
+    ui->comboProfilPosteEmpl->setCurrentText(poste);
+    ui->comboProfilPosteEmpl->setEnabled(false);
+    ui->lineProfilEmailEmpl->setText(m_employeConnecte.email());
+    ui->lineProfilEmailEmpl->setToolTip(m_employeConnecte.email());
+    ui->lineProfilEmailEmpl->setReadOnly(true);
+    ui->lineProfilTelEmpl->setText(m_employeConnecte.telephone());
+    ui->lineProfilTelEmpl->setReadOnly(true);
+
+    // Mes documents RH : conge par defaut du lendemain a +4 jours.
+    ui->dateDebutConge->setMinimumDate(QDate::currentDate());
+    ui->dateDebutConge->setDate(QDate::currentDate().addDays(1));
+    ui->dateFinConge->setMinimumDate(QDate::currentDate());
+    ui->dateFinConge->setDate(QDate::currentDate().addDays(5));
+
+    construireRadarStatistiques();
+}
+
+void MainWindow::construireGraphiqueStatistiquesEmploye()
+{
+    // Repartition des employes par poste (role), calculee sur la liste chargee depuis la
+    // table EMPLOYE : une part par poste autorise, dans l'ordre des postes de la base.
+    if (!m_repartition)
+        return;   // la page n'est pas encore construite (constructeur) : adapterMiseEnPageEmploye() le rappelle
+
+    QMap<QString, int> nombreParPoste;
+    for (const Employe &e : m_employes)
+        nombreParPoste[e.poste()]++;
+
+    QList<QPair<QString, int>> parts;
+    for (const QString &poste : Employe::postes())
+        parts.append({poste, nombreParPoste.take(poste)});
+    for (auto it = nombreParPoste.constBegin(); it != nombreParPoste.constEnd(); ++it)   // ancienne valeur hors liste
+        parts.append({it.key().isEmpty() ? QString("Non renseigné") : it.key(), it.value()});
+    m_repartition->setDonnees(parts);
+}
+
+void MainWindow::chargerEmployesDepuisBase()
+{
+    QString erreur;
+    m_employes = Employe::chargerTous(&erreur);
+    if (!erreur.isEmpty()) {
+        QMessageBox::warning(this, "Chargement",
+                              "Impossible de charger les employés : " + erreur);
+    }
+
+    actualiserTableauEmployes();
+    construireGraphiqueStatistiquesEmploye();
+}
+
+void MainWindow::actualiserTableauEmployes()
+{
+    ui->tableEmployes->setRowCount(0);
+    for (const Employe &e : m_employes) {
+        int row = ui->tableEmployes->rowCount();
+        ui->tableEmployes->insertRow(row);
+        ui->tableEmployes->setItem(row, 0, new QTableWidgetItem(e.nom()));
+        ui->tableEmployes->setItem(row, 1, new QTableWidgetItem(e.prenom()));
+        ui->tableEmployes->setItem(row, 2, new QTableWidgetItem(e.poste()));
+        ui->tableEmployes->setItem(row, 3, new QTableWidgetItem(e.email()));
+        ui->tableEmployes->setItem(row, 4, new QTableWidgetItem(e.telephone()));
+        ui->tableEmployes->setItem(row, 5, new QTableWidgetItem(e.statut()));
+    }
+}
+
+void MainWindow::viderFormulaireEmploye()
+{
+    ui->champNom->clear();
+    ui->champPrenom->clear();
+    ui->comboPoste->setCurrentIndex(-1);   // "Choisir..." : rien n'est choisi au depart
+    ui->comboStatut->setCurrentIndex(-1);
+    ui->comboPosteTravail->setCurrentIndex(0); // "Aucun"
+    if (m_comboServiceEmploye)
+        m_comboServiceEmploye->setCurrentIndex(-1);
+    ui->champEmail->clear();
+    ui->champTelephone->clear();
+    ui->champMotDePasse->clear();
+    m_ligneEmployeSelectionnee = -1;
+    m_modeModificationEmploye = false;
+    ui->tableEmployes->clearSelection();
+
+    // formulaire vierge : pas de message d'erreur affiche, mais Enregistrer reste desactive
+    // tant que les champs obligatoires ne sont pas remplis
+    if (m_validationEmploye) {
+        m_validationEmploye->effacerMessages();
+        m_validationEmploye->evaluer();
+    }
+}
+
+void MainWindow::chargerFormulaireDepuisEmploye(const Employe &e)
+{
+    ui->champNom->setText(e.nom());
+    ui->champPrenom->setText(e.prenom());
+    ui->comboPoste->setCurrentIndex(ui->comboPoste->findData(e.poste()));     // -1 si valeur inconnue
+    ui->comboStatut->setCurrentIndex(ui->comboStatut->findData(e.statut()));
+    const int indexPoste = ui->comboPosteTravail->findData(e.posteTravail());
+    ui->comboPosteTravail->setCurrentIndex(indexPoste >= 0 ? indexPoste : 0);
+    m_comboServiceEmploye->setCurrentIndex(m_comboServiceEmploye->findData(QString::number(e.idService())));
+    ui->champEmail->setText(e.email());
+    ui->champTelephone->setText(e.telephone());
+    ui->champMotDePasse->clear(); // on ne réaffiche jamais un mot de passe existant
+}
+
+void MainWindow::onLigneEmployeSelectionnee(int row, int /*column*/)
+{
+    m_ligneEmployeSelectionnee = row;
+}
+
+void MainWindow::onAjouterEmployeClicked()
+{
+    viderFormulaireEmploye();
+    ui->champNom->setFocus();
+}
+
+void MainWindow::onModifierEmployeClicked()
+{
+    if (m_ligneEmployeSelectionnee < 0 || m_ligneEmployeSelectionnee >= m_employes.size()) {
+        QMessageBox::warning(this, "Modifier", "Sélectionne d'abord un employé dans le tableau.");
+        return;
+    }
+    chargerFormulaireDepuisEmploye(m_employes.at(m_ligneEmployeSelectionnee));
+    m_modeModificationEmploye = true;   // le mot de passe devient facultatif (vide = on garde l'ancien)
+    m_validationEmploye->revalider();   // signale tout de suite une ancienne donnee devenue invalide
+}
+
+void MainWindow::onSupprimerEmployeClicked()
+{
+    if (m_ligneEmployeSelectionnee < 0 || m_ligneEmployeSelectionnee >= m_employes.size()) {
+        QMessageBox::warning(this, "Supprimer", "Sélectionne d'abord un employé dans le tableau.");
+        return;
+    }
+
+    Employe e = m_employes.at(m_ligneEmployeSelectionnee);
+    auto reponse = QMessageBox::question(this, "Confirmer",
+                                         "Supprimer l'employé « " + e.prenom() + " " + e.nom() + " » ?");
+    if (reponse != QMessageBox::Yes)
+        return;
+
+    QString erreur;
+    if (!e.supprimer(&erreur)) {
+        QMessageBox::warning(this, "Supprimer", "Échec de la suppression : " + erreur);
+        return;
+    }
+
+    chargerEmployesDepuisBase();
+    rafraichirPostesTravail(); // un employe supprime libere son poste
+    viderFormulaireEmploye();
+}
+
+void MainWindow::onEnregistrerEmployeClicked()
+{
+    // Normalement le bouton est desactive tant que la fiche est invalide ; on revalide quand
+    // meme (touche Entree, etat change entre-temps) et on place le curseur sur le premier
+    // champ en erreur.
+    if (!m_validationEmploye->revalider()) {
+        if (QWidget *fautif = m_validationEmploye->premierEnErreur())
+            fautif->setFocus();
+        return;
+    }
+
+    const QString nom = ui->champNom->text().trimmed();
+    const QString prenom = ui->champPrenom->text().trimmed();
+    const QString poste = ui->comboPoste->currentData().toString();
+    const QString statut = ui->comboStatut->currentData().toString();
+    const QString email = ui->champEmail->text().trimmed();
+    const QString telephone = ui->champTelephone->text().trimmed();
+    const QString motDePasse = ui->champMotDePasse->text(); // en clair : Employe se charge du hachage
+    const QString posteTravail = ui->comboPosteTravail->currentData().toString(); // "" = "Aucun"
+    const int idService = m_comboServiceEmploye->currentData().toString().toInt();       // 0 = rien de choisi
+
+    QString erreur;
+    QString champ;   // champ concerne par l'erreur, quand le Modele le sait
+    bool succes;
+
+    if (m_modeModificationEmploye && m_ligneEmployeSelectionnee >= 0 && m_ligneEmployeSelectionnee < m_employes.size()) {
+        // --- MODIFICATION d'un employe existant (UPDATE) ---
+        int id = m_employes.at(m_ligneEmployeSelectionnee).id();
+        Employe e(id, nom, prenom, poste, email, telephone, statut, motDePasse, posteTravail, idService);
+        succes = e.modifier(&erreur, &champ);
+    } else {
+        // --- AJOUT d'un nouvel employe (INSERT), l'ID vient de la sequence Oracle ---
+        Employe e(-1, nom, prenom, poste, email, telephone, statut, motDePasse, posteTravail, idService);
+        succes = e.ajouter(&erreur, &champ);
+    }
+
+    if (!succes) {
+        afficherErreurModeleEmploye(champ, erreur);
+        return;
+    }
+
+    chargerEmployesDepuisBase(); // on recharge tout depuis Oracle pour rester synchronise
+    rafraichirPostesTravail();   // l'affectation a pu changer le plan
+    viderFormulaireEmploye();
+}
+
+void MainWindow::afficherErreurModeleEmploye(const QString &champ, const QString &message)
+{
+    // Le Modele renvoie un message lisible (jamais d'erreur Oracle brute) et, s'il le sait, le
+    // champ concerne : on l'affiche sous ce champ plutot que dans une fenetre.
+    QWidget *cible = nullptr;
+    if (champ == "nom")               cible = ui->champNom;
+    else if (champ == "prenom")       cible = ui->champPrenom;
+    else if (champ == "poste")        cible = ui->comboPoste;
+    else if (champ == "statut")       cible = ui->comboStatut;
+    else if (champ == "email")        cible = ui->champEmail;
+    else if (champ == "telephone")    cible = ui->champTelephone;
+    else if (champ == "posteTravail") cible = ui->comboPosteTravail;
+    else if (champ == "service")      cible = m_comboServiceEmploye;
+    else if (champ == "motDePasse")   cible = ui->champMotDePasse;
+
+    if (cible) {
+        m_validationEmploye->afficherErreur(cible, message);
+        cible->setFocus();
+    } else {
+        QMessageBox::warning(this, "Enregistrer", message);
+    }
+}
+
+void MainWindow::configurerFormulaireEmploye()
+{
+    // Longueurs alignees sur les colonnes de la table EMPLOYE
+    ui->champNom->setMaxLength(100);
+    ui->champPrenom->setMaxLength(100);
+    ui->champEmail->setMaxLength(100);
+    ui->champTelephone->setMaxLength(8);
+    ui->champMotDePasse->setMaxLength(100);
+
+    // Listes : valeurs exactement egales aux contraintes CHECK de la base ; rien n'est
+    // choisi au depart ("Choisir...").
+    ui->comboPoste->clear();
+    for (const QString &poste : Employe::postes())
+        ui->comboPoste->addItem(poste, poste);
+    ui->comboStatut->clear();
+    ui->comboStatut->addItem("Actif", "Actif");
+    ui->comboStatut->addItem("Inactif", "Inactif");
+    ui->comboStatut->addItem("Congé", "Conge");   // affiche avec accent, enregistre sans (comme le CHECK)
+    ui->comboPoste->setPlaceholderText("Choisir...");
+    ui->comboStatut->setPlaceholderText("Choisir...");
+
+    m_validationEmploye = new ValidationFormulaire(this);
+
+    // Les regles vivent dans le Modele (Employe::...Valide) : la Vue les branche seulement.
+    m_validationEmploye->attacherChamp(ui->champNom, [](const QString &v, QString *e) { return Employe::nomValide(v, e); });
+    m_validationEmploye->attacherChamp(ui->champPrenom, [](const QString &v, QString *e) { return Employe::prenomValide(v, e); });
+
+    // chaque liste a sa propre cellule : son message se place juste sous elle
+    QLabel *erreurPoste = ValidationFormulaire::creerEtiquette(ui->groupFiche);
+    QLabel *erreurStatut = ValidationFormulaire::creerEtiquette(ui->groupFiche);
+    ValidationFormulaire::placerSous(ui->comboPoste, erreurPoste);
+    ValidationFormulaire::placerSous(ui->comboStatut, erreurStatut);
+    m_validationEmploye->attacherCombo(ui->comboPoste, [](const QString &v, QString *e) { return Employe::posteValide(v, e); }, erreurPoste);
+    m_validationEmploye->attacherCombo(ui->comboStatut, [](const QString &v, QString *e) { return Employe::statutValide(v, e); }, erreurStatut);
+
+    m_validationEmploye->attacherChamp(ui->champEmail, [](const QString &v, QString *e) { return Employe::emailValide(v, e); });
+    m_validationEmploye->attacherChamp(ui->champTelephone, [](const QString &v, QString *e) { return Employe::telephoneValide(v, e); });
+
+    QLabel *erreurService = ValidationFormulaire::creerEtiquette(ui->groupFiche);
+    ValidationFormulaire::placerSous(m_comboServiceEmploye, erreurService);
+    m_comboServiceEmploye->setPlaceholderText("Choisir...");
+    remplirComboServicesEmploye();
+    m_validationEmploye->attacherCombo(m_comboServiceEmploye, [](const QString &v, QString *e) { return Employe::serviceValide(v, e); }, erreurService);
+
+    QLabel *erreurPosteTravail = ValidationFormulaire::creerEtiquette(ui->groupFiche);
+    ValidationFormulaire::placerSous(ui->comboPosteTravail, erreurPosteTravail);
+    m_validationEmploye->attacherCombo(ui->comboPosteTravail, [](const QString &v, QString *e) { return Employe::posteTravailValide(v, e); }, erreurPosteTravail);
+
+    // en modification, un mot de passe vide est accepte (on garde l'ancien)
+    m_validationEmploye->attacherChamp(ui->champMotDePasse, [this](const QString &v, QString *e) {
+        return Employe::motDePasseValide(v, e, !m_modeModificationEmploye);
+    });
+
+    // Enregistrer n'est actif que lorsque tous les champs sont valides
+    connect(m_validationEmploye, &ValidationFormulaire::etatChange, ui->btnEnregistrerEmploye, &QPushButton::setEnabled);
+    viderFormulaireEmploye();
+}
+
+void MainWindow::onAnnulerEmployeClicked()
+{
+    viderFormulaireEmploye();
+}
+
+void MainWindow::onRechercheEmployeChanged(const QString &texte)
+{
+    QString type = ui->comboTriEmploye->currentText(); // "Nom" ou "Poste"
+    int colonne = (type == "Poste") ? 2 : 0;
+    for (int row = 0; row < ui->tableEmployes->rowCount(); ++row) {
+        auto *item = ui->tableEmployes->item(row, colonne);
+        bool correspond = texte.isEmpty() || (item && item->text().contains(texte, Qt::CaseInsensitive));
+        ui->tableEmployes->setRowHidden(row, !correspond);
+    }
+}
+
+// --- Plan de disponibilite des postes de travail ---------------------------------
+//
+// Nouvelle fonctionnalite : chaque poste de travail (table POSTE_TRAVAIL) est libre
+// ou occupe selon qu'un employe a ce moment-la son EMPLOYE.POSTE_TRAVAIL egal a ce poste
+// dessus (contrainte UNIQUE cote base : un poste ne peut avoir qu'un seul occupant a
+// la fois). Reutilise l'emplacement et le groupBox de l'ancienne "File d'attente
+// intelligente" (retiree sur demande de la prof, jugee trop basique).
+
+void MainWindow::chargerPostesTravailDepuisBase()
+{
+    // Les 6 postes sont une liste fixe (PosteTravail::tous()) ; seule la table EMPLOYE dit
+    // qui occupe quoi : un poste absent de ce resultat est libre.
+    QString erreur;
+    m_occupants = Employe::occupantsParPoste(&erreur);
+    if (!erreur.isEmpty() && !m_erreurPostesSignalee) {
+        m_erreurPostesSignalee = true; // le timer rappelle cette methode : un seul avertissement
+        QMessageBox::warning(this, "Postes de travail",
+                              "Impossible de lire les postes de travail : " + erreur);
+    }
+
+    // Le poste de l'employe connecte a pu etre change ailleurs (par le gerant, ou depuis
+    // une autre instance de l'application) : on le relit pour que les boutons "Prendre /
+    // Liberer mon poste" restent justes.
+    QString monPoste;
+    for (auto it = m_occupants.constBegin(); it != m_occupants.constEnd(); ++it) {
+        if (it.value().id() == m_employeConnecte.id()) {
+            monPoste = it.key();
+            break;
+        }
+    }
+    m_employeConnecte.setPosteTravail(monPoste);
+}
+
+void MainWindow::remplirComboServicesEmploye()
+{
+    // La liste vient de la table SERVICE, via le Modele : "ID - TYPE_SERVICE" s'affiche, l'ID est memorise.
+    const QString selection = m_comboServiceEmploye->currentData().toString();
+    QString erreur;
+    QSqlQueryModel *services = Employe::listerServices(&erreur);
+    m_comboServiceEmploye->clear();
+    for (int i = 0; i < services->rowCount(); ++i)
+    {
+        const QString id = services->data(services->index(i, 0)).toString();
+        const QString type = services->data(services->index(i, 1)).toString();
+        m_comboServiceEmploye->addItem(id + " - " + type, id);   // affiche "1 - Nettoyage", memorise l'ID
+    }
+    delete services;
+    m_comboServiceEmploye->setCurrentIndex(m_comboServiceEmploye->findData(selection));   // -1 = "Choisir..."
+    if (!erreur.isEmpty())
+        QMessageBox::warning(this, "Services", "Impossible de lire les services : " + erreur);
+}
+
+void MainWindow::remplirComboPostesTravail()
+{
+    // Conserve la selection en cours (le plan se rafraichit pendant qu'on edite le formulaire).
+    const QString selection = ui->comboPosteTravail->currentData().toString();
+
+    ui->comboPosteTravail->clear();
+    ui->comboPosteTravail->addItem("Aucun", QString());
+    for (const QString &poste : PosteTravail::tous()) {
+        const bool occupe = m_occupants.contains(poste);
+        const Employe occupant = m_occupants.value(poste);
+        ui->comboPosteTravail->addItem(
+            PosteTravail::libelle(poste)
+                + (occupe ? " (occupé : " + occupant.prenom() + " " + occupant.nom() + ")" : QString()),
+            poste);
+    }
+
+    const int index = ui->comboPosteTravail->findData(selection);
+    ui->comboPosteTravail->setCurrentIndex(index >= 0 ? index : 0);
+}
+
+void MainWindow::rafraichirPostesTravail()
+{
+    chargerPostesTravailDepuisBase();
+    remplirComboPostesTravail();
+    construirePlanDisponibilitePostes();
+}
+
+void MainWindow::construirePlanDisponibilitePostes()
+{
+    // Les deux tableaux de bord (gerant / employe) recoivent les memes donnees ; PlanPostes
+    // ne reconstruit ses cartes que si quelque chose a change.
+    m_planPostesGerant->setDonnees(PosteTravail::tous(), m_occupants, QString());
+    m_planPostesEmploye->setDonnees(PosteTravail::tous(), m_occupants, m_employeConnecte.posteTravail());
+}
+
+// Carte de section : fond creme arrondi, titre en Playfair suivi d'un filet dore, puis le contenu.
+// Libelle + champ empiles dans une cellule (le message de validation vient se glisser dessous).
+static QWidget *creerCellule(QLabel *libelle, QWidget *champ)
+{
+    auto *cellule = new QWidget();
+    auto *v = new QVBoxLayout(cellule);
+    v->setContentsMargins(0, 0, 0, 0);
+    v->setSpacing(4);
+    v->addWidget(libelle);
+    v->addWidget(champ);
+    return cellule;
+}
+
+// "compact" : marges et titre reduits, pour les cartes qui doivent rester basses.
+// "icone" : pictogramme optionnel affiche a gauche du titre.
+static QFrame *creerCarteSection(const QString &titre, QWidget *contenu, bool compact = false,
+                                 const Icone *icone = nullptr)
+{
+    auto *carte = new QFrame();
+    carte->setObjectName("carteSection");
+    carte->setStyleSheet("QFrame#carteSection { background-color: #FFFDF9; border: 1px solid #EADFD0; border-radius: 14px; }");
+    auto *colonne = new QVBoxLayout(carte);
+    colonne->setContentsMargins(20, compact ? 10 : 16, 20, compact ? 12 : 18);
+    colonne->setSpacing(compact ? 6 : 12);
+
+    auto *entete = new QHBoxLayout();
+    entete->setSpacing(14);
+    auto *libelle = new QLabel(titre);
+    libelle->setStyleSheet(QString("font-family: 'Playfair Display'; font-weight: bold; font-size: %1pt; "
+                           "color: #1F3A4D; background: transparent; border: none;").arg(compact ? 13 : 14));
+    auto *filet = new QFrame();
+    filet->setFixedHeight(1);
+    filet->setStyleSheet("background-color: #E2D5BF; border: none;");
+    if (icone) {
+        auto *pastille = new QLabel();
+        pastille->setFixedSize(30, 30);
+        pastille->setAlignment(Qt::AlignCenter);
+        pastille->setPixmap(pixmapIcone(*icone, QColor("#8B1E2F"), 18));
+        pastille->setStyleSheet("background-color: #F6EDE4; border: none; border-radius: 15px;");
+        entete->setSpacing(10);
+        entete->addWidget(pastille);
+    }
+    entete->addWidget(libelle);
+    entete->addWidget(filet, 1, Qt::AlignVCenter);
+    colonne->addLayout(entete);
+    colonne->addWidget(contenu, 1);
+    return carte;
+}
+
+void MainWindow::adapterMiseEnPageEmploye()
+{
+    // Le .ui place tout en positions absolues pour une fenetre de 1499 x 872 : trop grand
+    // pour beaucoup d'ecrans (contenu coupe en bas) et avec des vides en plein ecran. On
+    // remplace ces positions par des layouts qui suivent la taille de la fenetre.
+    // (taille minimale de la fenetre : geree par MainWindow)
+    ui->menubar->hide();
+
+    QWidget *barreRecherche = ui->champRecherche->parentWidget();
+    QWidget *navigation = ui->navArticlesEmpl->parentWidget();
+
+    // --- barre laterale : logo, navigation, puis utilisateur et deconnexion en bas ---
+    ui->sidebarEmpl->setFixedWidth(281);
+    auto *lateral = new QVBoxLayout(ui->sidebarEmpl);
+    lateral->setContentsMargins(25, 28, 25, 28);
+    lateral->setSpacing(18);
+    ui->labelLogoEmpl->setFixedSize(231, 101);
+    lateral->addWidget(ui->labelLogoEmpl, 0, Qt::AlignHCenter);
+    lateral->addSpacing(10);
+    navigation->setFixedHeight(271);
+    lateral->addWidget(navigation);
+    lateral->addStretch();
+    lateral->addWidget(ui->labelUtilisateurEmpl);
+    lateral->addWidget(ui->btnDeconnexionEmpl);
+
+    // --- fenetre : barre laterale a gauche, titre + pages a droite ---
+    auto *principal = new QHBoxLayout(ui->PEmpl);
+    principal->setContentsMargins(0, 0, 0, 0);
+    principal->setSpacing(0);
+    auto *zoneDroite = new QWidget(ui->PEmpl);
+    auto *droite = new QVBoxLayout(zoneDroite);
+    droite->setContentsMargins(28, 22, 28, 18);
+    droite->setSpacing(10);
+    ui->labelTitreEmpl->setMinimumHeight(44);
+    droite->addWidget(ui->labelTitreEmpl);
+    droite->addWidget(ui->SMEmpl, 1);
+    principal->addWidget(ui->sidebarEmpl);
+    principal->addWidget(zoneDroite, 1);
+
+    // --- page Gerant : cartes "Gestion des employes" / "Statistiques" a gauche, fiche a droite,
+    // plan de l'atelier compact en bas ; la page defile verticalement si l'ecran est petit ---
+    auto *defilement = new QScrollArea(ui->pageGestionEmpl);
+    defilement->setWidgetResizable(true);
+    defilement->setFrameShape(QFrame::NoFrame);
+    defilement->setStyleSheet("QScrollArea { background: transparent; }");
+    auto *contenu = new QWidget();
+    contenu->setObjectName("contenuGerant");
+    contenu->setStyleSheet("QWidget#contenuGerant { background: transparent; }");
+    defilement->setWidget(contenu);
+    auto *lPage = new QVBoxLayout(ui->pageGestionEmpl);
+    lPage->setContentsMargins(0, 0, 0, 0);
+    lPage->addWidget(defilement);
+
+    // loupe dans le champ de recherche
+    ui->champRecherche->addAction(QIcon(pixmapIcone(Icone::Loupe, QColor("#5F707D"), 18)), QLineEdit::LeadingPosition);
+
+    // carte 1 : recherche + boutons + tableau
+    auto *contenuEmployes = new QWidget();
+    auto *lEmployes = new QVBoxLayout(contenuEmployes);
+    lEmployes->setContentsMargins(0, 0, 0, 0);
+    lEmployes->setSpacing(10);
+    lEmployes->addWidget(barreRecherche);
+    lEmployes->addWidget(ui->tableEmployes, 1);
+    ui->tableEmployes->setMinimumHeight(170);
+    ui->tableEmployes->verticalHeader()->setDefaultSectionSize(34);
+    QFrame *carteEmployes = creerCarteSection("Gestion des employés", contenuEmployes);
+
+    // carte 2 : repartition par poste (a la place de l'ancien histogramme)
+    m_repartition = new RepartitionPostes();
+    ui->groupStatistiques->hide();
+    const Icone iconeStatistiques = Icone::Repartition;
+    QFrame *carteStatistiques = creerCarteSection("Statistiques des employés", m_repartition, true, &iconeStatistiques);
+
+    // carte 3 : fiche employe sur deux colonnes. Chaque champ est range avec son libelle dans
+    // une cellule ; le message de validation vient se glisser sous le champ, dans la cellule.
+    auto cellule = [](QLabel *libelle, QWidget *champ) {
+        auto *c = new QWidget();
+        auto *v = new QVBoxLayout(c);
+        v->setContentsMargins(0, 0, 0, 0);
+        v->setSpacing(4);
+        v->addWidget(libelle);
+        v->addWidget(champ);
+        return c;
+    };
+    delete ui->groupFiche->layout();   // l'ancienne pile verticale ; les widgets restent dans le groupe
+    ui->groupFiche->setTitle(QString());
+    ui->groupFiche->setStyleSheet("QGroupBox { border: none; margin: 0; padding: 0; background: transparent; }");
+    auto *fiche = new QGridLayout(ui->groupFiche);
+    fiche->setContentsMargins(0, 0, 0, 0);
+    fiche->setHorizontalSpacing(14);
+    fiche->setVerticalSpacing(12);
+    fiche->addWidget(cellule(ui->labelNomEmpl, ui->champNom), 0, 0);
+    fiche->addWidget(cellule(ui->labelPrenomEmpl, ui->champPrenom), 0, 1);
+    fiche->addWidget(cellule(ui->labelPosteEmpl, ui->comboPoste), 1, 0);
+    fiche->addWidget(cellule(ui->labelStatutEmpl, ui->comboStatut), 1, 1);
+    fiche->addWidget(cellule(ui->labelEmailEmpl, ui->champEmail), 2, 0);
+    fiche->addWidget(cellule(ui->labelTelephoneEmpl, ui->champTelephone), 2, 1);
+    auto *labelService = new QLabel("Service", ui->groupFiche);
+    labelService->setStyleSheet(ui->labelPosteEmpl->styleSheet());
+    labelService->setFont(ui->labelPosteEmpl->font());
+    m_comboServiceEmploye = new QComboBox(ui->groupFiche);
+    fiche->addWidget(cellule(ui->labelPosteTravail, ui->comboPosteTravail), 3, 0);
+    fiche->addWidget(cellule(labelService, m_comboServiceEmploye), 3, 1);
+    fiche->addWidget(cellule(ui->labelMotDePasseEmpl, ui->champMotDePasse), 4, 0, 1, 2);
+    auto *boutons = new QHBoxLayout();
+    boutons->setSpacing(14);
+    ui->btnEnregistrerEmploye->setMinimumHeight(40);
+    ui->btnAnnulerEmploye->setMinimumHeight(40);
+    boutons->addWidget(ui->btnEnregistrerEmploye, 1);
+    boutons->addWidget(ui->btnAnnulerEmploye, 1);
+    // l'espace libre se repartit entre les lignes de champs ; les boutons restent en bas
+    for (int ligne = 0; ligne < 5; ++ligne)
+        fiche->setRowStretch(ligne, 1);
+    fiche->addLayout(boutons, 5, 0, 1, 2);
+    for (QWidget *champ : std::initializer_list<QWidget *>{
+             ui->champNom, ui->champPrenom, ui->comboPoste, ui->comboStatut, ui->champEmail,
+             ui->champTelephone, ui->comboPosteTravail, m_comboServiceEmploye, ui->champMotDePasse})
+        champ->setMinimumHeight(38);
+    QFrame *carteFiche = creerCarteSection("Fiche employé", ui->groupFiche);
+
+    // plan de l'atelier : version compacte, sur toute la largeur
+    m_planPostesGerant->setCompact(true);
+
+    auto *grille = new QGridLayout(contenu);
+    grille->setContentsMargins(0, 4, 8, 8);
+    grille->setHorizontalSpacing(18);
+    grille->setVerticalSpacing(16);
+    grille->addWidget(carteEmployes, 0, 0);
+    grille->addWidget(carteStatistiques, 1, 0);
+    grille->addWidget(carteFiche, 0, 1, 2, 1);
+    grille->addWidget(m_planPostesGerant, 2, 0, 1, 2);
+    grille->setColumnStretch(0, 3);
+    grille->setColumnStretch(1, 2);
+    grille->setColumnMinimumWidth(1, 440);
+    grille->setRowStretch(0, 1);   // le tableau prend toute la place libre, les statistiques restent basses
+    grille->setRowStretch(1, 0);
+    construireGraphiqueStatistiquesEmploye();
+
+    // --- page employe : tout tient a l'ecran, sans defilement. Le plan est compact (une seule
+    // ligne de cartes) et les trois blocs du bas rangent leurs champs par layouts : ils
+    // s'adaptent a la largeur de la fenetre au lieu d'avoir une taille fixe. ---
+    ui->groupFileAttenteEmpl->hide();   // ancienne "File d'attente intelligente", remplacee par le plan
+    m_planPostesEmploye->setCompact(true);
+
+    auto neutraliser = [](QGroupBox *groupe) {
+        groupe->setTitle(QString());   // la carte porte le titre
+        groupe->setStyleSheet("QGroupBox { border: none; margin: 0; padding: 0; background: transparent; }");
+    };
+    auto grilleDe = [](QWidget *parent) {
+        auto *g = new QGridLayout(parent);
+        g->setContentsMargins(0, 0, 0, 0);
+        g->setHorizontalSpacing(12);
+        g->setVerticalSpacing(8);
+        return g;
+    };
+
+    // Mon profil : 2 x 2 champs en lecture seule
+    neutraliser(ui->groupProfilEmpl);
+    auto *profil = grilleDe(ui->groupProfilEmpl);
+    profil->addWidget(creerCellule(ui->labelProfilNomEmpl, ui->lineProfilNomEmpl), 0, 0);
+    profil->addWidget(creerCellule(ui->labelProfilPosteEmpl, ui->comboProfilPosteEmpl), 0, 1);
+    profil->addWidget(creerCellule(ui->labelProfilEmailEmpl, ui->lineProfilEmailEmpl), 1, 0, 1, 2);
+    profil->addWidget(creerCellule(ui->labelProfilTelEmpl, ui->lineProfilTelEmpl), 2, 0, 1, 2);
+
+    // Mes documents RH : liste, dates, motif, bouton
+    neutraliser(ui->groupDocumentsRHEmpl);
+    ui->labelDocumentRHEmpl->hide();   // "Document pre-rempli..." : la liste se suffit a elle-meme
+    auto *documents = grilleDe(ui->groupDocumentsRHEmpl);
+    documents->addWidget(ui->comboDocumentRHEmpl, 0, 0, 1, 2);
+    documents->addWidget(creerCellule(ui->labelDebutConge, ui->dateDebutConge), 1, 0);
+    documents->addWidget(creerCellule(ui->labelFinConge, ui->dateFinConge), 1, 1);
+    documents->addWidget(ui->champMotifConge, 2, 0, 1, 2);
+    documents->addWidget(ui->btnExporterDocument, 3, 0, 1, 2);
+
+    // Mes statistiques : le diagramme araignee remplit la carte
+    neutraliser(ui->groupStatistiquesEmployeEmpl);
+    if (ui->groupStatistiquesEmployeEmpl->layout())
+        ui->groupStatistiquesEmployeEmpl->layout()->setContentsMargins(0, 0, 0, 0);
+
+    for (QWidget *champ : std::initializer_list<QWidget *>{
+             ui->lineProfilNomEmpl, ui->comboProfilPosteEmpl, ui->lineProfilEmailEmpl, ui->lineProfilTelEmpl, ui->comboDocumentRHEmpl,
+             ui->dateDebutConge, ui->dateFinConge, ui->champMotifConge})
+    {
+        champ->setMinimumHeight(38);
+        champ->setMaximumHeight(64);
+        champ->setSizePolicy(champ->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+    }
+    ui->btnExporterDocument->setMinimumHeight(40);
+    ui->btnExporterDocument->setMaximumHeight(64);
+    ui->btnExporterDocument->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    QFrame *carteProfil = creerCarteSection("Mon profil", ui->groupProfilEmpl, true);
+    QFrame *carteDocuments = creerCarteSection("Mes documents RH", ui->groupDocumentsRHEmpl, true);
+    QFrame *carteStatsEmploye = creerCarteSection("Mes statistiques", ui->groupStatistiquesEmployeEmpl, true);
+
+    auto *lEmploye = new QGridLayout(ui->pageEspaceEmpl);
+    lEmploye->setContentsMargins(0, 4, 8, 8);
+    lEmploye->setHorizontalSpacing(16);
+    lEmploye->setVerticalSpacing(14);
+    lEmploye->addWidget(m_planPostesEmploye, 0, 0, 1, 3);
+    lEmploye->addWidget(carteProfil, 1, 0);
+    lEmploye->addWidget(carteDocuments, 1, 1);
+    lEmploye->addWidget(carteStatsEmploye, 1, 2);
+    lEmploye->setColumnStretch(0, 3);
+    lEmploye->setColumnStretch(1, 3);
+    lEmploye->setColumnStretch(2, 4);
+    lEmploye->setRowStretch(0, 0);   // le plan prend sa hauteur naturelle
+    lEmploye->setRowStretch(1, 1);   // les trois cartes se partagent le reste de la hauteur
+}
+
+void MainWindow::changerMonPosteTravail(const QString &poste)
+{
+    QString erreur;
+    if (!m_employeConnecte.changerPosteTravail(poste, &erreur)) {
+        QMessageBox::warning(this, "Poste de travail", erreur);
+    }
+    rafraichirPostesTravail();
+}
+
+void MainWindow::construireRadarStatistiques()
+{
+    QString erreur;
+    const QMap<QString, int> parType = Employe::compterServicesParType(m_employeConnecte.id(), &erreur);
+    if (!erreur.isEmpty()) {
+        QMessageBox::warning(this, "Statistiques", "Impossible de charger les statistiques : " + erreur);
+    }
+
+    int total = 0;
+    for (int n : parType)
+        total += n;
+
+    // Vide l'ancien contenu (au cas ou la methode est rappelee) avant d'ajouter le graphique.
+    while (QLayoutItem *item = ui->layoutStatistiquesEmploye->takeAt(0)) {
+        delete item->widget();
+        delete item;
+    }
+
+    auto *vue = new QChartView(creerDiagrammeAraignee(
+        total == 0 ? "Aucun service pour l'instant" : "Mes services par type",
+        Employe::typesService(), parType));
+    vue->setRenderHint(QPainter::Antialiasing);
+    vue->setStyleSheet("background: transparent;");
+    vue->setMinimumHeight(150);
+    ui->layoutStatistiquesEmploye->addWidget(vue);
+}
+
+void MainWindow::onExporterDocumentRHClicked()
+{
+    const QDate debut = ui->dateDebutConge->date();
+    const QDate fin = ui->dateFinConge->date();
+    if (fin < debut) {
+        QMessageBox::warning(this, "Demande de congé",
+                              "La date de fin doit être postérieure ou égale à la date de début.");
+        ui->dateFinConge->setFocus();
+        return;
+    }
+
+    const QString nomFichier = "Demande_conge_" + m_employeConnecte.nom() + "_"
+                               + debut.toString("yyyyMMdd") + ".pdf";
+    const QString chemin = QFileDialog::getSaveFileName(
+        this, "Exporter la demande de congé", QDir::home().filePath(nomFichier), "Documents PDF (*.pdf)");
+    if (chemin.isEmpty())
+        return; // annule par l'utilisateur
+
+    QString erreur;
+    if (!DocumentRH::exporterDemandeConge(m_employeConnecte, debut, fin,
+                                          ui->champMotifConge->text(), chemin, &erreur)) {
+        QMessageBox::warning(this, "Demande de congé", "Échec de l'export : " + erreur);
+        return;
+    }
+
+    if (QMessageBox::question(this, "Demande de congé",
+                              "Document exporté :\n" + chemin + "\n\nVoulez-vous l'ouvrir ?")
+        == QMessageBox::Yes) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(chemin));
+    }
+}
+// === FIN MODULE EMPLOYE ===
+
+
+// ====================================================================================
+// === MODULE CLIENT ===   (a integrer)
+// ====================================================================================
+// === FIN MODULE CLIENT ===
+
+
+// ====================================================================================
+// === MODULE ARTICLE ===   (a integrer)
+// ====================================================================================
+// === FIN MODULE ARTICLE ===
+
+
+// ====================================================================================
+// === MODULE MATIERE PREMIERE ===   (a integrer)
+// ====================================================================================
+// === FIN MODULE MATIERE PREMIERE ===
+
+
+// ====================================================================================
+// === MODULE EVENEMENT ===   (a integrer)
+// ====================================================================================
+// === FIN MODULE EVENEMENT ===

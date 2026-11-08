@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/icone.png</file>
+        <file alias="style_employes.qss">style.qss</file>
+        <file>fonts/Lato-Bold.ttf</file>
+        <file>fonts/Lato-Regular.ttf</file>
+        <file>fonts/PlayfairDisplay-Bold.ttf</file>
+        <file>fonts/PlayfairDisplay-Regular.ttf</file>
+        <file>images/logo.png</file>
+        <file>images/fond_connexion.png</file>
+        <file>images/logo_smartstitch.png</file>
+    </qresource>
+</RCC>

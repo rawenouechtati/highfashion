@@ -3,8 +3,13 @@
 
 #include <QMainWindow>
 #include <QDate>
+#include <QList>
+#include <QMap>
+#include <QString>
 #include <QVector>
-#include "service.h"
+#include "service.h"       // module Service
+#include "employe.h"       // module Employe
+#include "posteTravail.h"  // module Employe
 
 class QLabel;
 class QTextEdit;
@@ -13,6 +18,14 @@ class QComboBox;
 class QScrollArea;
 class QBoxLayout;
 class QResizeEvent;
+// module Employe
+class PlanPostes;
+class RepartitionPostes;
+class ValidationFormulaire;
+class QFrame;
+class QGridLayout;
+class QTimer;
+class QWidget;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -22,12 +35,48 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow(QWidget *parent = nullptr);
+    // employeConnecte : l'employe qui vient de se connecter (poste inclus). Il sert a adapter la page
+    // Employes : Gerant = gestion complete, autre poste = espace personnel seulement.
+    explicit MainWindow(const Employe &employeConnecte = Employe(), QWidget *parent = nullptr);
     ~MainWindow();
+
+    // Pages du QStackedWidget principal (ui->SWSmartStitch) : une page par module
+    enum PageModule {
+        PageEmploye   = 0,   // PEmpl
+        PageService   = 1,   // PServices
+        PageClient    = 2,   // PClient
+        PageArticle   = 3,   // PArticle
+        PageMatiere   = 4,   // PMatiere
+        PageEvenement = 5    // PEvenement
+    };
+
+signals:
+    // Emis par les boutons "Deconnexion" : main.cpp ferme la fenetre et rouvre l'ecran de connexion.
+    void deconnexionDemandee();
 
 protected:
     void resizeEvent(QResizeEvent *e) override;
 
+    // ==========================================================================
+    // === SLOTS GÉNÉRAUX ===   navigation entre les modules (stackedWidget principal)
+    // ==========================================================================
+private slots:
+    void allerVersEmployes();
+    void allerVersServices();
+    void allerVersClients();
+    void allerVersArticles();
+    void allerVersMatieres();
+    void allerVersEvenements();
+
+private:
+    void connecterNavigation();
+    Ui::MainWindow *ui;
+    // === FIN SLOTS GÉNÉRAUX ===
+
+
+    // ==========================================================================
+    // === MODULE SERVICE ===
+    // ==========================================================================
 private slots:
     void onRowSelected();
     void recalc();
@@ -42,7 +91,9 @@ private slots:
     void onSupprimer();
     void onPlanning();
 
+
 private:
+    void initialiserModuleService();
     void setupSidebar();
     void setupHeader();
     void setupFiche();
@@ -62,9 +113,6 @@ private:
     QVector<int> trouverConflits(const Service &s, int ignore) const;
     void verifierConflit();
 
-
-
-    Ui::MainWindow *ui;
     QVector<Service> m_services;
     int m_current = -1;
 
@@ -84,6 +132,80 @@ private:
     QScrollArea *scrollDetails = nullptr;
     QBoxLayout  *m_content = nullptr;
     int          m_layoutState = -1;
+    // === FIN MODULE SERVICE ===
+
+
+    // ==========================================================================
+    // === MODULE EMPLOYE ===
+    // ==========================================================================
+private slots:
+    void onAjouterEmployeClicked();
+    void onModifierEmployeClicked();
+    void onSupprimerEmployeClicked();
+    void onEnregistrerEmployeClicked();
+    void onAnnulerEmployeClicked();
+    void onLigneEmployeSelectionnee(int row, int column);
+    void onRechercheEmployeChanged(const QString &texte);
+    void onExporterDocumentRHClicked();
+
+private:
+    void initialiserModuleEmploye();            // ex-constructeur de la fenetre Employes : connexions, plan, timer
+    void actualiserTableauEmployes();
+    void viderFormulaireEmploye();
+    void chargerFormulaireDepuisEmploye(const Employe &e);
+    void chargerEmployesDepuisBase(); // va chercher les employes dans Oracle (SELECT)
+    void appliquerRestrictionsSelonPosteEmploye(); // bascule page Gerant / page employe selon le poste
+    // --- Plan de disponibilite des postes de travail (Modele : PosteTravail / Employe) ---
+    void chargerPostesTravailDepuisBase();      // recharge m_occupants (qui occupe quel poste)
+    void construirePlanDisponibilitePostes();   // (re)construit la grille de cartes
+    void configurerFormulaireEmploye();                // listes, longueurs max et validation en temps reel de la fiche
+    void afficherErreurModeleEmploye(const QString &champ, const QString &message); // message du Modele sous le bon champ
+    void adapterMiseEnPageEmploye();                   // layouts adaptatifs (remplacent les positions absolues du .ui)
+    void remplirComboServicesEmploye();                // combo "Service" du formulaire (obligatoire, ID_SERVICE)
+    void remplirComboPostesTravail();           // combo "Poste de travail" du formulaire (+ "Aucun")
+    void changerMonPosteTravail(const QString &poste); // l'employe connecte prend (ou libere avec "") un poste
+    void construireRadarStatistiques();         // "Mes statistiques" : diagramme araignee par type de service
+    void rafraichirPostesTravail();             // recharge + reconstruit le plan (timer et apres chaque ecriture)
+    void construireGraphiqueStatistiquesEmploye();// graphique "employes par poste", base sur m_employes
+
+    Employe m_employeConnecte;              // l'employe qui s'est connecte (poste inclus)
+    QList<Employe> m_employes;
+    int m_ligneEmployeSelectionnee = -1;
+    bool m_modeModificationEmploye = false;
+
+    QMap<QString, Employe> m_occupants;     // POSTE_TRAVAIL -> employe qui l'occupe (absent = libre)
+    bool m_erreurPostesSignalee = false;    // n'avertit qu'une fois si la lecture des postes echoue
+    QComboBox *m_comboServiceEmploye = nullptr;         // liste des services (SERVICE.ID memorise, TYPE_SERVICE affiche)
+    ValidationFormulaire *m_validationEmploye = nullptr; // messages d'erreur sous les champs de la fiche
+    RepartitionPostes *m_repartition = nullptr;   // "Statistiques des employes" : barre de repartition par poste
+    PlanPostes *m_planPostesGerant = nullptr;   // tableau de bord (page Gerant, lecture seule)
+    PlanPostes *m_planPostesEmploye = nullptr;  // tableau de bord (Mon espace, avec Prendre/Liberer)
+    QTimer *m_timerPostes = nullptr;        // rafraichit le plan : plusieurs instances partagent la base
+    // === FIN MODULE EMPLOYE ===
+
+
+    // ==========================================================================
+    // === MODULE CLIENT ===   (a integrer)
+    // ==========================================================================
+    // === FIN MODULE CLIENT ===
+
+
+    // ==========================================================================
+    // === MODULE ARTICLE ===   (a integrer)
+    // ==========================================================================
+    // === FIN MODULE ARTICLE ===
+
+
+    // ==========================================================================
+    // === MODULE MATIERE PREMIERE ===   (a integrer)
+    // ==========================================================================
+    // === FIN MODULE MATIERE PREMIERE ===
+
+
+    // ==========================================================================
+    // === MODULE EVENEMENT ===   (a integrer)
+    // ==========================================================================
+    // === FIN MODULE EVENEMENT ===
 };
 
 #endif // MAINWINDOW_H
