@@ -4,29 +4,21 @@
 
 Connection& Connection::createInstance()
 {
-    static Connection instance;            // Meyers Singleton
+    static Connection instance;
     return instance;
 }
 
 bool Connection::createconnect()
 {
-    if (!db.isValid())
-        db = QSqlDatabase::addDatabase("QODBC");
-
-    db.setDatabaseName("Source_Projet2A");
+    db = QSqlDatabase::addDatabase("QODBC");
+    db.setDatabaseName("Projet2A25");
     db.setUserName("smartstitch");
     db.setPassword("smart123");
 
-
     if (db.open()) {
-        qDebug() << "Connexion réussie";
+        qDebug() << "Connexion reussie";
         return true;
     }
-    qDebug() << "Erreur de connexion :" << db.lastError().text();
+    qDebug() << "Echec :" << db.lastError().text();
     return false;
-}
-
-void Connection::closeConnection()
-{
-    db.close();
 }

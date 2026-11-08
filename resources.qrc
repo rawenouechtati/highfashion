@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>style.qss</file>
-        <file>logo.jpeg.jpeg</file>
+        <file alias="2A25_Smart_Fashion_Management/images/logo.jpeg.jpeg">logo.jpeg.jpeg</file>
     </qresource>
     <qresource prefix="/images"/>
 </RCC>

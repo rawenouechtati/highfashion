@@ -1,13 +1,34 @@
-build/
-.qtcreator/
+# --- Fichiers spécifiques à Qt Creator ---
+*.pro.user
 *.user
 *.autosave
+*.qbs.user
+*.creator.user
+
+# --- Dossiers de compilation ---
 build/
-*.exe
+build-*/
+debug/
+release/
+bin/
+obj/
+
+# --- Sauvegardes et fichiers temporaires ---
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+
+# --- Fichiers générés automatiquement ---
+Makefile*
 *.o
-*.obj
-*.dll
 *.a
 *.so
-*.pro.user
-2A25_Smart_Fashion_Management/
+*.dll
+*.exe
+
+# --- Base de données : ne jamais la mettre sur GitHub ---
+*.dmp
+*.dbf
+*.sql
