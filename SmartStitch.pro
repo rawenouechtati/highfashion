@@ -21,5 +21,9 @@ FORMS += \
     Maysam_Module/clientsmainwindow.ui
 
 RESOURCES += resources.qrc
-# Si le logo du module Clients n'apparaît pas, ajouter aussi :
-# RESOURCES += Maysam_Module/LOGO.qrc
+
+# === MODULE EMPLOYE ===
+INCLUDEPATH += $$PWD/Employes
+SOURCES += $$files($$PWD/Employes/*.cpp)
+HEADERS += $$files($$PWD/Employes/*.h)
+FORMS   += $$files($$PWD/Employes/*.ui)
