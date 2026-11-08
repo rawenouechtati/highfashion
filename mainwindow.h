@@ -7,6 +7,9 @@
 #include <QMap>
 #include <QString>
 #include <QVector>
+#include <QHash>
+#include <QRect>
+#include <QSize>
 #include "service.h"       // module Service
 #include "employe.h"       // module Employe
 #include "posteTravail.h"  // module Employe
@@ -30,6 +33,25 @@ class QWidget;
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+// ==========================================================================
+// === MODULE CLIENT : widget de diagramme (repartition des clients par tranche de points) ===
+// ==========================================================================
+class DiagrammeWidget : public QWidget
+{
+public:
+    explicit DiagrammeWidget(QWidget *parent = nullptr) : QWidget(parent) {
+        setMinimumHeight(120);
+    }
+    void setDonnees(const QVector<int> &c, int sel) { comptes = c; trancheSel = sel; update(); }
+
+protected:
+    void paintEvent(QPaintEvent *) override;
+
+private:
+    QVector<int> comptes = QVector<int>(5, 0);
+    int trancheSel = -1;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -185,8 +207,42 @@ private:
 
 
     // ==========================================================================
-    // === MODULE CLIENT ===   (a integrer)
+    // === MODULE CLIENT ===
     // ==========================================================================
+private slots:
+    void on_cli_pushButton_6_clicked();            // bouton "generer" (recu)
+    void on_cli_pushButtonOuvrir_clicked();        // bouton "ouvrir" (contrat)
+    void on_cli_pushButtonEnregistrer_clicked();
+    void on_cli_pushButtonAnnuler_clicked();
+    void on_cli_pushButton_4_clicked();            // bouton "supprimer"
+    void onDeconnexionClientClicked();
+    void rechercherClients(const QString &texte);
+    void trierClients();
+    void onAjouterClientClicked();
+    void onModifierClientClicked();
+    void exporterListeClientsPdf();
+
+private:
+    void initialiserModuleClient();     // ex-constructeur du module : connexions, interface, style
+    void viderChampsClient();
+    bool emailClientValide(const QString &email) const;
+    void chargerClients();              // SELECT via Client::afficher, appele a chaque affichage de la page
+    void majDiagrammeClient();
+    void activerMenuClient(QPushButton *actif);
+    void collecterGeometriesClient(QWidget *parent);
+    void appliquerEchelleClient();
+
+    bool m_modeAjoutClient = false;
+    bool m_modeModifClient = false;
+    int m_ligneModifClient = -1;
+    int m_idModifClient = -1;
+    QTimer *m_timerHorlogeClient = nullptr;
+    QList<QPushButton*> m_boutonsMenuClient;
+    QString m_styleMenuActifClient;
+    QString m_styleMenuNormalClient;
+    DiagrammeWidget *m_diagrammeClient = nullptr;
+    QHash<QWidget*, QRect> m_geomOrigClient;
+    QSize m_baseSizeClient;
     // === FIN MODULE CLIENT ===
 
 

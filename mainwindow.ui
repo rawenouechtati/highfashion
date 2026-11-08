@@ -1795,22 +1795,1393 @@ border-radius: 4px;</string>
        </widget>
       </widget>
       <widget class="QWidget" name="PClient">
-       <layout class="QVBoxLayout" name="layoutPClient">
-        <item alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="labelPlaceholderClient">
-          <property name="text">
-           <string>Module Clients : page à intégrer par le membre de l'équipe concerné</string>
+       <property name="styleSheet">
+        <string notr="true">QMainWindow {
+    background-color: #F5F1E8;
+}
+
+QWidget {
+    color: #1F3A4D;
+    font-family: "Segoe UI";
+}
+
+QPushButton {
+    background-color: #1F3A4D;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+}
+
+QPushButton:hover {
+    background-color: #8B1E2D;
+}
+
+QLineEdit,
+QComboBox,
+QDateEdit,
+QSpinBox,
+QDoubleSpinBox {
+    background-color: white;
+    color: #1F3A4D;
+    border: 1px solid #B39B6A;
+    border-radius: 5px;
+    padding: 6px;
+}
+
+QTableWidget {
+    background-color: white;
+    color: #1F3A4D;
+    border: 1px solid #B39B6A;
+    gridline-color: #B39B6A;
+}
+
+QHeaderView::section {
+    background-color: #1F3A4D;
+    color: white;
+    padding: 7px;
+    border: none;
+}
+
+QGroupBox {
+    color: #1F3A4D;
+    font-weight: bold;
+    border: 1px solid #B39B6A;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 12px;
+}
+
+QLabel {
+    color: #1F3A4D;
+}
+
+QCheckBox {
+    color: #1F3A4D;
+}
+
+QListWidget {
+    background-color: #F5F1E8;
+    color: #1F3A4D;
+    border: 1px solid #B39B6A;
+    border-radius: 6px;
+}</string>
+       </property>
+       <widget class="QStackedWidget" name="cli_stackedWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>861</width>
+          <height>541</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(245, 241, 232);
+color: rgb(0, 0, 0);
+</string>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="cli_page">
+         <widget class="QGroupBox" name="cli_groupBox">
+          <property name="geometry">
+           <rect>
+            <x>670</x>
+            <y>130</y>
+            <width>191</width>
+            <height>391</height>
+           </rect>
           </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignHCenter">
-         <widget class="QPushButton" name="btnRetourClient">
-          <property name="text">
-           <string>← Retour</string>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(64, 64, 64);</string>
           </property>
+          <property name="title">
+           <string>Fiche client </string>
+          </property>
+          <widget class="QLabel" name="cli_label_2">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>20</y>
+             <width>81</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);</string>
+           </property>
+           <property name="text">
+            <string>nom et prenom </string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="cli_lineEditNom">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>141</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_6">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>81</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);</string>
+           </property>
+           <property name="text">
+            <string>email</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_7">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>100</y>
+             <width>81</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);</string>
+           </property>
+           <property name="text">
+            <string>telephone </string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_5">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>140</y>
+             <width>81</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);</string>
+           </property>
+           <property name="text">
+            <string>cin</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="cli_lineEditEmail">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>80</y>
+             <width>141</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="cli_lineEditTel">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>120</y>
+             <width>141</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="cli_lineEditCin">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>160</y>
+             <width>141</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_6">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>200</y>
+             <width>61</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(139, 30, 45);
+color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>générer</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButtonEnregistrer">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>350</y>
+             <width>81</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(139, 30, 45);
+color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>enregistrer </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButtonAnnuler">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>350</y>
+             <width>81</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(31, 58, 77);</string>
+           </property>
+           <property name="text">
+            <string>annuler</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>190</y>
+             <width>81</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);
+font: 10pt "Segoe UI";</string>
+           </property>
+           <property name="text">
+            <string>recu du paiment</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_3">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>200</y>
+             <width>81</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(64, 64, 64);
+font: 6pt "Segoe UI";</string>
+           </property>
+           <property name="text">
+            <string>  ticket :montant et mode</string>
+           </property>
+          </widget>
+          <widget class="QFrame" name="cli_frame_3">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>240</y>
+             <width>171</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+           <widget class="QLabel" name="cli_label_4">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>1</y>
+              <width>71</width>
+              <height>20</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(64, 64, 64);
+font: 10pt "Segoe UI";</string>
+            </property>
+            <property name="text">
+             <string>contrat en pdf  </string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="cli_pushButtonOuvrir">
+            <property name="geometry">
+             <rect>
+              <x>100</x>
+              <y>10</y>
+              <width>61</width>
+              <height>21</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(31, 58, 77);</string>
+            </property>
+            <property name="text">
+             <string>⭣ouvrir  </string>
+            </property>
+           </widget>
+           <widget class="QLabel" name="cli_label_8">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>20</y>
+              <width>71</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(64, 64, 64);
+font: 6pt "Segoe UI";</string>
+            </property>
+            <property name="text">
+             <string>  condition et signature</string>
+            </property>
+           </widget>
+          </widget>
          </widget>
-        </item>
-       </layout>
+         <widget class="QFrame" name="cli_frame">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>20</y>
+            <width>691</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <widget class="QLabel" name="cli_label_9">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>1</y>
+             <width>221</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(31, 58, 77);
+font: 16pt "Bell MT";
+</string>
+           </property>
+           <property name="text">
+            <string>gestion des clients</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_10">
+           <property name="geometry">
+            <rect>
+             <x>30</x>
+             <y>30</y>
+             <width>281</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font: 8pt "Bell MT";
+color: rgb(64, 64, 64);
+</string>
+           </property>
+           <property name="text">
+            <string>ficher clientièle,fidèlite et recommandations personnalisèes</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_11">
+           <property name="geometry">
+            <rect>
+             <x>490</x>
+             <y>20</y>
+             <width>131</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font: 8pt "Bell MT";
+color: rgb(64, 64, 64);
+</string>
+           </property>
+           <property name="text">
+            <string>session ouverte-respnsable clientièle</string>
+           </property>
+          </widget>
+          <widget class="QDateTimeEdit" name="cli_dateTimeEdit">
+           <property name="geometry">
+            <rect>
+             <x>470</x>
+             <y>0</y>
+             <width>194</width>
+             <height>20</height>
+            </rect>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QFrame" name="cli_frame_2">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>80</y>
+            <width>691</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <widget class="QLineEdit" name="cli_lineEditRecherche">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>171</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="cli_comboBox">
+           <property name="geometry">
+            <rect>
+             <x>190</x>
+             <y>10</y>
+             <width>121</width>
+             <height>22</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>⇅ trier par points </string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>niveaux </string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>points </string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string/>
+            </property>
+           </item>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_2">
+           <property name="geometry">
+            <rect>
+             <x>320</x>
+             <y>10</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(139, 30, 45);
+color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>+ajouter </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_5">
+           <property name="geometry">
+            <rect>
+             <x>590</x>
+             <y>10</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(31, 58, 77);
+color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>⎙ export pdf </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_4">
+           <property name="geometry">
+            <rect>
+             <x>500</x>
+             <y>10</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>🗑️supprimer </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_3">
+           <property name="geometry">
+            <rect>
+             <x>410</x>
+             <y>10</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);
+color: rgb(31, 58, 77);</string>
+           </property>
+           <property name="text">
+            <string>✎ modifier </string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QFrame" name="cli_frame_6">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>20</y>
+            <width>131</width>
+            <height>501</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(31, 58, 77);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <widget class="QPushButton" name="navTableauBordClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>100</y>
+             <width>101</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Tableau de bord </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="navArticlesClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>130</y>
+             <width>101</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Article</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="navServicesClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>160</y>
+             <width>101</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Service</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="navEmployesClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>220</y>
+             <width>101</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Employès</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btnDeconnexionClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>460</y>
+             <width>111</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Deconnexion </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="navClientsClient">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>190</y>
+             <width>101</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(139, 30, 45);
+color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Client</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_lblUser">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>410</y>
+             <width>301</width>
+             <height>61</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&lt;b&gt;r.clientele&lt;/b&gt;&lt;br/&gt;&lt;span style=" font-size:8pt; color:#aebdca;"&gt;Responsable clientèle&lt;/span&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::RichText</enum>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_12">
+           <property name="geometry">
+            <rect>
+             <x>40</x>
+             <y>30</y>
+             <width>37</width>
+             <height>12</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_13">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>30</y>
+             <width>37</width>
+             <height>12</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QFrame" name="cli_frame_7">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>130</y>
+            <width>511</width>
+            <height>121</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <widget class="QLabel" name="cli_lblCount">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>99</y>
+             <width>161</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(121, 121, 121);</string>
+           </property>
+           <property name="text">
+            <string>9 clients affichés sur 69</string>
+           </property>
+           <property name="role" stdset="0">
+            <string>muted</string>
+           </property>
+          </widget>
+          <widget class="QTableWidget" name="cli_tableWidget">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>511</width>
+             <height>91</height>
+            </rect>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>511</width>
+             <height>51</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(31, 58, 77);
+color: rgb(255, 255, 255);
+</string>
+           </property>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <column>
+            <property name="text">
+             <string>id </string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>nom et prenom </string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>email</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>telephone</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>cin </string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>points </string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>niveau</string>
+            </property>
+           </column>
+           <item row="0" column="0">
+            <property name="text">
+             <string>C001</string>
+            </property>
+           </item>
+           <item row="0" column="1">
+            <property name="text">
+             <string>sarra ben ali </string>
+            </property>
+           </item>
+           <item row="0" column="2">
+            <property name="text">
+             <string>sarra ben ali@mail.tn  </string>
+            </property>
+           </item>
+           <item row="0" column="3">
+            <property name="text">
+             <string>22 345 678</string>
+            </property>
+           </item>
+           <item row="0" column="4">
+            <property name="text">
+             <string>09128457</string>
+            </property>
+           </item>
+           <item row="0" column="5">
+            <property name="text">
+             <string>540</string>
+            </property>
+           </item>
+           <item row="0" column="6">
+            <property name="text">
+             <string>or</string>
+            </property>
+           </item>
+           <item row="1" column="0">
+            <property name="text">
+             <string>C002</string>
+            </property>
+           </item>
+           <item row="1" column="1">
+            <property name="text">
+             <string>yassine trabelsi</string>
+            </property>
+           </item>
+           <item row="1" column="2">
+            <property name="text">
+             <string>yassine trabelsi@mail.tn</string>
+            </property>
+           </item>
+           <item row="1" column="3">
+            <property name="text">
+             <string>98 120 647</string>
+            </property>
+           </item>
+           <item row="1" column="4">
+            <property name="text">
+             <string>11234689</string>
+            </property>
+           </item>
+           <item row="1" column="5">
+            <property name="text">
+             <string>320</string>
+            </property>
+           </item>
+           <item row="1" column="6">
+            <property name="text">
+             <string>argent </string>
+            </property>
+           </item>
+           <item row="2" column="0">
+            <property name="text">
+             <string>C003</string>
+            </property>
+           </item>
+           <item row="2" column="1">
+            <property name="text">
+             <string>ines mansouri</string>
+            </property>
+           </item>
+           <item row="2" column="2">
+            <property name="text">
+             <string>ines mansouri@mail.tn</string>
+            </property>
+           </item>
+           <item row="2" column="3">
+            <property name="text">
+             <string>55 908 231</string>
+            </property>
+           </item>
+           <item row="2" column="4">
+            <property name="text">
+             <string>07468215</string>
+            </property>
+           </item>
+           <item row="2" column="5">
+            <property name="text">
+             <string>85</string>
+            </property>
+           </item>
+           <item row="2" column="6">
+            <property name="text">
+             <string>bronze</string>
+            </property>
+           </item>
+           <item row="3" column="0">
+            <property name="text">
+             <string>C004</string>
+            </property>
+           </item>
+           <item row="3" column="1">
+            <property name="text">
+             <string>karim jbeli </string>
+            </property>
+           </item>
+           <item row="3" column="2">
+            <property name="text">
+             <string>karim jbeli@mail.tn</string>
+            </property>
+           </item>
+           <item row="3" column="3">
+            <property name="text">
+             <string>29 774 610 </string>
+            </property>
+           </item>
+           <item row="3" column="4">
+            <property name="text">
+             <string>10983264</string>
+            </property>
+           </item>
+           <item row="3" column="5">
+            <property name="text">
+             <string>520</string>
+            </property>
+           </item>
+           <item row="3" column="6">
+            <property name="text">
+             <string>or</string>
+            </property>
+           </item>
+           <item row="4" column="0">
+            <property name="text">
+             <string>C005</string>
+            </property>
+           </item>
+           <item row="4" column="1">
+            <property name="text">
+             <string>nour gharbi </string>
+            </property>
+           </item>
+           <item row="4" column="2">
+            <property name="text">
+             <string>nour gharbi@mail.tn</string>
+            </property>
+           </item>
+           <item row="4" column="3">
+            <property name="text">
+             <string>50 21 889</string>
+            </property>
+           </item>
+           <item row="4" column="4">
+            <property name="text">
+             <string>04871530</string>
+            </property>
+           </item>
+           <item row="4" column="5">
+            <property name="text">
+             <string>210</string>
+            </property>
+           </item>
+           <item row="4" column="6">
+            <property name="text">
+             <string>argent</string>
+            </property>
+           </item>
+           <item row="5" column="0">
+            <property name="text">
+             <string>C006</string>
+            </property>
+           </item>
+           <item row="5" column="1">
+            <property name="text">
+             <string>amine chaouch </string>
+            </property>
+           </item>
+           <item row="5" column="2">
+            <property name="text">
+             <string>amine chaouch@mail.tn</string>
+            </property>
+           </item>
+           <item row="5" column="3">
+            <property name="text">
+             <string>23 456 019</string>
+            </property>
+           </item>
+           <item row="5" column="4">
+            <property name="text">
+             <string>12056738</string>
+            </property>
+           </item>
+           <item row="5" column="5">
+            <property name="text">
+             <string>45</string>
+            </property>
+           </item>
+           <item row="5" column="6">
+            <property name="text">
+             <string>bronze</string>
+            </property>
+           </item>
+           <item row="6" column="0">
+            <property name="text">
+             <string>C007</string>
+            </property>
+           </item>
+           <item row="6" column="1">
+            <property name="text">
+             <string>rim belhaj </string>
+            </property>
+           </item>
+           <item row="6" column="2">
+            <property name="text">
+             <string>rim belhaj@mail.tn</string>
+            </property>
+           </item>
+           <item row="6" column="3">
+            <property name="text">
+             <string>97 665 302</string>
+            </property>
+           </item>
+           <item row="6" column="4">
+            <property name="text">
+             <string>09345617</string>
+            </property>
+           </item>
+           <item row="6" column="5">
+            <property name="text">
+             <string>455</string>
+            </property>
+           </item>
+           <item row="6" column="6">
+            <property name="text">
+             <string>argent </string>
+            </property>
+           </item>
+           <item row="7" column="0">
+            <property name="text">
+             <string>C008</string>
+            </property>
+           </item>
+           <item row="7" column="1">
+            <property name="text">
+             <string>sami dridi </string>
+            </property>
+           </item>
+           <item row="7" column="2">
+            <property name="text">
+             <string>sami dridi@mail.tn  </string>
+            </property>
+           </item>
+           <item row="7" column="3">
+            <property name="text">
+             <string>54 018 776</string>
+            </property>
+           </item>
+           <item row="7" column="4">
+            <property name="text">
+             <string>11590824</string>
+            </property>
+           </item>
+           <item row="7" column="5">
+            <property name="text">
+             <string>130</string>
+            </property>
+           </item>
+           <item row="7" column="6">
+            <property name="text">
+             <string>bronzet</string>
+            </property>
+           </item>
+           <item row="8" column="0">
+            <property name="text">
+             <string>C009</string>
+            </property>
+           </item>
+           <item row="8" column="1">
+            <property name="text">
+             <string>lina hamdi </string>
+            </property>
+           </item>
+           <item row="8" column="2">
+            <property name="text">
+             <string>lina hamdi@mail.tn</string>
+            </property>
+           </item>
+           <item row="8" column="3">
+            <property name="text">
+             <string>26 590 143 </string>
+            </property>
+           </item>
+           <item row="8" column="4">
+            <property name="text">
+             <string>08762094</string>
+            </property>
+           </item>
+           <item row="8" column="5">
+            <property name="text">
+             <string>275</string>
+            </property>
+           </item>
+           <item row="8" column="6">
+            <property name="text">
+             <string>argent </string>
+            </property>
+           </item>
+          </widget>
+         </widget>
+         <widget class="QGroupBox" name="cli_groupBox_2">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>260</y>
+            <width>251</width>
+            <height>261</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Répartition</string>
+          </property>
+          <layout class="QVBoxLayout" name="cli_verticalLayout"/>
+         </widget>
+         <widget class="QGroupBox" name="cli_groupBox_3">
+          <property name="geometry">
+           <rect>
+            <x>410</x>
+            <y>260</y>
+            <width>251</width>
+            <height>261</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>Recommandations : Sarra ben ali</string>
+          </property>
+          <widget class="QPushButton" name="cli_pushButton_19">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>130</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Démonstration </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_18">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>100</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Démonstration </string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_17">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>70</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Démonstration</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="cli_pushButton_16">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>40</y>
+             <width>80</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(139, 30, 45);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Démonstration</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_16">
+           <property name="geometry">
+            <rect>
+             <x>220</x>
+             <y>130</y>
+             <width>21</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>78 %</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_17">
+           <property name="geometry">
+            <rect>
+             <x>220</x>
+             <y>40</y>
+             <width>21</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>96 %</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_18">
+           <property name="geometry">
+            <rect>
+             <x>220</x>
+             <y>100</y>
+             <width>21</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>84 %</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_label_19">
+           <property name="geometry">
+            <rect>
+             <x>220</x>
+             <y>70</y>
+             <width>21</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>91 %</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_lblPiece1_5">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>111</width>
+             <height>27</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&lt;b&gt;Robe cocktail « New Look »&lt;/b&gt;&lt;br/&gt;&lt;span style=" font-size:8pt; color:#7d8591;"&gt;Dior 1950 · 3 200 DT&lt;/span&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::RichText</enum>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_lblPiece4_6">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>130</y>
+             <width>91</width>
+             <height>27</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&lt;b&gt;Ensemble jupe-veste&lt;/b&gt;&lt;br/&gt;&lt;span style=" font-size:8pt; color:#7d8591;"&gt;Dior 1950 · 2 800 DT&lt;/span&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::RichText</enum>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_lblPiece2_6">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>70</y>
+             <width>101</width>
+             <height>27</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&lt;b&gt;Robe du soir&lt;/b&gt;&lt;br/&gt;&lt;span style=" font-size:8pt; color:#7d8591;"&gt;Givenchy 1950 · 2 600 DT&lt;/span&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::RichText</enum>
+           </property>
+          </widget>
+          <widget class="QLabel" name="cli_lblPiece3_3">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>100</y>
+             <width>91</width>
+             <height>27</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&lt;b&gt;Robe corolle&lt;/b&gt;&lt;br/&gt;&lt;span style=" font-size:8pt; color:#7d8591;"&gt;Balmain 1950 · 1 950 DT&lt;/span&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::RichText</enum>
+           </property>
+          </widget>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="cli_page_2"/>
+       </widget>
       </widget>
       <widget class="QWidget" name="PArticle">
        <layout class="QVBoxLayout" name="layoutPArticle">
@@ -1892,4 +3263,32 @@ border-radius: 4px;</string>
  </customwidgets>
  <resources/>
  <connections/>
+ <tabstops>
+  <tabstop>cli_pushButtonEnregistrer</tabstop>
+  <tabstop>cli_pushButtonAnnuler</tabstop>
+  <tabstop>cli_lineEditTel</tabstop>
+  <tabstop>cli_lineEditCin</tabstop>
+  <tabstop>cli_pushButton_6</tabstop>
+  <tabstop>cli_lineEditNom</tabstop>
+  <tabstop>cli_lineEditEmail</tabstop>
+  <tabstop>cli_pushButtonOuvrir</tabstop>
+  <tabstop>cli_dateTimeEdit</tabstop>
+  <tabstop>cli_lineEditRecherche</tabstop>
+  <tabstop>cli_comboBox</tabstop>
+  <tabstop>cli_pushButton_2</tabstop>
+  <tabstop>cli_pushButton_5</tabstop>
+  <tabstop>cli_pushButton_4</tabstop>
+  <tabstop>cli_pushButton_3</tabstop>
+  <tabstop>navTableauBordClient</tabstop>
+  <tabstop>navArticlesClient</tabstop>
+  <tabstop>navServicesClient</tabstop>
+  <tabstop>navEmployesClient</tabstop>
+  <tabstop>btnDeconnexionClient</tabstop>
+  <tabstop>navClientsClient</tabstop>
+  <tabstop>cli_tableWidget</tabstop>
+  <tabstop>cli_pushButton_19</tabstop>
+  <tabstop>cli_pushButton_18</tabstop>
+  <tabstop>cli_pushButton_17</tabstop>
+  <tabstop>cli_pushButton_16</tabstop>
+ </tabstops>
 </ui>
