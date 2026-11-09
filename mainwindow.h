@@ -13,8 +13,10 @@
 #include "service.h"       // module Service
 #include "employe.h"       // module Employe
 #include "posteTravail.h"  // module Employe
+#include "evenement.h"      // module Evenement
 
 class QLabel;
+class QListWidgetItem;
 class QTextEdit;
 class QPushButton;
 class QComboBox;
@@ -259,8 +261,64 @@ private:
 
 
     // ==========================================================================
-    // === MODULE EVENEMENT ===   (a integrer)
+    // === MODULE EVENEMENT ===   (Melek : ex-projet GEvents)
     // ==========================================================================
+private slots:
+    void enregistrerEvenement();
+    void supprimerEvenement();
+    void modifierEvenement();
+    void choisirImageEvenement();
+    void rechercherEvenements(const QString &texte);
+    void trierEvenements(int index);
+    void filtrerEvenements(int index);
+
+    void onAjouterEvenementClicked();
+    void onAnnulerEvenementClicked();
+    void onReinitialiserEvenementClicked();
+    void onSelectionEvenementChanged();
+    void onCalendrierEvenementClicked(const QDate &date);
+    void onDeconnexionEvenementClicked();
+
+    // navigation interne : tableau de bord / page "Calendrier"
+    void afficherListeEvenements();
+    void afficherCalendrierEvenements();
+    void majListeJourEvenement();
+    void ouvrirEvenementDuJour();
+    void onJourEvenementActivated(QListWidgetItem *item);
+
+private:
+    void initialiserModuleEvenement();      // ex-constructeur de la fenetre GEvents : connexions, chargement
+
+    // donnees : table Oracle EVENEMENT, via la classe Evenement (Evenements/evenement.h)
+    void chargerEvenements();
+    QString dossierDonneesEvenement() const;      // copie locale des affiches (images)
+    const Evenement *trouverEvenementParId(int id) const;
+
+    // affichage
+    void rafraichirEvenements(int selectId = -1);
+    void remplirTableEvenements(int selectId);
+    QVector<Evenement> evenementsFiltresTries() const;
+    void majCombosFiltreEvenement();
+    void majCartesEvenement();
+    void majBarresEvenement();
+    void majLieuxEvenement();
+    void majMarquesCalendrierEvenement();
+    void ouvrirEvenementDansFiche(int id);
+    QDate dateInitialeCalendrierEvenement() const;
+    static QWidget *creerBadgeEvenement(const QString &statut);
+
+    // fiche evenement
+    int  idEvenementSelectionne() const;
+    void viderFicheEvenement();
+    void remplirFicheEvenement(const Evenement &e);
+    Evenement donneesFicheEvenement();
+    void definirApercuEvenement(const QString &path);
+    QString copierImageEvenement(const QString &path) const;
+
+    QVector<Evenement> m_evenements;          // toutes les donnees
+    QVector<Evenement> m_evenementsVisibles;  // lignes affichees (apres filtres + tri)
+    int     m_idEvenementCourant = -1;        // -1 = nouvel evenement
+    QString m_imageEvenementCourante;
     // === FIN MODULE EVENEMENT ===
 };
 
