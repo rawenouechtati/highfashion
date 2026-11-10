@@ -179,3 +179,10 @@ bool Service::valider(QString &erreur) const
     erreur.clear();
     return true;
 }
+bool Service::existe(const QString &id)
+{
+    QSqlQuery q;
+    q.prepare("SELECT COUNT(*) FROM service WHERE id = :id");
+    q.bindValue(":id", id);
+    return q.exec() && q.next() && q.value(0).toInt() > 0;
+}

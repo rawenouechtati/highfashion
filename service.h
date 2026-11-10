@@ -32,6 +32,8 @@ public:
     // Retourne true si le service est valide.
     // En cas d'erreur, retourne false et remplit "erreur" avec un message clair.
     bool valider(QString &erreur) const;
+
+     static bool existe(const QString &id);
 };
 
 #endif // SERVICE_H
