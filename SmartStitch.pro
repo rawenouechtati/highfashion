@@ -29,3 +29,9 @@ RESOURCES += Clients/ressources_clients.qrc
    SOURCES += $$files($$PWD/Evenements/*.cpp)
    HEADERS += $$files($$PWD/Evenements/*.h)
    RESOURCES += Evenements/ressources_evenements.qrc
+
+# === MODULE ARTICLE ===
+       INCLUDEPATH += $$PWD/Articles
+       SOURCES += $$files($$PWD/Articles/*.cpp)
+       HEADERS += $$files($$PWD/Articles/*.h)
+       RESOURCES += Articles/ressources_articles.qrc
