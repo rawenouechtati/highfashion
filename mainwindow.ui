@@ -3268,19 +3268,263 @@ background-color: rgb(255, 255, 255);</string>
        </widget>
       </widget>
       <widget class="QWidget" name="PArticle">
-       <layout class="QVBoxLayout" name="layoutPArticle">
-        <item alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="labelPlaceholderArticle">
-          <property name="text">
-           <string>Module Articles : page à intégrer par le membre de l'équipe concerné</string>
+       <property name="styleSheet">
+        <string>/* ===== Module Articles : menu latéral (même structure que les autres modules) ===== */
+      QWidget#PArticle, QFrame#contentFrameArt { background: #f5f3ef; }
+      QFrame#sidebarArt { background: #1e2f47; }
+      QFrame#sidebarArt QLabel { color: #ffffff; }
+      QLabel#lblUserNameArt { font-weight: 600; font-size: 13px; }
+      QLabel#lblUserRoleArt { color: #b7c6d9; font-size: 12px; }
+      QFrame#sidebarArt QPushButton {
+          color: #e8eef6; background: transparent; border: none; text-align: left;
+          padding: 12px 16px; border-radius: 8px; font-size: 14px;
+      }
+      QFrame#sidebarArt QPushButton:hover { background: rgba(255, 255, 255, 0.10); }
+      QFrame#sidebarArt QPushButton:checked { background: #8b2635; color: #ffffff; font-weight: 600; }
+      </string>
+       </property>
+       <layout class="QHBoxLayout" name="mainLayoutArt" stretch="0,1">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QFrame" name="sidebarArt">
+          <property name="minimumSize">
+           <size>
+            <width>260</width>
+            <height>0</height>
+           </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>260</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="layout3Art">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>14</number>
+           </property>
+           <property name="topMargin">
+            <number>20</number>
+           </property>
+           <property name="rightMargin">
+            <number>14</number>
+           </property>
+           <property name="bottomMargin">
+            <number>20</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblLogoArt">
+             <property name="minimumSize">
+              <size>
+               <width>232</width>
+               <height>93</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>232</width>
+               <height>93</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="spacer1Art">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>24</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+               <item>
+                <widget class="QPushButton" name="btnNavEvenementsArt">
+                 <property name="text">
+                  <string>📅   Événements</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavArticlesArt">
+                 <property name="text">
+                  <string>👗   Articles</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavServicesArt">
+                 <property name="text">
+                  <string>⚙️   Services</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavClientsArt">
+                 <property name="text">
+                  <string>👥   Clients</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavEmployesArt">
+                 <property name="text">
+                  <string>👤   Employés</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavMatieresArt">
+                 <property name="text">
+                  <string>🧵   Matières premières</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="autoExclusive">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNavDeconnexionArt">
+                 <property name="text">
+                  <string>🚪   Déconnexion</string>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="spacer2Art">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblUserNameArt">
+                 <property name="text">
+                  <string>Utilisateur</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblUserRoleArt">
+                 <property name="text">
+                  <string>Poste</string>
+                 </property>
+                </widget>
+               </item>
+          </layout>
          </widget>
         </item>
-        <item alignment="Qt::AlignHCenter">
-         <widget class="QPushButton" name="btnRetourArticle">
-          <property name="text">
-           <string>← Retour</string>
-          </property>
+        <item>
+         <widget class="QFrame" name="contentFrameArt">
+          <layout class="QVBoxLayout" name="contentLayoutArt">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+          </layout>
          </widget>
         </item>
        </layout>

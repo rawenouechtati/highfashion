@@ -17,6 +17,7 @@
 #include "evenement.h"      // module Evenement
 
 namespace Mat { class ModuleMatieres; }   // module Matieres premieres (dossier Matieres/)
+namespace Art { class ModuleArticles; }   // module Articles (dossier Articles/)
 
 class QLabel;
 class QListWidgetItem;
@@ -256,8 +257,15 @@ private:
 
 
     // ==========================================================================
-    // === MODULE ARTICLE ===   (a integrer)
+    // === MODULE ARTICLE ===   (Aziz)
     // ==========================================================================
+private slots:
+    void onDeconnexionArticleClicked();
+
+private:
+    void initialiserModuleArticle();      // menu lateral : utilisateur, logo
+    void ouvrirModuleArticle();           // cree le widget au 1er affichage, puis relit Oracle a chaque affichage
+    Art::ModuleArticles *m_moduleArticles = nullptr;   // onglets Catalogue / Statistiques / Estimation (Articles/)
     // === FIN MODULE ARTICLE ===
 
 
