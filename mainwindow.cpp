@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "service.h"
+#include "modulematieres.h"   // module Matieres premieres (dossier Matieres/)
 #include <QSqlQuery>
 #include <QSqlError>
 #include <algorithm>
@@ -124,6 +125,7 @@ MainWindow::MainWindow(const Employe &employeConnecte, QWidget *parent)
     initialiserModuleEmploye();   // zone MODULE EMPLOYE
     initialiserModuleClient();    // zone MODULE CLIENT
     initialiserModuleEvenement(); // zone MODULE EVENEMENT
+    initialiserModuleMatiere();   // zone MODULE MATIERE PREMIERE
 
     // Page d'accueil : la page Employes (elle s'adapte au poste de l'employe connecte).
     // La barre d'etat "Role : Responsable des services" ne concerne que la page Services.
@@ -172,9 +174,17 @@ void MainWindow::connecterNavigation()
     connect(ui->btnNavMatieresEvt,    &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
     connect(ui->btnNavDeconnexionEvt, &QPushButton::clicked, this, &MainWindow::onDeconnexionEvenementClicked);
 
-    // pages des modules pas encore integres : bouton "Retour" vers l'accueil
+    // menu lateral du module Matieres premieres
+    connect(ui->btnNavEvenementsMat,  &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->btnNavArticlesMat,    &QPushButton::clicked, this, &MainWindow::allerVersArticles);
+    connect(ui->btnNavServicesMat,    &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->btnNavClientsMat,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
+    connect(ui->btnNavEmployesMat,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnNavMatieresMat,    &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+    connect(ui->btnNavDeconnexionMat, &QPushButton::clicked, this, &MainWindow::onDeconnexionMatiereClicked);
+
+    // page des modules pas encore integres : bouton "Retour" vers l'accueil
     connect(ui->btnRetourArticle,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
-    connect(ui->btnRetourMatiere,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
 
     // a chaque changement de page : la barre d'etat ("Role : Responsable des services") ne concerne
     // que la page Services, et la liste des clients est rechargee depuis la base
@@ -182,6 +192,8 @@ void MainWindow::connecterNavigation()
         statusBar()->setVisible(index == PageService);
         if (index == PageClient)
             chargerClients();
+        if (index == PageMatiere)
+            ouvrirModuleMatiere();   // les matieres sont relues dans Oracle a chaque affichage
     });
 }
 
@@ -3532,8 +3544,43 @@ void MainWindow::appliquerEchelleClient()
 
 
 // ====================================================================================
-// === MODULE MATIERE PREMIERE ===   (a integrer)
+// === MODULE MATIERE PREMIERE ===   (Ahmed)
 // ====================================================================================
+// Donnees : table Oracle MATIERE_PREMIERE, via la classe entite Matiere (Matieres/matiere.h/.cpp).
+// Cette zone ne contient AUCUNE requete SQL. L'interface (onglets Tableau de bord / Matieres
+// premieres / Mouvements de stock) est le widget Mat::ModuleMatieres du dossier Matieres/ : il est
+// place dans la page PMatiere, a cote du menu lateral dessine dans Qt Designer.
+void MainWindow::initialiserModuleMatiere()
+{
+    ui->lblUserNameMat->setText(m_employeConnecte.prenom() + " " + m_employeConnecte.nom());
+    ui->lblUserRoleMat->setText(m_employeConnecte.poste());
+    const QPixmap logo(":/images/logo.png");
+    ui->lblLogoMat->setPixmap(logo.scaled(ui->lblLogoMat->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // le widget du module est cree au premier affichage de la page (voir ouvrirModuleMatiere)
+}
+
+void MainWindow::ouvrirModuleMatiere()
+{
+    if (!m_moduleMatieres) {
+        m_moduleMatieres = new Mat::ModuleMatieres(ui->contentFrameMat);
+        ui->contentLayoutMat->addWidget(m_moduleMatieres);
+        m_moduleMatieres->charger();      // premiere lecture de la table Oracle
+        return;
+    }
+    m_moduleMatieres->rafraichir();       // relit la table (modifications faites depuis un autre poste)
+}
+
+// Deconnexion (bouton du menu lateral) : confirmation puis retour a l'ecran de connexion
+void MainWindow::onDeconnexionMatiereClicked()
+{
+    QMessageBox::StandardButton rep = QMessageBox::question(
+        this, "Déconnexion",
+        "Voulez-vous vraiment vous déconnecter ?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (rep == QMessageBox::Yes)
+        emit deconnexionDemandee();      // main.cpp ferme la fenêtre et rouvre l'écran de connexion
+}
 // === FIN MODULE MATIERE PREMIERE ===
 
 

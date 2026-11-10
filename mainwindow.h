@@ -16,6 +16,8 @@
 #include "posteTravail.h"  // module Employe
 #include "evenement.h"      // module Evenement
 
+namespace Mat { class ModuleMatieres; }   // module Matieres premieres (dossier Matieres/)
+
 class QLabel;
 class QListWidgetItem;
 class QTextEdit;
@@ -260,8 +262,15 @@ private:
 
 
     // ==========================================================================
-    // === MODULE MATIERE PREMIERE ===   (a integrer)
+    // === MODULE MATIERE PREMIERE ===   (Ahmed)
     // ==========================================================================
+private slots:
+    void onDeconnexionMatiereClicked();
+
+private:
+    void initialiserModuleMatiere();      // menu lateral : utilisateur, logo
+    void ouvrirModuleMatiere();           // cree le widget au 1er affichage, puis relit Oracle a chaque affichage
+    Mat::ModuleMatieres *m_moduleMatieres = nullptr;   // onglets Tableau de bord / Matieres / Mouvements (Matieres/)
     // === FIN MODULE MATIERE PREMIERE ===
 
 

@@ -29,3 +29,8 @@ RESOURCES += Clients/ressources_clients.qrc
    SOURCES += $$files($$PWD/Evenements/*.cpp)
    HEADERS += $$files($$PWD/Evenements/*.h)
    RESOURCES += Evenements/ressources_evenements.qrc
+
+# === MODULE MATIERE PREMIERE ===
+INCLUDEPATH += $$PWD/Matieres
+SOURCES += $$files($$PWD/Matieres/*.cpp)
+HEADERS += $$files($$PWD/Matieres/*.h)
