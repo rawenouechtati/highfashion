@@ -94,6 +94,16 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QUrl>
+// --- module Evenement ---
+#include <QCollator>
+#include <QDebug>
+#include <QFileInfo>
+#include <QStandardPaths>
+#include <QTextCharFormat>
+#include <QTime>
+#include <QCalendarWidget>
+#include <QListWidget>
+#include <climits>
 
 // ====================================================================================
 // === SLOTS GÉNÉRAUX ===
@@ -113,6 +123,7 @@ MainWindow::MainWindow(const Employe &employeConnecte, QWidget *parent)
     initialiserModuleService();   // zone MODULE SERVICE
     initialiserModuleEmploye();   // zone MODULE EMPLOYE
     initialiserModuleClient();    // zone MODULE CLIENT
+    initialiserModuleEvenement(); // zone MODULE EVENEMENT
 
     // Page d'accueil : la page Employes (elle s'adapte au poste de l'employe connecte).
     // La barre d'etat "Role : Responsable des services" ne concerne que la page Services.
@@ -144,10 +155,26 @@ void MainWindow::connecterNavigation()
     connect(ui->navClientsClient,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
     connect(ui->navEmployesClient,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
 
+    // boutons "Evenements" et "Matieres premieres" ajoutes aux menus des autres modules
+    connect(ui->navEvenementsServ,   &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->navMatieresServ,     &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+    connect(ui->navEvenementsEmpl,   &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->navMatieresEmpl,     &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+    connect(ui->navEvenementsClient, &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->navMatieresClient,   &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+
+    // menu lateral du module Evenements
+    connect(ui->btnNavEvenementsEvt,  &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->btnNavArticlesEvt,    &QPushButton::clicked, this, &MainWindow::allerVersArticles);
+    connect(ui->btnNavServicesEvt,    &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->btnNavClientsEvt,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
+    connect(ui->btnNavEmployesEvt,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnNavMatieresEvt,    &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+    connect(ui->btnNavDeconnexionEvt, &QPushButton::clicked, this, &MainWindow::onDeconnexionEvenementClicked);
+
     // pages des modules pas encore integres : bouton "Retour" vers l'accueil
     connect(ui->btnRetourArticle,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
     connect(ui->btnRetourMatiere,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
-    connect(ui->btnRetourEvenement, &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
 
     // a chaque changement de page : la barre d'etat ("Role : Responsable des services") ne concerne
     // que la page Services, et la liste des clients est rechargee depuis la base
@@ -293,7 +320,8 @@ void MainWindow::setupSidebar()
     lay->addSpacing(30);
 
     const QList<QPushButton *> nav = {ui->navTableauBordServ, ui->navArticlesServ, ui->navServicesServ,
-                                      ui->navClientsServ, ui->navEmployesServ};
+                                      ui->navClientsServ, ui->navEmployesServ,
+                                      ui->navEvenementsServ, ui->navMatieresServ};
     for (QPushButton *b : nav) {
         b->setMinimumHeight(46);
         b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -1462,6 +1490,8 @@ void MainWindow::appliquerRestrictionsSelonPosteEmploye()
     ui->navArticlesEmpl->hide();
     ui->navServicesEmpl->hide();
     ui->navClientsEmpl->hide();
+    ui->navEvenementsEmpl->hide();
+    ui->navMatieresEmpl->hide();
     ui->SMEmpl->setCurrentIndex(1);
     ui->labelTitreEmpl->setText("Mon espace — " + poste);
 
@@ -1919,7 +1949,7 @@ void MainWindow::adapterMiseEnPageEmploye()
     ui->labelLogoEmpl->setFixedSize(231, 101);
     lateral->addWidget(ui->labelLogoEmpl, 0, Qt::AlignHCenter);
     lateral->addSpacing(10);
-    navigation->setFixedHeight(271);
+    navigation->setFixedHeight(360);   // 6 boutons (au lieu de 4 : + Evenements, Matieres) ; 60 px par bouton pour tenir sur un ecran 768 px
     lateral->addWidget(navigation);
     lateral->addStretch();
     lateral->addWidget(ui->labelUtilisateurEmpl);
@@ -2300,7 +2330,8 @@ void MainWindow::initialiserModuleClient()
         " border:1px solid #3C5A70; border-radius:4px; padding:4px; }"
         "QPushButton:hover { background:#355F7C; }";
 
-    const QStringList titres = {"tableau de bord", "article", "service", "client", "employ"};
+    const QStringList titres = {"tableau de bord", "article", "service", "client", "employ",
+                                 "événement", "matière"};
     const auto boutons = ui->PClient->findChildren<QPushButton*>();
     for (QPushButton *b : boutons) {
         const QString tx = b->text().trimmed().toLower();
@@ -3501,6 +3532,635 @@ void MainWindow::appliquerEchelleClient()
 
 
 // ====================================================================================
-// === MODULE EVENEMENT ===   (a integrer)
+// === MODULE EVENEMENT ===   (Melek : ex-projet GEvents)
 // ====================================================================================
+// Donnees : table Oracle EVENEMENT, via la classe Evenement (Evenements/evenement.h/.cpp).
+// Cette zone ne contient AUCUNE requete SQL : elle affiche et saisit, la classe fait le reste.
+namespace {
+
+const QStringList kTypesEvenement = Evenement::typesAutorises();
+const char *kFormatDateEvenement = "yyyy-MM-dd";   // affichage de la date dans le tableau
+
+// clé utilisée par le QSS : QLabel[badge="programme"] { ... }
+QString cleBadgeEvenement(const QString &statut)
+{
+    static const QHash<QString, QString> map = {
+        { "Planifié", "planifie" }, { "Programmé", "programme" },
+        { "Terminé", "termine" },   { "Annulé", "annule" }
+    };
+    return map.value(statut, "termine");
+}
+
+} // namespace
+
+// ------------------------------------------------------------------------------------
+// Initialisation du module (ex-constructeur de la fenetre GEvents de Melek)
+// ------------------------------------------------------------------------------------
+void MainWindow::initialiserModuleEvenement()
+{
+    // Reapplique la feuille de style de la page : certains widgets (dans la zone de
+    // defilement) sont "polis" avant d'avoir un parent, donc sans style.
+    {
+        const QString qss = ui->PEvenement->styleSheet();
+        ui->PEvenement->setStyleSheet(QString());
+        ui->PEvenement->setStyleSheet(qss);
+    }
+
+    // Utilisateur connecte dans la barre laterale (remplace le nom fige du .ui)
+    ui->lblUserNameEvt->setText(m_employeConnecte.prenom() + " " + m_employeConnecte.nom());
+    ui->lblUserRoleEvt->setText(m_employeConnecte.poste());
+
+    const QLocale fr(QLocale::French, QLocale::France);
+    ui->calendarEvt->setLocale(fr);
+    ui->dateEditEvt->setLocale(fr);
+
+    // Connexions vers les slots de MainWindow (celles entre widgets restent dans le .ui)
+    connect(ui->btnEnregistrerEvt,  &QPushButton::clicked, this, &MainWindow::enregistrerEvenement);
+    connect(ui->btnSupprimerEvt,    &QPushButton::clicked, this, &MainWindow::supprimerEvenement);
+    connect(ui->btnModifierEvt,     &QPushButton::clicked, this, &MainWindow::modifierEvenement);
+    connect(ui->btnChoisirImageEvt, &QPushButton::clicked, this, &MainWindow::choisirImageEvenement);
+    connect(ui->lineSearchEvt, &QLineEdit::textChanged, this, &MainWindow::rechercherEvenements);
+    connect(ui->comboTriEvt, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &MainWindow::trierEvenements);
+    for (QComboBox *c : { ui->comboStatutEvt, ui->comboTypeEvt, ui->comboLieuEvt })
+        connect(c, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::filtrerEvenements);
+
+    connect(ui->btnAjouterEvt,       &QPushButton::clicked, this, &MainWindow::onAjouterEvenementClicked);
+    connect(ui->btnAnnulerEvt,       &QPushButton::clicked, this, &MainWindow::onAnnulerEvenementClicked);
+    connect(ui->btnReinitialiserEvt, &QPushButton::clicked, this, &MainWindow::onReinitialiserEvenementClicked);
+    connect(ui->tableEventsEvt,      &QTableWidget::itemSelectionChanged, this, &MainWindow::onSelectionEvenementChanged);
+    connect(ui->calendarEvt,         &QCalendarWidget::clicked,           this, &MainWindow::onCalendrierEvenementClicked);
+    connect(ui->calendarEvt,         &QCalendarWidget::selectionChanged,  this, &MainWindow::majListeJourEvenement);
+
+    // Navigation interne : menu lateral "Evenements" (tableau de bord) / bouton "Calendrier" (sous la recherche)
+    connect(ui->btnNavEvenementsEvt, &QPushButton::clicked, this, &MainWindow::afficherListeEvenements);
+    connect(ui->btnCalendrierEvt,    &QPushButton::clicked, this, &MainWindow::afficherCalendrierEvenements);
+    // Page "Calendrier" : ouvrir un evenement du jour dans la fiche
+    connect(ui->listJourEvt,         &QListWidget::itemDoubleClicked, this, &MainWindow::onJourEvenementActivated);
+    connect(ui->btnOuvrirFicheEvt,   &QPushButton::clicked,           this, &MainWindow::ouvrirEvenementDuJour);
+
+    // A chaque retour sur cette page : menu lateral sur "Evenements" et liste (pas le calendrier)
+    connect(ui->SWSmartStitch, &QStackedWidget::currentChanged, this, [this](int index) {
+        if (index == PageEvenement) {
+            ui->btnNavEvenementsEvt->setChecked(true);
+            ui->stackPagesEvt->setCurrentWidget(ui->pageEvenementsEvt);
+        }
+    });
+
+    chargerEvenements();
+    ui->calendarEvt->setSelectedDate(dateInitialeCalendrierEvenement());
+    viderFicheEvenement();
+    rafraichirEvenements();
+    if (ui->tableEventsEvt->rowCount() > 0)
+        ui->tableEventsEvt->selectRow(0);
+}
+
+// ======================================================================
+//  Données : table Oracle EVENEMENT (via la classe Evenement)
+// ======================================================================
+// Dossier de l'application : copie locale des affiches (images) choisies dans la fiche.
+QString MainWindow::dossierDonneesEvenement() const
+{
+    QString d = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/evenements";
+    if (d.isEmpty())
+        d = QDir::homePath() + "/.smartstitch_evenements";
+    QDir().mkpath(d);
+    return d;
+}
+
+void MainWindow::chargerEvenements()
+{
+    m_evenements = Evenement::afficher();
+    if (m_evenements.isEmpty() && !Evenement::derniereErreur().isEmpty()) {
+        qWarning() << "Evenements : lecture impossible :" << Evenement::derniereErreur();
+        QMessageBox::warning(this, "Événements",
+                             "Impossible de lire les événements dans la base de données.\n"
+                             "Vérifiez que le script Oracle v5 a bien été exécuté (table EVENEMENT).");
+    }
+}
+
+const Evenement *MainWindow::trouverEvenementParId(int id) const
+{
+    for (const Evenement &e : m_evenements)
+        if (e.id() == id)
+            return &e;
+    return nullptr;
+}
+
+// ======================================================================
+//  Rafraîchissement de l'affichage
+// ======================================================================
+void MainWindow::rafraichirEvenements(int selectId)
+{
+    majCombosFiltreEvenement();
+    remplirTableEvenements(selectId >= 0 ? selectId : m_idEvenementCourant);
+    majCartesEvenement();
+    majBarresEvenement();
+    majLieuxEvenement();
+    majMarquesCalendrierEvenement();
+    majListeJourEvenement();
+}
+
+QVector<Evenement> MainWindow::evenementsFiltresTries() const
+{
+    const QString q = ui->lineSearchEvt->text().trimmed();
+    QVector<Evenement> res;
+    for (const Evenement &e : m_evenements) {
+        if (!q.isEmpty()) {
+            const QString hay = e.nom() + " " + e.type() + " " + e.lieu() + " " + e.statut();
+            if (!hay.contains(q, Qt::CaseInsensitive))
+                continue;
+        }
+        if (ui->comboStatutEvt->currentIndex() > 0 && e.statut() != ui->comboStatutEvt->currentText()) continue;
+        if (ui->comboTypeEvt->currentIndex() > 0   && e.type()   != ui->comboTypeEvt->currentText())   continue;
+        if (ui->comboLieuEvt->currentIndex() > 0   && e.lieu()   != ui->comboLieuEvt->currentText())   continue;
+        res.push_back(e);
+    }
+
+    // ----- tri -----
+    const int mode = ui->comboTriEvt->currentIndex();
+    const QDate today = QDate::currentDate();
+    QHash<QString, int> perLieu;                       // = panneau « Événements par lieu »
+    for (const Evenement &e : m_evenements)
+        ++perLieu[e.lieu()];
+    QCollator col{ QLocale(QLocale::French) };         // départage les lieux ex æquo (é = e)
+    col.setCaseSensitivity(Qt::CaseInsensitive);
+
+    auto dist = [&](const Evenement &e) {
+        const QDate d = e.date();
+        return d.isValid() ? int(qAbs(today.daysTo(d))) : INT_MAX / 2;
+    };
+    auto less = [&](const Evenement &a, const Evenement &b) -> bool {
+        switch (mode) {
+        case 2:                                         // Lieu : le plus d'événements d'abord
+            if (perLieu[a.lieu()] != perLieu[b.lieu()]) return perLieu[a.lieu()] > perLieu[b.lieu()];
+            if (a.lieu() != b.lieu()) return col.compare(a.lieu(), b.lieu()) < 0;
+            return a.date() < b.date();
+        default:                                        // Date (0 : proche → lointaine, 1 : inverse)
+            if (dist(a) != dist(b)) return dist(a) < dist(b);
+            if (a.date() != b.date())   return a.date() < b.date();
+            return a.heure() < b.heure();
+        }
+    };
+    const bool reverse = (mode == 1);                   // Date : la plus lointaine → la plus proche
+    std::stable_sort(res.begin(), res.end(), [&](const Evenement &a, const Evenement &b) {
+        return reverse ? less(b, a) : less(a, b);
+    });
+    return res;
+}
+
+QWidget *MainWindow::creerBadgeEvenement(const QString &statut)
+{
+    auto *lbl = new QLabel(statut);
+    lbl->setAlignment(Qt::AlignCenter);
+    lbl->setProperty("badge", cleBadgeEvenement(statut));       // stylé par le QSS du .ui
+    auto *wrap = new QWidget;
+    wrap->setObjectName("badgeWrapEvt");
+    wrap->setStyleSheet("QWidget#badgeWrapEvt { background: transparent; }");
+    auto *lay = new QHBoxLayout(wrap);
+    lay->setContentsMargins(4, 8, 4, 8);
+    lay->addWidget(lbl);
+    return wrap;
+}
+
+void MainWindow::remplirTableEvenements(int selectId)
+{
+    QTableWidget *t = ui->tableEventsEvt;
+    m_evenementsVisibles = evenementsFiltresTries();
+
+    const bool old = t->blockSignals(true);
+    t->clearSelection();
+    t->setRowCount(0);
+    t->setRowCount(m_evenementsVisibles.size());
+    int target = -1;
+    for (int r = 0; r < m_evenementsVisibles.size(); ++r) {
+        const Evenement &e = m_evenementsVisibles[r];
+        const QStringList cells = { QString::number(e.id()), e.nom(), e.type(),
+                                    e.date().toString(kFormatDateEvenement), e.lieu() };
+        for (int c = 0; c < cells.size(); ++c)
+            t->setItem(r, c, new QTableWidgetItem(cells[c]));
+        t->setCellWidget(r, 5, creerBadgeEvenement(e.statut()));
+        if (e.id() == selectId)
+            target = r;
+    }
+    if (target >= 0)
+        t->selectRow(target);
+    t->blockSignals(old);
+}
+
+void MainWindow::majCombosFiltreEvenement()
+{
+    // liste des lieux : valeurs distinctes presentes dans la base (premier item = "Tous les lieux")
+    QComboBox *combo = ui->comboLieuEvt;
+    const QString first = combo->count() ? combo->itemText(0) : QString();
+    const QString cur = combo->currentText();
+    QStringList values;
+    for (const Evenement &e : m_evenements)
+        if (!e.lieu().isEmpty() && !values.contains(e.lieu()))
+            values << e.lieu();
+    values.sort(Qt::CaseInsensitive);
+
+    const bool old = combo->blockSignals(true);
+    combo->clear();
+    combo->addItem(first);
+    combo->addItems(values);
+    combo->setCurrentIndex(qMax(0, combo->findText(cur)));
+    combo->blockSignals(old);
+}
+
+void MainWindow::majCartesEvenement()
+{
+    // "A venir" = date a partir d'aujourd'hui, hors evenements termines ou annules
+    int aVenir = 0, programme = 0, planifie = 0;
+    const QDate today = QDate::currentDate();
+    for (const Evenement &e : m_evenements) {
+        if (e.statut() == "Programmé") ++programme;
+        else if (e.statut() == "Planifié") ++planifie;
+        if (e.date() >= today && e.statut() != "Terminé" && e.statut() != "Annulé") ++aVenir;
+    }
+    ui->lblTotalValueEvt->setText(QString::number(m_evenements.size()));
+    ui->lblAVenirValueEvt->setText(QString::number(aVenir));
+    ui->lblProgrammeValueEvt->setText(QString::number(programme));
+    ui->lblPlanifieValueEvt->setText(QString::number(planifie));
+}
+
+void MainWindow::majBarresEvenement()
+{
+    // --- événements par type ---
+    QHash<QString, int> byType;
+    int maxT = 1;
+    for (const Evenement &e : m_evenements)
+        maxT = std::max(maxT, ++byType[e.type()]);
+    for (int i = 0; i < kTypesEvenement.size(); ++i) {
+        auto *bar = findChild<QProgressBar *>(QString("barT%1Evt").arg(i));
+        auto *val = findChild<QLabel *>(QString("lblValT%1Evt").arg(i));
+        const int n = byType.value(kTypesEvenement[i], 0);
+        if (bar) { bar->setMaximum(maxT + 1); bar->setValue(n); }
+        if (val) val->setText(QString::number(n));
+    }
+}
+
+void MainWindow::majLieuxEvenement()
+{
+    QStringList order;
+    QHash<QString, int> n;
+    for (const Evenement &e : m_evenements) {
+        if (e.lieu().isEmpty()) continue;
+        if (!n.contains(e.lieu())) order << e.lieu();
+        ++n[e.lieu()];
+    }
+    std::stable_sort(order.begin(), order.end(), [&](const QString &a, const QString &b) { return n[a] > n[b]; });
+    ui->listLieuxEvt->clear();
+    for (const QString &l : order)
+        ui->listLieuxEvt->addItem(QString("📍  %1   ·   %2 événement%3").arg(l).arg(n[l]).arg(n[l] > 1 ? "s" : ""));
+}
+
+QDate MainWindow::dateInitialeCalendrierEvenement() const
+{
+    QList<QDate> dates;
+    for (const Evenement &e : m_evenements) {
+        const QDate d = e.date();
+        if (d.isValid()) dates << d;
+    }
+    if (dates.isEmpty()) return QDate::currentDate();
+    std::sort(dates.begin(), dates.end());
+    for (const QDate &d : std::as_const(dates))
+        if (d >= QDate::currentDate()) return d;
+    return dates.last();
+}
+
+void MainWindow::majMarquesCalendrierEvenement()
+{
+    ui->calendarEvt->setDateTextFormat(QDate(), QTextCharFormat());   // efface tout
+    QTextCharFormat fmt;
+    fmt.setBackground(QColor("#dce9f7"));
+    fmt.setForeground(QColor("#17375e"));
+    fmt.setFontWeight(QFont::Bold);
+    for (const Evenement &e : m_evenements) {
+        const QDate d = e.date();
+        if (d.isValid())
+            ui->calendarEvt->setDateTextFormat(d, fmt);
+    }
+}
+
+// ======================================================================
+//  Fiche événement
+// ======================================================================
+int MainWindow::idEvenementSelectionne() const
+{
+    const int row = ui->tableEventsEvt->currentRow();
+    if (row >= 0 && row < m_evenementsVisibles.size() && !ui->tableEventsEvt->selectedItems().isEmpty())
+        return m_evenementsVisibles[row].id();
+    return -1;
+}
+
+void MainWindow::viderFicheEvenement()
+{
+    m_idEvenementCourant = -1;
+    m_imageEvenementCourante.clear();
+    ui->lineNomEvt->clear();
+    ui->comboTypeFormEvt->setCurrentIndex(0);
+    ui->comboStatutFormEvt->setCurrentIndex(0);
+    ui->dateEditEvt->setDate(QDate::currentDate());
+    ui->timeEditEvt->setTime(QTime(18, 0));
+    ui->lineLieuEvt->clear();
+    ui->spinCapaciteEvt->setValue(50);
+    ui->textDescriptionEvt->clear();
+    definirApercuEvenement(QString());
+    ui->lblFicheTitleEvt->setText("📅  Fiche événement");
+}
+
+void MainWindow::remplirFicheEvenement(const Evenement &e)
+{
+    ui->lineNomEvt->setText(e.nom());
+    ui->comboTypeFormEvt->setCurrentText(e.type());
+    ui->comboStatutFormEvt->setCurrentText(e.statut());
+    const QDate d = e.date();
+    ui->dateEditEvt->setDate(d.isValid() ? d : QDate::currentDate());
+    const QTime t = QTime::fromString(e.heure(), "HH:mm");
+    ui->timeEditEvt->setTime(t.isValid() ? t : QTime(18, 0));
+    ui->lineLieuEvt->setText(e.lieu());
+    ui->spinCapaciteEvt->setValue(e.capacite() > 0 ? e.capacite() : 50);
+    ui->textDescriptionEvt->setPlainText(e.description());
+    m_imageEvenementCourante = e.imageAffiche();
+    definirApercuEvenement(m_imageEvenementCourante);
+    ui->lblFicheTitleEvt->setText(QString("📅  Fiche événement  #%1").arg(e.id()));
+    if (d.isValid())
+        ui->calendarEvt->setSelectedDate(d);
+}
+
+Evenement MainWindow::donneesFicheEvenement()
+{
+    Evenement e;
+    e.setNom(ui->lineNomEvt->text().trimmed());
+    e.setType(ui->comboTypeFormEvt->currentText());
+    e.setStatut(ui->comboStatutFormEvt->currentText());
+    e.setDate(ui->dateEditEvt->date());
+    e.setHeure(ui->timeEditEvt->time().toString("HH:mm"));
+    e.setLieu(ui->lineLieuEvt->text().trimmed());
+    e.setCapacite(ui->spinCapaciteEvt->value());
+    e.setDescription(ui->textDescriptionEvt->toPlainText().trimmed());
+    e.setImageAffiche(copierImageEvenement(m_imageEvenementCourante));
+    return e;
+}
+
+void MainWindow::definirApercuEvenement(const QString &path)
+{
+    if (!path.isEmpty() && QFileInfo::exists(path)) {
+        ui->lblImagePreviewEvt->setPixmap(
+            QPixmap(path).scaled(56, 56, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+        ui->btnChoisirImageEvt->setText(QFileInfo(path).fileName());
+    } else {
+        ui->lblImagePreviewEvt->setPixmap(QPixmap());
+        ui->lblImagePreviewEvt->setText("🖼");
+        ui->btnChoisirImageEvt->setText("Choisir une image…");
+    }
+}
+
+QString MainWindow::copierImageEvenement(const QString &path) const
+{
+    // copie l'affiche dans le dossier de données pour que le chemin reste valide
+    if (path.isEmpty() || !QFileInfo::exists(path))
+        return QString();
+    const QString dir = dossierDonneesEvenement() + "/images";
+    QDir().mkpath(dir);
+    const QString dest = dir + "/" + QFileInfo(path).fileName();
+    if (QFileInfo(path).absoluteFilePath() != QFileInfo(dest).absoluteFilePath()) {
+        QFile::remove(dest);
+        QFile::copy(path, dest);
+    }
+    return dest;
+}
+
+// ======================================================================
+//  Slots : boutons et widgets
+// ======================================================================
+void MainWindow::onSelectionEvenementChanged()
+{
+    const int id = idEvenementSelectionne();
+    if (id < 0) return;
+    if (const Evenement *e = trouverEvenementParId(id)) {
+        m_idEvenementCourant = id;
+        remplirFicheEvenement(*e);
+    }
+}
+
+void MainWindow::onCalendrierEvenementClicked(const QDate &date)
+{
+    // (le .ui met déjà à jour le champ Date) – sélectionne l'événement de ce jour s'il existe
+    for (int r = 0; r < m_evenementsVisibles.size(); ++r) {
+        if (m_evenementsVisibles[r].date() == date) {
+            ui->tableEventsEvt->selectRow(r);
+            return;
+        }
+    }
+}
+
+// ======================================================================
+//  Navigation et page « Calendrier »
+// ======================================================================
+void MainWindow::afficherListeEvenements()
+{
+    ui->stackPagesEvt->setCurrentWidget(ui->pageEvenementsEvt);
+}
+
+void MainWindow::afficherCalendrierEvenements()
+{
+    ui->stackPagesEvt->setCurrentWidget(ui->pageCalendrierEvt);
+    majListeJourEvenement();
+}
+
+void MainWindow::majListeJourEvenement()
+{
+    const QDate d = ui->calendarEvt->selectedDate();
+    ui->lblJourDateEvt->setText(QLocale(QLocale::French, QLocale::France).toString(d, "dddd d MMMM yyyy"));
+
+    QVector<Evenement> day;
+    for (const Evenement &e : m_evenements)
+        if (e.date() == d)
+            day.push_back(e);
+    std::sort(day.begin(), day.end(), [](const Evenement &a, const Evenement &b) { return a.heure() < b.heure(); });
+
+    ui->listJourEvt->clear();
+    for (const Evenement &e : day) {
+        auto *it = new QListWidgetItem(QString("%1  ·  %2\n📍 %3   —   %4").arg(e.heure(), e.nom(), e.lieu(), e.statut()));
+        it->setData(Qt::UserRole, e.id());
+        ui->listJourEvt->addItem(it);
+    }
+    if (day.isEmpty()) {
+        auto *it = new QListWidgetItem("Aucun événement à cette date.");
+        it->setFlags(Qt::NoItemFlags);
+        ui->listJourEvt->addItem(it);
+    } else {
+        ui->listJourEvt->setCurrentRow(0);
+    }
+    ui->btnOuvrirFicheEvt->setEnabled(!day.isEmpty());
+}
+
+void MainWindow::ouvrirEvenementDuJour()
+{
+    if (QListWidgetItem *it = ui->listJourEvt->currentItem())
+        onJourEvenementActivated(it);
+}
+
+void MainWindow::onJourEvenementActivated(QListWidgetItem *item)
+{
+    if (!item || !item->data(Qt::UserRole).isValid())
+        return;
+    ouvrirEvenementDansFiche(item->data(Qt::UserRole).toInt());
+}
+
+void MainWindow::ouvrirEvenementDansFiche(int id)
+{
+    const Evenement *e = trouverEvenementParId(id);
+    if (!e)
+        return;
+    bool visible = false;
+    for (const Evenement &v : std::as_const(m_evenementsVisibles))
+        if (v.id() == id) { visible = true; break; }
+    if (!visible)
+        onReinitialiserEvenementClicked();                      // un filtre ou une recherche masque l'événement
+
+    ui->btnNavEvenementsEvt->setChecked(true);     // retour au tableau de bord
+    ui->stackPagesEvt->setCurrentWidget(ui->pageEvenementsEvt);
+    for (int r = 0; r < m_evenementsVisibles.size(); ++r) {
+        if (m_evenementsVisibles[r].id() == id) {
+            ui->tableEventsEvt->selectRow(r);
+            break;
+        }
+    }
+    m_idEvenementCourant = id;
+    remplirFicheEvenement(*e);                               // la fiche affiche l'événement choisi
+}
+
+void MainWindow::onAjouterEvenementClicked()
+{
+    ui->tableEventsEvt->clearSelection();
+    viderFicheEvenement();
+    ui->lblFicheTitleEvt->setText("📅  Nouvel événement");
+    ui->lineNomEvt->setFocus();
+}
+
+void MainWindow::onAnnulerEvenementClicked()
+{
+    // le .ui vide d'abord les champs ; on restaure ensuite l'événement courant
+    if (const Evenement *e = trouverEvenementParId(m_idEvenementCourant))
+        remplirFicheEvenement(*e);
+    else
+        viderFicheEvenement();
+}
+
+void MainWindow::onReinitialiserEvenementClicked()
+{
+    for (QComboBox *c : { ui->comboStatutEvt, ui->comboTypeEvt, ui->comboLieuEvt, ui->comboTriEvt }) {
+        const bool old = c->blockSignals(true);
+        c->setCurrentIndex(0);
+        c->blockSignals(old);
+    }
+    ui->lineSearchEvt->clear();
+    remplirTableEvenements(m_idEvenementCourant);
+}
+
+void MainWindow::modifierEvenement()
+{
+    if (idEvenementSelectionne() < 0 && m_idEvenementCourant < 0) {
+        QMessageBox::information(this, "Modifier", "Sélectionnez d'abord un événement dans le tableau.");
+        return;
+    }
+    ui->lblFicheTitleEvt->setText(QString("✏️  Modification  #%1").arg(m_idEvenementCourant));
+}
+
+void MainWindow::supprimerEvenement()
+{
+    const int id = idEvenementSelectionne();
+    const Evenement *e = trouverEvenementParId(id);
+    if (!e) {
+        QMessageBox::information(this, "Supprimer", "Sélectionnez d'abord un événement dans le tableau.");
+        return;
+    }
+    QMessageBox box(QMessageBox::Question, "Supprimer",
+                    QString("Voulez-vous vraiment supprimer « %1 » ?").arg(e->nom()),
+                    QMessageBox::Yes | QMessageBox::No, this);
+    box.button(QMessageBox::Yes)->setText("Oui");
+    box.button(QMessageBox::No)->setText("Non");
+    if (box.exec() != QMessageBox::Yes)
+        return;
+
+    if (!Evenement::supprimer(id)) {
+        qWarning() << "Evenements : suppression impossible :" << Evenement::derniereErreur();
+        QMessageBox::critical(this, "Supprimer", "La suppression a échoué.\n" + Evenement::derniereErreur());
+        return;
+    }
+    chargerEvenements();
+    viderFicheEvenement();
+    rafraichirEvenements(-1);
+}
+
+void MainWindow::enregistrerEvenement()
+{
+    Evenement e = donneesFicheEvenement();
+
+    // controle de saisie (memes regles que les contraintes de la table, cf. Evenement::valider)
+    if (e.nom().isEmpty()) {
+        QMessageBox::warning(this, "Champ obligatoire", "Le nom de l'événement est obligatoire.");
+        ui->lineNomEvt->setFocus();
+        return;
+    }
+    if (e.lieu().isEmpty()) {
+        QMessageBox::warning(this, "Champ obligatoire", "Le lieu est obligatoire.");
+        ui->lineLieuEvt->setFocus();
+        return;
+    }
+    QString erreur;
+    if (!e.valider(&erreur)) {
+        QMessageBox::warning(this, "Saisie invalide", erreur);
+        return;
+    }
+
+    bool ok;
+    if (m_idEvenementCourant < 0) {
+        ok = e.ajouter();                       // INSERT : renseigne e.id()
+    } else {
+        e.setId(m_idEvenementCourant);
+        ok = e.modifier();                      // UPDATE
+    }
+    if (!ok) {
+        qWarning() << "Evenements : enregistrement impossible :" << Evenement::derniereErreur();
+        QMessageBox::critical(this, "Enregistrer", "L'enregistrement a échoué.\n" + Evenement::derniereErreur());
+        return;
+    }
+
+    m_idEvenementCourant = e.id();
+    chargerEvenements();
+    rafraichirEvenements(e.id());
+    ui->lblFicheTitleEvt->setText(QString("📅  Fiche événement  #%1").arg(e.id()));
+    QMessageBox::information(this, "Enregistré", "L'événement a été enregistré avec succès.");
+}
+
+void MainWindow::choisirImageEvenement()
+{
+    const QString path = QFileDialog::getOpenFileName(this, "Choisir une image", QString(),
+                                                      "Images (*.png *.jpg *.jpeg *.bmp *.webp)");
+    if (path.isEmpty()) return;
+    m_imageEvenementCourante = path;
+    definirApercuEvenement(path);
+}
+
+void MainWindow::rechercherEvenements(const QString &)   { remplirTableEvenements(m_idEvenementCourant); }
+void MainWindow::trierEvenements(int)          { remplirTableEvenements(m_idEvenementCourant); }
+void MainWindow::filtrerEvenements(int)        { remplirTableEvenements(m_idEvenementCourant); }
+
+// ------------------------------------------------------------------------------------
+// Deconnexion (bouton du menu lateral) : confirmation puis retour a l'ecran de connexion
+// ------------------------------------------------------------------------------------
+void MainWindow::onDeconnexionEvenementClicked()
+{
+    QMessageBox::StandardButton rep = QMessageBox::question(
+        this, "Déconnexion",
+        "Voulez-vous vraiment vous déconnecter ?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (rep == QMessageBox::Yes)
+        emit deconnexionDemandee();      // main.cpp ferme la fenêtre et rouvre l'écran de connexion
+}
 // === FIN MODULE EVENEMENT ===

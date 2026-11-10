@@ -23,3 +23,9 @@ INCLUDEPATH += $$PWD/Clients
 SOURCES += $$files($$PWD/Clients/*.cpp)
 HEADERS += $$files($$PWD/Clients/*.h)
 RESOURCES += Clients/ressources_clients.qrc
+
+# === MODULE EVENEMENT ===
+   INCLUDEPATH += $$PWD/Evenements
+   SOURCES += $$files($$PWD/Evenements/*.cpp)
+   HEADERS += $$files($$PWD/Evenements/*.h)
+   RESOURCES += Evenements/ressources_evenements.qrc
