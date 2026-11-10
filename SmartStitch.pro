@@ -30,6 +30,10 @@ RESOURCES += Clients/ressources_clients.qrc
    HEADERS += $$files($$PWD/Evenements/*.h)
    RESOURCES += Evenements/ressources_evenements.qrc
 
+# === MODULE ARTICLE ===
+       INCLUDEPATH += $$PWD/Articles
+       SOURCES += $$files($$PWD/Articles/*.cpp)
+
 # === MODULE MATIERE PREMIERE ===
 INCLUDEPATH += $$PWD/Matieres
 SOURCES += $$files($$PWD/Matieres/*.cpp)
