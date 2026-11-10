@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QRect>
 #include <QSize>
+#include <QStringList>
 #include "service.h"       // module Service
 #include "employe.h"       // module Employe
 #include "posteTravail.h"  // module Employe
@@ -37,7 +38,7 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 // ==========================================================================
-// === MODULE CLIENT : widget de diagramme (repartition des clients par tranche de points) ===
+// === MODULE CLIENT : widget de diagramme (repartition des clients par niveau) ===
 // ==========================================================================
 class DiagrammeWidget : public QWidget
 {
@@ -45,7 +46,8 @@ public:
     explicit DiagrammeWidget(QWidget *parent = nullptr) : QWidget(parent) {
         setMinimumHeight(120);
     }
-    void setDonnees(const QVector<int> &c, int sel) { comptes = c; trancheSel = sel; update(); }
+    void setDonnees(const QVector<int> &c, int sel, const QStringList &n = QStringList())
+    { comptes = c; trancheSel = sel; noms = n; update(); }
 
 protected:
     void paintEvent(QPaintEvent *) override;
@@ -53,6 +55,7 @@ protected:
 private:
     QVector<int> comptes = QVector<int>(5, 0);
     int trancheSel = -1;
+    QStringList noms;                       // noms des barres (Bronze, Argent, Or)
 };
 
 class MainWindow : public QMainWindow
@@ -243,6 +246,8 @@ private:
     QString m_styleMenuActifClient;
     QString m_styleMenuNormalClient;
     DiagrammeWidget *m_diagrammeClient = nullptr;
+    QComboBox *m_cmbNiveauClient = nullptr;     // niveau de fidelite (Bronze, Argent, Or)
+    QComboBox *m_cmbStatutClient = nullptr;     // statut (Actif, Inactif)
     QHash<QWidget*, QRect> m_geomOrigClient;
     QSize m_baseSizeClient;
     // === FIN MODULE CLIENT ===

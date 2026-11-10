@@ -2237,7 +2237,7 @@ static int rangNiveau(const QString &niveau)
 static void colorerNiveaux(QTableWidget *t)
 {
     for (int r = 0; r < t->rowCount(); ++r) {
-        QTableWidgetItem *it = t->item(r, 6);
+        QTableWidgetItem *it = t->item(r, 5);
         if (!it) continue;
         const QString n = it->text().trimmed().toLower();
         QColor fond("#F4D9C2"), texte("#8A4B1F");                   // bronze
@@ -2272,7 +2272,7 @@ void MainWindow::initialiserModuleClient()
 
     ui->cli_tableWidget->setColumnCount(7);
     ui->cli_tableWidget->setHorizontalHeaderLabels(
-        {"id", "nom et prenom", "email", "telephone", "cin", "points", "niveau"});
+        {"id", "nom", "prénom", "email", "téléphone", "niveau", "statut"});
     ui->cli_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->cli_comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int){ trierClients(); });
@@ -2397,7 +2397,7 @@ void MainWindow::initialiserModuleClient()
                 w->hide();
     };
     nettoyer(ui->cli_groupBox, {ui->cli_lineEditNom, ui->cli_lineEditEmail, ui->cli_lineEditTel,
-                            ui->cli_lineEditCin, ui->cli_pushButton_6, ui->cli_pushButtonOuvrir,
+                            ui->cli_lineEditPrenom, ui->cli_pushButton_6, ui->cli_pushButtonOuvrir,
                             ui->cli_pushButtonEnregistrer, ui->cli_pushButtonAnnuler});
     nettoyer(ui->cli_groupBox_2, {m_diagrammeClient});
     delete ui->cli_groupBox->layout();
@@ -2532,7 +2532,7 @@ void MainWindow::initialiserModuleClient()
     QHBoxLayout *lb = new QHBoxLayout(barre);
     lb->setContentsMargins(10, 8, 10, 8);
     lb->setSpacing(8);
-    ui->cli_lineEditRecherche->setPlaceholderText("Rechercher par nom, email ou CIN...");
+    ui->cli_lineEditRecherche->setPlaceholderText("Rechercher par nom, prénom ou email...");
     ui->cli_lineEditRecherche->setStyleSheet(styleChamp);
     ui->cli_lineEditRecherche->setMinimumHeight(34);
     ui->cli_comboBox->setStyleSheet("QComboBox { background:#FFFFFF; border:1px solid #C9BFA8;"
@@ -2569,7 +2569,7 @@ void MainWindow::initialiserModuleClient()
     QHBoxLayout *bas = new QHBoxLayout;
     bas->setSpacing(12);
 
-    ui->cli_groupBox_2->setTitle("Répartition par points");
+    ui->cli_groupBox_2->setTitle("Répartition par niveau");
     ui->cli_groupBox_2->setStyleSheet(styleGroupe);
     QVBoxLayout *lg2 = new QVBoxLayout(ui->cli_groupBox_2);
     lg2->setContentsMargins(10, 22, 10, 10);
@@ -2625,10 +2625,15 @@ void MainWindow::initialiserModuleClient()
     lf->setContentsMargins(16, 26, 16, 16);
     lf->setSpacing(4);
 
-    ajouterChamp(lf, "Nom et prénom", ui->cli_lineEditNom, [](const QString &v) {
+    ajouterChamp(lf, "Nom", ui->cli_lineEditNom, [](const QString &v) {
         static const QRegularExpression re(R"(^[\p{L} '\-]+$)");
         return re.match(v).hasMatch() ? QString()
                                       : QString("Le nom ne doit contenir que des lettres");
+    });
+    ajouterChamp(lf, "Prénom", ui->cli_lineEditPrenom, [](const QString &v) {
+        static const QRegularExpression re(R"(^[\p{L} '\-]+$)");
+        return re.match(v).hasMatch() ? QString()
+                                      : QString("Le prénom ne doit contenir que des lettres");
     });
     ajouterChamp(lf, "Email", ui->cli_lineEditEmail, [this](const QString &v) {
         return emailClientValide(v) ? QString()
@@ -2639,11 +2644,23 @@ void MainWindow::initialiserModuleClient()
         return re.match(v).hasMatch() ? QString()
                                       : QString("Le téléphone doit contenir 8 à 12 chiffres");
     });
-    ajouterChamp(lf, "CIN", ui->cli_lineEditCin, [](const QString &v) {
-        static const QRegularExpression re(R"(^\d{8}$)");
-        return re.match(v).hasMatch() ? QString()
-                                      : QString("Le CIN doit contenir exactement 8 chiffres");
-    });
+    // niveau et statut : listes fermees (valeurs acceptees par la base)
+    const QString styleListe =
+        "QComboBox { background:#FFFFFF; border:1px solid #D9CFB8; border-radius:6px;"
+        "  padding:6px 10px; color:#1F3A4D; }";
+    auto ajouterListe = [lf, styleListe](const QString &libelle, QComboBox *&combo,
+                                         const QStringList &valeurs) {
+        QLabel *lbl = new QLabel(libelle);
+        lbl->setStyleSheet("color:#1F3A4D; font-weight:bold; background:transparent;");
+        combo = new QComboBox;
+        combo->addItems(valeurs);
+        combo->setStyleSheet(styleListe);
+        combo->setMinimumHeight(34);
+        lf->addWidget(lbl);
+        lf->addWidget(combo);
+    };
+    ajouterListe("Niveau de fidélité", m_cmbNiveauClient, Client::niveauxAutorises());
+    ajouterListe("Statut", m_cmbStatutClient, Client::statutsAutorises());
     lf->addSpacing(6);
 
     // carte reçu
@@ -2713,49 +2730,29 @@ bool MainWindow::emailClientValide(const QString &email) const
 
 void MainWindow::on_cli_pushButtonEnregistrer_clicked()
 {
-    const QString nom   = ui->cli_lineEditNom->text().trimmed();
-    const QString email = ui->cli_lineEditEmail->text().trimmed();
-    const QString tel   = ui->cli_lineEditTel->text().trimmed();
-    const QString cin   = ui->cli_lineEditCin->text().trimmed();
-
-    if (nom.isEmpty() || email.isEmpty() || tel.isEmpty() || cin.isEmpty()) {
-        QMessageBox::warning(this, "Champs manquants", "Veuillez remplir tous les champs.");
-        return;
-    }
-    if (!emailClientValide(email)) {
-        QMessageBox::warning(this, "Email invalide", "Veuillez saisir un email valide.");
-        return;
-    }
-
-    static const QRegularExpression reCin(R"(^\d{8}$)");
-    if (!reCin.match(cin).hasMatch()) {
-        QMessageBox::warning(this, "CIN invalide", "Le CIN doit contenir 8 chiffres.");
-        return;
-    }
-
-    static const QRegularExpression reTel(R"(^[0-9 ]{8,12}$)");
-    if (!reTel.match(tel).hasMatch()) {
-        QMessageBox::warning(this, "Téléphone invalide",
-                             "Le téléphone doit contenir entre 8 et 12 chiffres.");
-        return;
-    }
-
     const bool modification = (m_modeModifClient && m_idModifClient > 0);
     const int id = modification ? m_idModifClient : 0;
 
-    Client c(id, nom, email, tel, cin);
+    Client c(id, ui->cli_lineEditNom->text(), ui->cli_lineEditPrenom->text(),
+             ui->cli_lineEditEmail->text(), ui->cli_lineEditTel->text(),
+             m_cmbNiveauClient->currentText(), m_cmbStatutClient->currentText());
+
+    // controle de saisie : fait par la classe Client (memes regles que les contraintes Oracle)
+    QString message;
+    if (!c.valider(&message)) {
+        QMessageBox::warning(this, "Saisie invalide", message);
+        return;
+    }
+
     const bool ok = modification ? c.modifier() : c.ajouter();
 
     if (!ok) {
         const QString err = c.derniereErreur();
         if (err.contains("ORA-00001")) {
-            if (err.contains("UQ_CLIENT_EMAIL"))
-                QMessageBox::warning(this, "Doublon", "Cet email est déjà utilisé.");
-            else
-                QMessageBox::warning(this, "Doublon", "Un client avec ce CIN existe déjà.");
+            QMessageBox::warning(this, "Doublon", "Cet email est déjà utilisé par un autre client.");
         } else if (err.contains("ORA-02290")) {
             QMessageBox::warning(this, "Données invalides",
-                                 "Une valeur ne respecte pas les règles de la base (CIN, téléphone, email...).");
+                                 "Une valeur ne respecte pas les règles de la base (nom, prénom, email, téléphone, niveau...).");
         } else {
             QMessageBox::critical(this, "Erreur", err);
         }
@@ -2788,7 +2785,9 @@ void MainWindow::viderChampsClient()
     ui->cli_lineEditNom->clear();
     ui->cli_lineEditEmail->clear();
     ui->cli_lineEditTel->clear();
-    ui->cli_lineEditCin->clear();
+    ui->cli_lineEditPrenom->clear();
+    if (m_cmbNiveauClient) m_cmbNiveauClient->setCurrentIndex(0);
+    if (m_cmbStatutClient) m_cmbStatutClient->setCurrentIndex(0);
     ui->cli_lineEditNom->setFocus();
 }
 
@@ -2802,7 +2801,8 @@ void MainWindow::on_cli_pushButton_4_clicked()
         return;
     }
 
-    const QString nom = ui->cli_tableWidget->item(row, 1)->text();
+    const QString nom = ui->cli_tableWidget->item(row, 1)->text() + " "
+                        + ui->cli_tableWidget->item(row, 2)->text();
 
     QMessageBox::StandardButton rep = QMessageBox::question(
         this, "Confirmation",
@@ -2819,7 +2819,7 @@ void MainWindow::on_cli_pushButton_4_clicked()
         const QString err = c.derniereErreur();
         if (err.contains("ORA-02292"))
             QMessageBox::warning(this, "Suppression impossible",
-                                 "Ce client est lié à un service ou un événement.");
+                                 "Ce client est lié à un service (table PASSER).");
         else
             QMessageBox::critical(this, "Erreur", err);
         return;
@@ -2836,8 +2836,8 @@ void MainWindow::rechercherClients(const QString &texte)
     for (int r = 0; r < ui->cli_tableWidget->rowCount(); ++r) {
         bool trouve = recherche.isEmpty();   // champ vide : tout afficher
 
-        // colonnes : 1 = nom, 2 = email, 4 = cin
-        const int colonnes[] = {1, 2, 4};
+        // colonnes : 1 = nom, 2 = prénom, 3 = email
+        const int colonnes[] = {1, 2, 3};
         for (int c : colonnes) {
             QTableWidgetItem *it = ui->cli_tableWidget->item(r, c);
             if (it && it->text().toLower().contains(recherche)) {
@@ -2860,7 +2860,10 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
     QString nom   = ui->cli_lineEditNom->text().trimmed();
     QString email = ui->cli_lineEditEmail->text().trimmed();
     QString tel   = ui->cli_lineEditTel->text().trimmed();
-    QString cin   = ui->cli_lineEditCin->text().trimmed();
+    QString prenom = ui->cli_lineEditPrenom->text().trimmed();
+    QString ref = (m_idModifClient > 0)                         // numero de client (ex. C005)
+                      ? QString("C%1").arg(m_idModifClient, 3, 10, QChar('0'))
+                      : QString("à attribuer");
 
     const int row = ui->cli_tableWidget->currentRow();
     if (nom.isEmpty() && row >= 0) {
@@ -2868,11 +2871,13 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
             QTableWidgetItem *it = ui->cli_tableWidget->item(row, c);
             return it ? it->text() : QString();
         };
-        nom   = texte(1);
-        email = texte(2);
-        tel   = texte(3);
-        cin   = texte(4);
+        nom    = texte(1);
+        prenom = texte(2);
+        email  = texte(3);
+        tel    = texte(4);
+        ref    = texte(0);
     }
+    nom = (nom + " " + prenom).trimmed();
 
     if (nom.isEmpty()) {
         QMessageBox::warning(this, "Contrat",
@@ -2882,7 +2887,7 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
 
     const QString fichier = QFileDialog::getSaveFileName(
         this, "Enregistrer le contrat",
-        "contrat_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
+        "contrat_" + (ref.startsWith('C') ? ref : QString("nouveau")) + ".pdf", "Fichiers PDF (*.pdf)");
     if (fichier.isEmpty())
         return;
 
@@ -2918,7 +2923,7 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
     Nom &amp; Prénom : <b>%2</b><br>
     Email : <b>%3</b><br>
     Téléphone : <b>%4</b><br>
-    N° CIN : <b>%5</b>
+    N° client : <b>%5</b>
   </p>
   <span style="font-size:8pt; color:#B39B6A;">Date du contrat : %1</span>
 </td></tr>
@@ -2935,7 +2940,7 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
     2. <b>Délais et Livraison :</b> L'atelier s'engage à respecter les délais de livraison spécifiés ci-dessus, sauf cas de force majeure.<br>
     3. <b>Politique d'acompte :</b> Tout acompte versé lors de la signature reste définitivement acquis à l'atelier en cas d'annulation.<br>
     4. <b>Garantie Qualité :</b> L'atelier garantit un travail d'artisanat conforme aux standards de la haute couture vintage.<br>
-    5. <b>Programme de fidélité :</b> Les points acquis sont strictement personnels et non cessibles à un tiers.
+    5. <b>Programme de fidélité :</b> Le niveau de fidélité (Bronze, Argent, Or) est strictement personnel et non cessible à un tiers.
   </p>
 </td></tr>
 </table>
@@ -2970,7 +2975,7 @@ void MainWindow::on_cli_pushButtonOuvrir_clicked()
 )HTML")
                              .arg(QDate::currentDate().toString("dd/MM/yyyy"),
                                   nom.toHtmlEscaped(), email.toHtmlEscaped(),
-                                  tel.toHtmlEscaped(), cin.toHtmlEscaped());
+                                  tel.toHtmlEscaped(), ref.toHtmlEscaped());
 
     QPdfWriter pdf(fichier);
     pdf.setPageSize(QPageSize(QPageSize::A4));
@@ -3007,15 +3012,21 @@ void MainWindow::on_cli_pushButton_6_clicked()
 {
     // infos du formulaire, sinon du client sélectionné dans le tableau
     QString nom = ui->cli_lineEditNom->text().trimmed();
-    QString cin = ui->cli_lineEditCin->text().trimmed();
+    QString prenom = ui->cli_lineEditPrenom->text().trimmed();
+    QString ref = (m_idModifClient > 0)                         // numero de client (ex. C005)
+                      ? QString("C%1").arg(m_idModifClient, 3, 10, QChar('0'))
+                      : QString("à attribuer");
 
     const int row = ui->cli_tableWidget->currentRow();
     if (nom.isEmpty() && row >= 0) {
         QTableWidgetItem *n = ui->cli_tableWidget->item(row, 1);
-        QTableWidgetItem *c = ui->cli_tableWidget->item(row, 4);
-        nom = n ? n->text() : QString();
-        cin = c ? c->text() : QString();
+        QTableWidgetItem *p = ui->cli_tableWidget->item(row, 2);
+        QTableWidgetItem *r = ui->cli_tableWidget->item(row, 0);
+        nom    = n ? n->text() : QString();
+        prenom = p ? p->text() : QString();
+        ref    = r ? r->text() : ref;
     }
+    nom = (nom + " " + prenom).trimmed();
 
     if (nom.isEmpty()) {
         QMessageBox::warning(this, "Reçu",
@@ -3043,12 +3054,12 @@ void MainWindow::on_cli_pushButton_6_clicked()
 
     const QString fichier = QFileDialog::getSaveFileName(
         this, "Enregistrer le reçu",
-        "recu_" + cin + ".pdf", "Fichiers PDF (*.pdf)");
+        "recu_" + (ref.startsWith('C') ? ref : QString("nouveau")) + ".pdf", "Fichiers PDF (*.pdf)");
     if (fichier.isEmpty())
         return;
 
     const QString numero = "RC-" + QDate::currentDate().toString("yyyyMMdd")
-                           + "-" + cin.right(4);
+                           + "-" + (ref.startsWith('C') ? ref : QString("000"));
 
     const QString html = QString(R"HTML(
 <body style="font-family:'Segoe UI','Arial',sans-serif; color:#1F3A4D; font-size:10pt;">
@@ -3081,7 +3092,7 @@ void MainWindow::on_cli_pushButton_6_clicked()
   <p style="margin-top:10px; line-height:170%;">
     Date : <b>%1</b><br>
     Reçu de : <b>%3</b><br>
-    N° CIN : <b>%4</b>
+    N° client : <b>%4</b>
   </p>
 </td></tr>
 </table>
@@ -3130,7 +3141,7 @@ void MainWindow::on_cli_pushButton_6_clicked()
                              .arg(QDate::currentDate().toString("dd/MM/yyyy"),
                                   numero,
                                   nom.toHtmlEscaped(),
-                                  cin.toHtmlEscaped(),
+                                  ref.toHtmlEscaped(),
                                   QString::number(montant, 'f', 3) + " DT",
                                   mode.toHtmlEscaped());
 
@@ -3202,9 +3213,13 @@ void MainWindow::onModifierClientClicked()
 
     // remplir la fiche avec les coordonnées du client
     ui->cli_lineEditNom->setText(texte(1));
-    ui->cli_lineEditEmail->setText(texte(2));
-    ui->cli_lineEditTel->setText(texte(3));
-    ui->cli_lineEditCin->setText(texte(4));
+    ui->cli_lineEditPrenom->setText(texte(2));
+    ui->cli_lineEditEmail->setText(texte(3));
+    ui->cli_lineEditTel->setText(texte(4));
+    const int iNiveau = m_cmbNiveauClient->findText(texte(5), Qt::MatchFixedString);
+    const int iStatut = m_cmbStatutClient->findText(texte(6), Qt::MatchFixedString);
+    m_cmbNiveauClient->setCurrentIndex(iNiveau >= 0 ? iNiveau : 0);
+    m_cmbStatutClient->setCurrentIndex(iStatut >= 0 ? iStatut : 0);
 
     m_modeAjoutClient = false;
     m_modeModifClient = true;
@@ -3217,27 +3232,20 @@ void MainWindow::onModifierClientClicked()
 
 void MainWindow::majDiagrammeClient()
 {
-    auto tranche = [](int pts) {
-        if (pts < 100) return 0;
-        if (pts < 200) return 1;
-        if (pts < 300) return 2;
-        if (pts < 500) return 3;
-        return 4;
-    };
-
-    QVector<int> comptes(5, 0);
+    const QStringList niveaux = Client::niveauxAutorises();      // Bronze, Argent, Or
+    QVector<int> comptes(niveaux.size(), 0);
     for (int r = 0; r < ui->cli_tableWidget->rowCount(); ++r) {
         QTableWidgetItem *it = ui->cli_tableWidget->item(r, 5);
         if (it)
-            comptes[tranche(it->text().toInt())]++;
+            comptes[rangNiveau(it->text()) - 1]++;
     }
 
     int sel = -1;
     const int row = ui->cli_tableWidget->currentRow();
     if (row >= 0 && ui->cli_tableWidget->item(row, 5))
-        sel = tranche(ui->cli_tableWidget->item(row, 5)->text().toInt());
+        sel = rangNiveau(ui->cli_tableWidget->item(row, 5)->text()) - 1;
 
-    m_diagrammeClient->setDonnees(comptes, sel);
+    m_diagrammeClient->setDonnees(comptes, sel, niveaux);
 }
 
 void DiagrammeWidget::paintEvent(QPaintEvent *)
@@ -3245,7 +3253,9 @@ void DiagrammeWidget::paintEvent(QPaintEvent *)
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
-    const QStringList noms = {"0-99", "100-199", "200-299", "300-499", "500+"};
+    QStringList etiquettes = noms;                      // noms des barres (ex. Bronze, Argent, Or)
+    while (etiquettes.size() < comptes.size())
+        etiquettes << QString::number(etiquettes.size() + 1);
     int maxVal = 4;
     for (int v : comptes) maxVal = qMax(maxVal, v);
 
@@ -3281,31 +3291,26 @@ void DiagrammeWidget::paintEvent(QPaintEvent *)
         p.drawText(barre.left() - 10, barre.top() - 16, largeurBarre + 20, 14,
                    Qt::AlignCenter, QString::number(comptes[i]));
         p.drawText(zone.left() + i * largeurCase, zone.bottom() + 4, largeurCase, 16,
-                   Qt::AlignCenter, noms[i]);
+                   Qt::AlignCenter, etiquettes[i]);
     }
 }
 
 void MainWindow::trierClients()
 {
     for (int r = 0; r < ui->cli_tableWidget->rowCount(); ++r) {
-        QTableWidgetItem *ip = ui->cli_tableWidget->item(r, 5);
-        QTableWidgetItem *in = ui->cli_tableWidget->item(r, 6);
-        if (!ip || !in) continue;
+        QTableWidgetItem *in = ui->cli_tableWidget->item(r, 5);
+        if (!in) continue;
 
-        const QString pts = ip->text();
-        const QString niv = in->text();
-
-        ItemTri *p = new ItemTri(pts);
-        p->setData(Qt::UserRole, pts.toInt());
-        ui->cli_tableWidget->setItem(r, 5, p);
-
-        ItemTri *n = new ItemTri(niv);
-        n->setData(Qt::UserRole, rangNiveau(niv));
-        ui->cli_tableWidget->setItem(r, 6, n);
+        ItemTri *n = new ItemTri(in->text());
+        n->setData(Qt::UserRole, rangNiveau(in->text()));
+        ui->cli_tableWidget->setItem(r, 5, n);
     }
 
     const bool parNiveau = ui->cli_comboBox->currentText().toLower().contains("niveau");
-    ui->cli_tableWidget->sortItems(parNiveau ? 6 : 5, Qt::DescendingOrder);
+    if (parNiveau)
+        ui->cli_tableWidget->sortItems(5, Qt::DescendingOrder);   // Or, Argent, Bronze
+    else
+        ui->cli_tableWidget->sortItems(1, Qt::AscendingOrder);    // par nom
     ui->cli_tableWidget->scrollToTop();
     colorerNiveaux(ui->cli_tableWidget);
 }
@@ -3331,15 +3336,15 @@ void MainWindow::chargerClients()
         ui->cli_tableWidget->setItem(r, 3, new QTableWidgetItem(q.value(3).toString()));
         ui->cli_tableWidget->setItem(r, 4, new QTableWidgetItem(q.value(4).toString()));
 
-        const int pts = q.value(5).toInt();
-        auto *ip = new ItemTri(QString::number(pts));
-        ip->setData(Qt::UserRole, pts);
-        ui->cli_tableWidget->setItem(r, 5, ip);
-
-        const QString niv = q.value(6).toString();
+        const QString niv = q.value(5).toString();
         auto *in = new ItemTri(niv);
         in->setData(Qt::UserRole, rangNiveau(niv));
-        ui->cli_tableWidget->setItem(r, 6, in);
+        ui->cli_tableWidget->setItem(r, 5, in);
+
+        const QString statut = q.value(6).toString();
+        auto *is = new QTableWidgetItem(statut);
+        is->setForeground(QColor(statut.compare("Actif", Qt::CaseInsensitive) == 0 ? "#2E7D4F" : "#7A8791"));
+        ui->cli_tableWidget->setItem(r, 6, is);
     }
     colorerNiveaux(ui->cli_tableWidget);
     const int total = ui->cli_tableWidget->rowCount();
@@ -3363,7 +3368,7 @@ void MainWindow::exporterListeClientsPdf()
             return it ? it->text().toHtmlEscaped() : QString();
         };
 
-        const QString niv = txt(6).toLower();
+        const QString niv = txt(5).toLower();
         QString fond = "#F4D9C2", couleur = "#8A4B1F";            // bronze
         if (niv == "or")          { fond = "#F7E3A1"; couleur = "#8A6D1F"; }
         else if (niv == "argent") { fond = "#E4E7EB"; couleur = "#4A5560"; }
@@ -3371,10 +3376,11 @@ void MainWindow::exporterListeClientsPdf()
         const QString fondLigne = (nb % 2 == 0) ? "#FFFFFF" : "#FAF6EC";
 
         lignes += "<tr bgcolor=\"" + fondLigne + "\">";
-        for (int c = 0; c < 6; ++c)
+        for (int c = 0; c < 5; ++c)
             lignes += "<td>" + txt(c) + "</td>";
         lignes += "<td align=\"center\" bgcolor=\"" + fond + "\">"
-                  "<span style=\"color:" + couleur + ";\"><b>" + txt(6) + "</b></span></td></tr>";
+                  "<span style=\"color:" + couleur + ";\"><b>" + txt(5) + "</b></span></td>";
+        lignes += "<td>" + txt(6) + "</td></tr>";
         ++nb;
     }
 
@@ -3427,12 +3433,12 @@ void MainWindow::exporterListeClientsPdf()
   <table width="100%" cellpadding="6" cellspacing="0">
     <tr bgcolor="#1F3A4D">
       <td><span style="color:#F5F1E8;"><b>ID</b></span></td>
-      <td><span style="color:#F5F1E8;"><b>Nom et prénom</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Nom</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Prénom</b></span></td>
       <td><span style="color:#F5F1E8;"><b>Email</b></span></td>
       <td><span style="color:#F5F1E8;"><b>Téléphone</b></span></td>
-      <td><span style="color:#F5F1E8;"><b>CIN</b></span></td>
-      <td><span style="color:#F5F1E8;"><b>Points</b></span></td>
       <td align="center"><span style="color:#F5F1E8;"><b>Niveau</b></span></td>
+      <td><span style="color:#F5F1E8;"><b>Statut</b></span></td>
     </tr>
 )HTML";
 

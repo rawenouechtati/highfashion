@@ -2029,7 +2029,7 @@ color: rgb(0, 0, 0);
             <string notr="true">color: rgb(64, 64, 64);</string>
            </property>
            <property name="text">
-            <string>cin</string>
+            <string>prénom</string>
            </property>
           </widget>
           <widget class="QLineEdit" name="cli_lineEditEmail">
@@ -2064,7 +2064,7 @@ color: rgb(0, 0, 0);
             <string/>
            </property>
           </widget>
-          <widget class="QLineEdit" name="cli_lineEditCin">
+          <widget class="QLineEdit" name="cli_lineEditPrenom">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -2359,7 +2359,7 @@ color: rgb(64, 64, 64);
            </property>
            <item>
             <property name="text">
-             <string>⇅ trier par points </string>
+             <string>⇅ trier par nom </string>
             </property>
            </item>
            <item>
@@ -6251,7 +6251,7 @@ background-color: rgb(255, 255, 255);</string>
   <tabstop>cli_pushButtonEnregistrer</tabstop>
   <tabstop>cli_pushButtonAnnuler</tabstop>
   <tabstop>cli_lineEditTel</tabstop>
-  <tabstop>cli_lineEditCin</tabstop>
+  <tabstop>cli_lineEditPrenom</tabstop>
   <tabstop>cli_pushButton_6</tabstop>
   <tabstop>cli_lineEditNom</tabstop>
   <tabstop>cli_lineEditEmail</tabstop>
