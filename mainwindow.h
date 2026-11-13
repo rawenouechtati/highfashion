@@ -123,6 +123,7 @@ private slots:
 
 private:
     void initialiserModuleService();
+    void remplirListesService();   // combos Article / Client / Employé lues dans Oracle
     void setupSidebar();
     void setupHeader();
     void setupFiche();

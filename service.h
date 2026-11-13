@@ -5,12 +5,13 @@
 #include <QDate>
 #include <QSqlQueryModel>
 #include <QVector>
+#include <QStringList>
 
 class Service
 {
 public:
     // Attributs (données)
-    QString id, article, client, type, employe, statut;
+    QString id, reference, article, client, type, employe, statut;
     QDate debut, fin;
     double tarif, cout, acompte;
 
@@ -33,7 +34,12 @@ public:
     // En cas d'erreur, retourne false et remplit "erreur" avec un message clair.
     bool valider(QString &erreur) const;
 
-     static bool existe(const QString &id);
+    static bool existe(const QString &id);
+
+    // Listes pour les ComboBox de la fiche (lues dans Oracle)
+    static QStringList listerArticles();
+    static QStringList listerClients();
+    static QStringList listerEmployes();
 };
 
 #endif // SERVICE_H
