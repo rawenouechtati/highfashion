@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 #include "service.h"
 #include "modulematieres.h"   // module Matieres premieres (dossier Matieres/)
+#include "modulearticles.h"    // module Articles (dossier Articles/)
 #include <QSqlQuery>
 #include <QSqlError>
 #include <algorithm>
@@ -126,6 +127,7 @@ MainWindow::MainWindow(const Employe &employeConnecte, QWidget *parent)
     initialiserModuleClient();    // zone MODULE CLIENT
     initialiserModuleEvenement(); // zone MODULE EVENEMENT
     initialiserModuleMatiere();   // zone MODULE MATIERE PREMIERE
+    initialiserModuleArticle();   // zone MODULE ARTICLE
 
     // Page d'accueil : la page Employes (elle s'adapte au poste de l'employe connecte).
     // La barre d'etat "Role : Responsable des services" ne concerne que la page Services.
@@ -183,8 +185,14 @@ void MainWindow::connecterNavigation()
     connect(ui->btnNavMatieresMat,    &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
     connect(ui->btnNavDeconnexionMat, &QPushButton::clicked, this, &MainWindow::onDeconnexionMatiereClicked);
 
-    // page des modules pas encore integres : bouton "Retour" vers l'accueil
-    connect(ui->btnRetourArticle,   &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    // menu lateral du module Articles
+    connect(ui->btnNavEvenementsArt,  &QPushButton::clicked, this, &MainWindow::allerVersEvenements);
+    connect(ui->btnNavArticlesArt,    &QPushButton::clicked, this, &MainWindow::allerVersArticles);
+    connect(ui->btnNavServicesArt,    &QPushButton::clicked, this, &MainWindow::allerVersServices);
+    connect(ui->btnNavClientsArt,     &QPushButton::clicked, this, &MainWindow::allerVersClients);
+    connect(ui->btnNavEmployesArt,    &QPushButton::clicked, this, &MainWindow::allerVersEmployes);
+    connect(ui->btnNavMatieresArt,    &QPushButton::clicked, this, &MainWindow::allerVersMatieres);
+    connect(ui->btnNavDeconnexionArt, &QPushButton::clicked, this, &MainWindow::onDeconnexionArticleClicked);
 
     // a chaque changement de page : la barre d'etat ("Role : Responsable des services") ne concerne
     // que la page Services, et la liste des clients est rechargee depuis la base
@@ -194,6 +202,8 @@ void MainWindow::connecterNavigation()
             chargerClients();
         if (index == PageMatiere)
             ouvrirModuleMatiere();   // les matieres sont relues dans Oracle a chaque affichage
+        if (index == PageArticle)
+            ouvrirModuleArticle();   // les articles sont relus dans Oracle a chaque affichage
     });
 }
 
@@ -3553,8 +3563,43 @@ void MainWindow::appliquerEchelleClient()
 
 
 // ====================================================================================
-// === MODULE ARTICLE ===   (a integrer)
+// === MODULE ARTICLE ===   (Aziz)
 // ====================================================================================
+// Donnees : table Oracle ARTICLE, via la classe entite Article (Articles/article.h/.cpp).
+// Cette zone ne contient AUCUNE requete SQL. L'interface (onglets Catalogue / Statistiques /
+// Estimation et certificat) est le widget Art::ModuleArticles du dossier Articles/ : il est
+// place dans la page PArticle, a cote du menu lateral dessine dans Qt Designer.
+void MainWindow::initialiserModuleArticle()
+{
+    ui->lblUserNameArt->setText(m_employeConnecte.prenom() + " " + m_employeConnecte.nom());
+    ui->lblUserRoleArt->setText(m_employeConnecte.poste());
+    const QPixmap logo(":/images/logo.png");
+    ui->lblLogoArt->setPixmap(logo.scaled(ui->lblLogoArt->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // le widget du module est cree au premier affichage de la page (voir ouvrirModuleArticle)
+}
+
+void MainWindow::ouvrirModuleArticle()
+{
+    if (!m_moduleArticles) {
+        m_moduleArticles = new Art::ModuleArticles(ui->contentFrameArt);
+        ui->contentLayoutArt->addWidget(m_moduleArticles);
+        m_moduleArticles->charger();      // premiere lecture de la table Oracle
+        return;
+    }
+    m_moduleArticles->rafraichir();       // relit la table (modifications faites depuis un autre poste)
+}
+
+// Deconnexion (bouton du menu lateral) : confirmation puis retour a l'ecran de connexion
+void MainWindow::onDeconnexionArticleClicked()
+{
+    QMessageBox::StandardButton rep = QMessageBox::question(
+        this, "Déconnexion",
+        "Voulez-vous vraiment vous déconnecter ?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (rep == QMessageBox::Yes)
+        emit deconnexionDemandee();      // main.cpp ferme la fenêtre et rouvre l'écran de connexion
+}
 // === FIN MODULE ARTICLE ===
 
 
