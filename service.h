@@ -6,12 +6,16 @@
 #include <QSqlQueryModel>
 #include <QVector>
 #include <QStringList>
+#include <QPair>
+
+typedef QVector<QPair<int, QString>> ListeChoix;
 
 class Service
 {
 public:
     // Attributs (données)
     QString id, reference, article, client, type, employe, statut;
+    int idClient = 0;      // lien Service-Client (table PASSER), 0 = aucun
     QDate debut, fin;
     double tarif, cout, acompte;
 
@@ -38,7 +42,7 @@ public:
 
     // Listes pour les ComboBox de la fiche (lues dans Oracle)
     static QStringList listerArticles();
-    static QStringList listerClients();
+    static ListeChoix listerClients();   // (ID Oracle, "Prénom Nom")
     static QStringList listerEmployes();
 };
 

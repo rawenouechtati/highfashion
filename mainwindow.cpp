@@ -308,7 +308,19 @@ void MainWindow::remplirListesService()
             c->setCurrentIndex(c->findText(courant));
     };
     remplir(ui->cmbArticle, Service::listerArticles(), false);
-    remplir(ui->cmbClient,  Service::listerClients(),  true);    // le client est facultatif
+    {   // Client : l'ID Oracle de chaque client est mémorisé dans les données de la ligne
+        const ListeChoix clients = Service::listerClients();
+        if (!clients.isEmpty()) {
+            const int courant = ui->cmbClient->currentData().toInt();
+            QSignalBlocker blocage(ui->cmbClient);
+            ui->cmbClient->clear();
+            ui->cmbClient->addItem("", 0);               // ligne vide : client facultatif
+            for (const auto &c : clients)
+                ui->cmbClient->addItem(c.second, c.first);
+            const int i = ui->cmbClient->findData(courant);
+            ui->cmbClient->setCurrentIndex(i >= 0 ? i : 0);
+        }
+    }
     remplir(cmbEmploye,     Service::listerEmployes(), false);
 }
 
@@ -330,6 +342,10 @@ void MainWindow::initialiserModuleService()
 
     // Chargement via la classe Service
     m_services = Service::chargerDepuisDb();
+    for (Service &sv : m_services) {             // nom du client lié (table PASSER)
+        const int ic = ui->cmbClient->findData(sv.idClient);
+        if (sv.idClient > 0 && ic >= 0) sv.client = ui->cmbClient->itemText(ic);
+    }
     ui->tableServices->setRowCount(m_services.size());
     for (int r = 0; r < m_services.size(); ++r) fillRow(r);
 
@@ -481,6 +497,13 @@ void MainWindow::setupFiche()
 
     connect(ui->spinTarif,   QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
     connect(ui->spinCout,    QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
+    // Par défaut un QDoubleSpinBox est limité à 99,99 : un tarif de 300 était écrasé en 99.99
+    // à l'affichage, puis enregistré tel quel dans Oracle. On élargit les limites (NUMBER(10,2)).
+    for (QDoubleSpinBox *sp : {ui->spinTarif, ui->spinCout, ui->spinAcompte}) {
+        sp->setDecimals(2);
+        sp->setRange(0.0, 99999999.99);
+    }
+
     connect(ui->spinAcompte, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
 
     // --- reçu
@@ -701,7 +724,8 @@ void MainWindow::fillForm(int i)
     const Service &s = m_services[i];
     ui->frameDetails->setTitle(s.reference.isEmpty() ? QString("Fiche service") : "Fiche service · " + s.reference);
     setCombo(ui->cmbArticle, s.article);
-    setCombo(ui->cmbClient,  s.client);
+    const int ic = ui->cmbClient->findData(s.idClient);
+    ui->cmbClient->setCurrentIndex(ic >= 0 ? ic : 0);   // 0 = ligne vide
     setCombo(ui->cmdType,    s.type);
     setCombo(cmbEmploye,     s.employe);
     setCombo(ui->cmbStatut,  s.statut);
@@ -726,6 +750,7 @@ void MainWindow::onSave()
     Service s = m_services[m_current];   // copie : rien n'est modifié tant que tout n'est pas valide
     s.article = ui->cmbArticle->currentText();
     s.client  = ui->cmbClient->currentText();
+    s.idClient = ui->cmbClient->currentData().toInt();
     s.type    = ui->cmdType->currentText();
     s.employe = cmbEmploye->currentText();
     s.statut  = ui->cmbStatut->currentText();
@@ -1420,7 +1445,7 @@ void MainWindow::onSupprimer()
         Service svc;
         if (!svc.supprimer(id)) {
             QMessageBox::critical(this, "Oracle",
-                                  "Échec de la suppression dans la base.\nVoir la console pour le détail.");
+                                  "Échec de la suppression dans la base.\nDes articles ou des employés sont peut-être encore liés à ce service.\nVoir la console pour le détail.");
             return;
         }
     }
