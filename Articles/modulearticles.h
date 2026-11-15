@@ -21,7 +21,12 @@ class QTabWidget;
 class QTableView;
 class QTimer;
 class QVBoxLayout;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <QChartView>          // Qt 5 : QChartView est dans l'espace de noms QtCharts
+QT_CHARTS_USE_NAMESPACE
+#else
 class QChartView;
+#endif
 
 namespace Art {
 

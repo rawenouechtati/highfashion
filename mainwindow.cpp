@@ -107,6 +107,16 @@
 #include <QListWidget>
 #include <climits>
 
+// C++11 : remplace std::as_const (C++17). Donne une reference constante
+// pour qu'une boucle "for (x : conteneur)" ne provoque pas de copie (detach) Qt.
+template <typename T>
+static const T &constRef(const T &t) { return t; }
+
+// Qt 5 : les classes QChart, QBarSet... sont dans l'espace de noms QtCharts
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+QT_CHARTS_USE_NAMESPACE
+#endif
+
 // ====================================================================================
 // === SLOTS GÉNÉRAUX ===
 // Construction de la fenetre principale et navigation entre les modules (stackedWidget principal).
@@ -208,11 +218,7 @@ void MainWindow::connecterNavigation()
 }
 
 void MainWindow::allerVersEmployes()   { ui->SWSmartStitch->setCurrentIndex(PageEmploye); }
-void MainWindow::allerVersServices()
-{
-    remplirListesService();   // relit articles, clients et employés à chaque ouverture de la page
-    ui->SWSmartStitch->setCurrentIndex(PageService);
-}
+void MainWindow::allerVersServices()   { ui->SWSmartStitch->setCurrentIndex(PageService); }
 void MainWindow::allerVersClients()    { ui->SWSmartStitch->setCurrentIndex(PageClient); }
 void MainWindow::allerVersArticles()   { ui->SWSmartStitch->setCurrentIndex(PageArticle); }
 void MainWindow::allerVersMatieres()   { ui->SWSmartStitch->setCurrentIndex(PageMatiere); }
@@ -286,44 +292,6 @@ static QString dt(double v)
     return QString("%1 DT").arg(v, 0, 'f', (v == qFloor(v)) ? 0 : 2);
 }
 
-// Libellé affiché à l'utilisateur pour un service : la référence (jamais l'ID interne)
-static QString refService(const Service &s)
-{
-    return s.reference.isEmpty() ? s.type : s.reference;
-}
-
-// Remplit les combos Article / Client / Employé avec les données Oracle (en gardant la sélection)
-void MainWindow::remplirListesService()
-{
-    auto remplir = [](QComboBox *c, const QStringList &liste, bool ligneVide) {
-        if (!c || liste.isEmpty()) return;          // base injoignable : on ne vide pas la liste
-        const QString courant = c->currentText();
-        QSignalBlocker blocage(c);
-        c->clear();
-        if (ligneVide) c->addItem("");              // première ligne vide (champ facultatif)
-        c->addItems(liste);
-        if (courant.isEmpty())
-            c->setCurrentIndex(ligneVide ? 0 : -1);
-        else
-            c->setCurrentIndex(c->findText(courant));
-    };
-    remplir(ui->cmbArticle, Service::listerArticles(), false);
-    {   // Client : l'ID Oracle de chaque client est mémorisé dans les données de la ligne
-        const ListeChoix clients = Service::listerClients();
-        if (!clients.isEmpty()) {
-            const int courant = ui->cmbClient->currentData().toInt();
-            QSignalBlocker blocage(ui->cmbClient);
-            ui->cmbClient->clear();
-            ui->cmbClient->addItem("", 0);               // ligne vide : client facultatif
-            for (const auto &c : clients)
-                ui->cmbClient->addItem(c.second, c.first);
-            const int i = ui->cmbClient->findData(courant);
-            ui->cmbClient->setCurrentIndex(i >= 0 ? i : 0);
-        }
-    }
-    remplir(cmbEmploye,     Service::listerEmployes(), false);
-}
-
 void MainWindow::initialiserModuleService()
 {
     // métier innovant : planning intelligent (remplace les notifications système)
@@ -338,14 +306,8 @@ void MainWindow::initialiserModuleService()
     setupStatusBar();
     setupLayout();      // assemble tous les layouts (responsive)
 
-    remplirListesService();   // Article / Client / Employé depuis la base
-
     // Chargement via la classe Service
     m_services = Service::chargerDepuisDb();
-    for (Service &sv : m_services) {             // nom du client lié (table PASSER)
-        const int ic = ui->cmbClient->findData(sv.idClient);
-        if (sv.idClient > 0 && ic >= 0) sv.client = ui->cmbClient->itemText(ic);
-    }
     ui->tableServices->setRowCount(m_services.size());
     for (int r = 0; r < m_services.size(); ++r) fillRow(r);
 
@@ -467,7 +429,8 @@ void MainWindow::setupFiche()
     lblEmp->setFont(ui->lblType->font());
 
     cmbEmploye = new QComboBox(f);
-    // la liste des employés vient d'Oracle : voir remplirListesService()
+    cmbEmploye->addItems({"Mouna Ayari", "Sami Guesmi", "Karim Fekih",
+                          "Amine Sassi", "Salma Trabelsi"});
 
     for (QWidget *w : {(QWidget *)ui->lblSoldeTitre, (QWidget *)ui->lblSolde,
                        (QWidget *)ui->lblBenefice, (QWidget *)ui->lblValeurBenefice})
@@ -497,13 +460,6 @@ void MainWindow::setupFiche()
 
     connect(ui->spinTarif,   QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
     connect(ui->spinCout,    QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
-    // Par défaut un QDoubleSpinBox est limité à 99,99 : un tarif de 300 était écrasé en 99.99
-    // à l'affichage, puis enregistré tel quel dans Oracle. On élargit les limites (NUMBER(10,2)).
-    for (QDoubleSpinBox *sp : {ui->spinTarif, ui->spinCout, ui->spinAcompte}) {
-        sp->setDecimals(2);
-        sp->setRange(0.0, 99999999.99);
-    }
-
     connect(ui->spinAcompte, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
 
     // --- reçu
@@ -634,7 +590,7 @@ void MainWindow::setupFiche()
 void MainWindow::setupTable()
 {
     auto *t = ui->tableServices;
-    t->setHorizontalHeaderLabels({"Référence", "Article", "Client", "Type", "Employé",
+    t->setHorizontalHeaderLabels({"ID", "Article", "Client", "Type", "Employé",
                                   "Fin prévue", "Tarif", "Statut"});
     t->setSelectionBehavior(QAbstractItemView::SelectRows);
     t->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -695,7 +651,7 @@ void MainWindow::loadDemoData()
 void MainWindow::fillRow(int r)
 {
     const Service &s = m_services[r];
-    const QStringList v = { s.reference.isEmpty() ? QString("Nouveau") : s.reference, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
+    const QStringList v = { s.id, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
                            s.employe, s.fin.toString("dd/MM/yyyy"),
                            QString::number(s.tarif, 'f', 0), s.statut };
     for (int c = 0; c < v.size(); ++c)
@@ -722,10 +678,9 @@ void MainWindow::fillForm(int i)
 {
     if (i < 0 || i >= m_services.size()) return;
     const Service &s = m_services[i];
-    ui->frameDetails->setTitle(s.reference.isEmpty() ? QString("Fiche service") : "Fiche service · " + s.reference);
+    ui->frameDetails->setTitle("Fiche service · " + s.id);
     setCombo(ui->cmbArticle, s.article);
-    const int ic = ui->cmbClient->findData(s.idClient);
-    ui->cmbClient->setCurrentIndex(ic >= 0 ? ic : 0);   // 0 = ligne vide
+    setCombo(ui->cmbClient,  s.client);
     setCombo(ui->cmdType,    s.type);
     setCombo(cmbEmploye,     s.employe);
     setCombo(ui->cmbStatut,  s.statut);
@@ -750,7 +705,6 @@ void MainWindow::onSave()
     Service s = m_services[m_current];   // copie : rien n'est modifié tant que tout n'est pas valide
     s.article = ui->cmbArticle->currentText();
     s.client  = ui->cmbClient->currentText();
-    s.idClient = ui->cmbClient->currentData().toInt();
     s.type    = ui->cmdType->currentText();
     s.employe = cmbEmploye->currentText();
     s.statut  = ui->cmbStatut->currentText();
@@ -774,7 +728,7 @@ void MainWindow::onSave()
         QDate libre = s.debut;
         for (int i : conflits) {
             const Service &o = m_services[i];
-            lignes << QString("• %1 (%2 → %3, %4)").arg(refService(o), o.debut.toString("dd/MM/yyyy"),
+            lignes << QString("• %1 (%2 → %3, %4)").arg(o.id, o.debut.toString("dd/MM/yyyy"),
                                                         o.fin.toString("dd/MM/yyyy"), o.type);
             libre = qMax(libre, o.fin.addDays(1));
         }
@@ -785,22 +739,32 @@ void MainWindow::onSave()
         return;
     }
 
-    // 1) Base de données d'abord : INSERT si le service n'a pas encore d'ID, sinon UPDATE
-    const bool ok = s.id.isEmpty() ? s.ajouter() : s.modifier();
-    if (!ok) {
-        QMessageBox::critical(this, "Oracle",
-                              "Échec de l'enregistrement dans la base.\nVoir la console pour le détail.");
-        return;
-    }
-
-    // 2) Puis l'interface (s.id contient maintenant l'ID généré, jamais affiché)
     m_services[m_current] = s;
     fillRow(m_current);
     ui->tableServices->selectRow(m_current);
     updateChart();
     updateBanner();
-    updateCount();
-    statusBar()->showMessage("Service " + s.reference + " enregistré", 3000);
+    statusBar()->showMessage("Service " + s.id + " enregistré", 3000);
+
+    // Enregistrement via la classe Service (INSERT si nouveau, UPDATE sinon)
+    bool ok = false;
+    if (s.id.isEmpty()) {
+        ok = s.ajouter();
+    } else {
+        QSqlQuery check;
+        check.prepare("select count(*) from service where id = :id");
+        check.bindValue(":id", s.id);
+        if (check.exec() && check.next() && check.value(0).toInt() > 0)
+            ok = s.modifier();
+        else
+            ok = s.ajouter();
+    }
+
+    if (!ok) {
+        QMessageBox::critical(this, "Oracle",
+                              "Échec de l'enregistrement dans la base.");
+        return;
+    }
 }
 
 void MainWindow::onCancel() { fillForm(m_current); }
@@ -810,7 +774,7 @@ void MainWindow::onSearch(const QString &text)
     auto *t = ui->tableServices;
     for (int r = 0; r < t->rowCount(); ++r) {
         bool ok = text.isEmpty();
-        for (int c : {0, 1, 2, 6})
+        for (int c : {1, 2, 6})
             if (t->item(r, c) && t->item(r, c)->text().contains(text, Qt::CaseInsensitive))
                 ok = true;
         t->setRowHidden(r, !ok);
@@ -830,8 +794,8 @@ void MainWindow::updateCount()
 void MainWindow::updateBanner()
 {
     QStringList ids;
-    for (const Service &s : std::as_const(m_services))
-        if (s.statut == "En retard") ids << refService(s);
+    for (const Service &s : constRef(m_services))
+        if (s.statut == "En retard") ids << s.id;
     ui->lblAlerte->setText(ids.isEmpty()
                                ? "Aucun service en retard"
                                : QString("⚠ %1 services dépassent leur date de fin prévue (%2)")
@@ -954,7 +918,7 @@ void MainWindow::updateChart()
         double total = 0;
         for (const QString &t : types) {
             double v = 0;
-            for (const Service &s : std::as_const(m_services))
+            for (const Service &s : constRef(m_services))
                 if (s.type == t) v += profit ? (s.tarif - s.cout) : 1;
             rows.append({t, v});
             total += v;
@@ -1144,7 +1108,7 @@ void MainWindow::verifierConflit()
 
     QStringList ids;
     QDate libre = tmp.debut;
-    for (int i : c) { ids << refService(m_services[i]); libre = qMax(libre, m_services[i].fin.addDays(1)); }
+    for (int i : c) { ids << m_services[i].id; libre = qMax(libre, m_services[i].fin.addDays(1)); }
     lblConflit->setText(QString("⚠ Conflit : article déjà engagé dans %1. Prochaine disponibilité : %2")
                             .arg(ids.join(", "), libre.toString("dd/MM/yyyy")));
     lblConflit->show();
@@ -1208,7 +1172,7 @@ void MainWindow::onPlanning()
     cal->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // 1) un point coloré par service actif, chaque jour
-    for (const Service &sv : std::as_const(m_services)) {
+    for (const Service &sv : constRef(m_services)) {
         if (!sv.debut.isValid() || !sv.fin.isValid()) continue;
         int garde = 0;
         for (QDate d = sv.debut; d <= sv.fin && garde < 800; d = d.addDays(1), ++garde)
@@ -1230,7 +1194,7 @@ void MainWindow::onPlanning()
                 cal->conflits.insert(d);
             if (!premier.isValid() || dbt < premier) premier = dbt;
             resumes << QString("• %1 ⟷ %2 · %3 · libre le %4")
-                           .arg(refService(a), refService(b), a.article,
+                           .arg(a.id, b.id, a.article,
                                 qMax(a.fin, b.fin).addDays(1).toString("dd/MM/yyyy"));
         }
 
@@ -1282,7 +1246,7 @@ void MainWindow::onPlanning()
                             && o.debut <= d && d <= o.fin);
                 }
             auto *it = new QListWidgetItem(QString("%1%2 · %3 · %4")
-                                               .arg(conf ? "⚠ " : "", refService(sv), sv.article, sv.statut));
+                                               .arg(conf ? "⚠ " : "", sv.id, sv.article, sv.statut));
             it->setForeground(conf ? QColor("#8B1E2D") : statutColor(sv.statut));
             it->setData(Qt::UserRole, i);
             liste->addItem(it);
@@ -1365,7 +1329,7 @@ void MainWindow::genererRecu()
 {
     if (m_current < 0) return;
     const Service &s = m_services[m_current];
-    QString file = QFileDialog::getSaveFileName(this, "Reçu de service", "recu_" + s.reference + ".pdf", "PDF (*.pdf)");
+    QString file = QFileDialog::getSaveFileName(this, "Reçu de service", "recu_" + s.id + ".pdf", "PDF (*.pdf)");
     if (file.isEmpty()) return;
 
     QString html = QString("<h2>Atelier Vintage Couture</h2><h3>Reçu de service %1</h3>"
@@ -1374,7 +1338,7 @@ void MainWindow::genererRecu()
                            "<tr><td>Tarif</td><td>%6</td></tr>"
                            "<tr><td>Acompte versé</td><td>%7</td></tr>"
                            "<tr><td><b>Solde restant</b></td><td><b>%8</b></td></tr></table>")
-                       .arg(refService(s), s.article, s.client.isEmpty() ? "—" : s.client, s.type,
+                       .arg(s.id, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
                             s.fin.toString("dd/MM/yyyy"), dt(s.tarif), dt(s.acompte), dt(s.tarif - s.acompte));
 
     QPdfWriter w(file);
@@ -1382,15 +1346,15 @@ void MainWindow::genererRecu()
     QTextDocument doc;
     doc.setHtml(html);
     doc.print(&w);
-    txtAlertes->append("● Reçu généré pour " + refService(s));
+    txtAlertes->append("● Reçu généré pour " + s.id);
 }
 
 void MainWindow::envoyerRappels()
 {
     int n = 0;
-    for (const Service &s : std::as_const(m_services))
+    for (const Service &s : constRef(m_services))
         if (s.statut == "En retard") {
-            txtAlertes->append(QString("● Rappel envoyé à %1 — %2 en retard.").arg(s.employe, refService(s)));
+            txtAlertes->append(QString("● Rappel envoyé à %1 — %2 en retard.").arg(s.employe, s.id));
             ++n;
         }
     // TODO : envoi réel par e-mail (SMTP) ici
@@ -1400,7 +1364,12 @@ void MainWindow::envoyerRappels()
 // ---------- Ajouter / Modifier / Supprimer ----------
 void MainWindow::onAjouter()
 {
-    Service s;               // id vide : l'ID Oracle est généré à l'enregistrement
+    int n = 0;
+    for (const Service &x : constRef(m_services))
+        n = qMax(n, x.id.mid(2).toInt());
+
+    Service s;
+    s.id      = QString("SV%1").arg(n + 1, 3, 10, QChar('0'));
     s.type    = "Location";
     s.employe = cmbEmploye->itemText(0);
     s.debut   = QDate::currentDate();
@@ -1417,7 +1386,9 @@ void MainWindow::onAjouter()
     updateChart();
     updateCount();
     ui->cmbArticle->setFocus();
-    statusBar()->showMessage("Nouveau service : remplissez la fiche puis cliquez sur Enregistrer", 6000);
+    statusBar()->showMessage("Nouveau service " + s.id +
+                                 " : remplissez la fiche puis cliquez sur Enregistrer", 6000);
+    // TODO : INSERT dans Oracle au moment de Enregistrer
 }
 
 void MainWindow::onModifier()
@@ -1436,19 +1407,10 @@ void MainWindow::onSupprimer()
         QMessageBox::information(this, "Supprimer", "Sélectionnez d'abord un service dans le tableau.");
         return;
     }
-    if (QMessageBox::question(this, "Supprimer", "Supprimer ce service ?") != QMessageBox::Yes)
-        return;
-
-    // Base d'abord (un service jamais enregistré n'a pas d'ID : rien à supprimer dans Oracle)
     const QString id = m_services[m_current].id;
-    if (!id.isEmpty()) {
-        Service svc;
-        if (!svc.supprimer(id)) {
-            QMessageBox::critical(this, "Oracle",
-                                  "Échec de la suppression dans la base.\nDes articles ou des employés sont peut-être encore liés à ce service.\nVoir la console pour le détail.");
-            return;
-        }
-    }
+    if (QMessageBox::question(this, "Supprimer", "Supprimer le service " + id + " ?")
+        != QMessageBox::Yes)
+        return;
 
     int row = m_current;
     {
@@ -1463,7 +1425,15 @@ void MainWindow::onSupprimer()
     updateChart();
     updateBanner();
     updateCount();
-    statusBar()->showMessage("Service supprimé", 4000);
+    statusBar()->showMessage("Service " + id + " supprimé", 4000);
+
+    // Suppression via la classe Service
+    Service svc;
+    if (!svc.supprimer(id)) {
+        QMessageBox::critical(this, "Oracle",
+                              "Échec de la suppression dans la base.");
+        return;
+    }
 }
 // === FIN MODULE SERVICE ===
 
@@ -3962,7 +3932,7 @@ QDate MainWindow::dateInitialeCalendrierEvenement() const
     }
     if (dates.isEmpty()) return QDate::currentDate();
     std::sort(dates.begin(), dates.end());
-    for (const QDate &d : std::as_const(dates))
+    for (const QDate &d : constRef(dates))
         if (d >= QDate::currentDate()) return d;
     return dates.last();
 }
@@ -4154,7 +4124,7 @@ void MainWindow::ouvrirEvenementDansFiche(int id)
     if (!e)
         return;
     bool visible = false;
-    for (const Evenement &v : std::as_const(m_evenementsVisibles))
+    for (const Evenement &v : constRef(m_evenementsVisibles))
         if (v.id() == id) { visible = true; break; }
     if (!visible)
         onReinitialiserEvenementClicked();                      // un filtre ou une recherche masque l'événement

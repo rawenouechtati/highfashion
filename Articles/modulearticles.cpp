@@ -43,6 +43,11 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
+// Qt 5 : les classes QChart, QBarSet... sont dans l'espace de noms QtCharts
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+QT_CHARTS_USE_NAMESPACE
+#endif
+
 namespace Art {
 
 // Thème du module (feuille de style portée par ce widget : elle ne touche pas les autres modules)
@@ -234,7 +239,7 @@ QWidget *ModuleArticles::construireCatalogue()
     recherche_->setPlaceholderText("🔍  Rechercher par nom, maison, catégorie...");
     recherche_->setClearButtonEnabled(true);
     tri_ = new QComboBox;
-    tri_->addItems({"Trier par : ID", "Trier par : Nom (A → Z)", "Trier par : Maison", "Trier par : Décennie",
+    tri_->addItems({"Trier par : Ordre d'ajout", "Trier par : Nom (A → Z)", "Trier par : Maison", "Trier par : Décennie",
                     "Trier par : Prix croissant", "Trier par : Prix décroissant"});
     barre->addWidget(recherche_, 1);
     barre->addWidget(tri_);
@@ -316,7 +321,7 @@ QWidget *ModuleArticles::construireCatalogue()
         grid->addWidget(cell, ligne, col, 1, span);
     };
     nom_ = new QLineEdit;       nom_->setMaxLength(80);
-    maison_ = new QComboBox;    maison_->setEditable(true);  maison_->lineEdit()->setMaxLength(60);
+    maison_ = new QComboBox;    // liste deroulante des grandes maisons (remplie dans remplirListes)
     decennie_ = new QComboBox;
     categorie_ = new QComboBox; categorie_->setEditable(true); categorie_->lineEdit()->setMaxLength(40);
     etat_ = new QComboBox;
@@ -325,9 +330,14 @@ QWidget *ModuleArticles::construireCatalogue()
     prix_->setPlaceholderText("ex. 4500,500");
     prix_->setValidator(new QRegularExpressionValidator(QRegularExpression(R"(^\d{0,7}([.,]\d{0,3})?$)"), prix_));
     date_ = new QDateEdit(QDate::currentDate());
-    date_->setCalendarPopup(true);
     date_->setDisplayFormat("dd/MM/yyyy");
     date_->setMaximumDate(QDate::currentDate());
+    // date d'entree automatique : affichee seulement, l'utilisateur ne peut pas la changer
+    date_->setReadOnly(true);
+    date_->setCalendarPopup(false);
+    date_->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    date_->setFocusPolicy(Qt::NoFocus);
+    date_->setToolTip("Date d'entree remplie automatiquement");
     service_ = new QComboBox;
     origine_ = new QLineEdit;   origine_->setMaxLength(100);
     origine_->setPlaceholderText("Provenance et historique");
@@ -342,7 +352,7 @@ QWidget *ModuleArticles::construireCatalogue()
     champ(4, 0, 1, "etat", "État *", etat_);
     champ(4, 1, 1, "statut", "Statut *", statut_);
     champ(5, 0, 1, "prix", "Prix (DT) *", prix_);
-    champ(5, 1, 1, "date", "Date d'entrée *", date_);
+    champ(5, 1, 1, "date", "Date d'entrée (automatique)", date_);
     champ(6, 0, 2, "service", "Service associé *", service_);
     champ(7, 0, 2, "origine", "Origine *", origine_);
     auto *boutons = new QHBoxLayout;
@@ -366,7 +376,7 @@ QWidget *ModuleArticles::construireCatalogue()
     connect(tri_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ModuleArticles::onTri);
     connect(table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this, [this] { onLigneChoisie(); });
     connect(nom_, &QLineEdit::textEdited, this, [this] { validerChamp("nom", true); });
-    connect(maison_, &QComboBox::editTextChanged, this, [this] { if (maison_->hasFocus() || maison_->lineEdit()->hasFocus()) validerChamp("maison", true); });
+    connect(maison_, QOverload<int>::of(&QComboBox::activated), this, [this] { validerChamp("maison", true); });
     connect(categorie_, &QComboBox::editTextChanged, this, [this] { if (categorie_->lineEdit() && (categorie_->hasFocus() || categorie_->lineEdit()->hasFocus())) validerChamp("categorie", true); });
     connect(categorie_, QOverload<int>::of(&QComboBox::activated), this, [this] { validerChamp("categorie", true); });
     connect(decennie_, QOverload<int>::of(&QComboBox::activated), this, [this] { validerChamp("decennie", true); });
@@ -391,8 +401,13 @@ void ModuleArticles::remplirListes()
     maisons.sort(Qt::CaseInsensitive);
     cats.sort(Qt::CaseInsensitive);
     categorie_->setEditable(!Article::categoriesFermees());   // liste imposée par un CHECK : pas de saisie libre
-    const QString m = garder(maison_), c = garder(categorie_);
-    maison_->blockSignals(true); maison_->clear(); maison_->addItems(maisons); maison_->setCurrentIndex(-1); maison_->setEditText(m); maison_->blockSignals(false);
+    const QString m = maison_->currentData().toString(), c = garder(categorie_);
+    maison_->blockSignals(true);
+    maison_->clear();
+    maison_->addItem("— Choisir —", "");
+    for (const QString &x : maisons) maison_->addItem(x, x);
+    maison_->setCurrentIndex(std::max(0, maison_->findData(m)));
+    maison_->blockSignals(false);
     categorie_->blockSignals(true); categorie_->clear(); categorie_->addItems(cats); categorie_->setCurrentIndex(-1);
     if (categorie_->isEditable()) categorie_->setEditText(c); else categorie_->setCurrentIndex(categorie_->findText(c));
     categorie_->blockSignals(false);
@@ -440,7 +455,8 @@ void ModuleArticles::recharger(int idASelectionner)
     model_ = nouveau;
     model_->setParent(this);
     // colonnes visibles : ID, Nom, Maison, Décennie, État, Prix, Catégorie, Statut (Origine, Service et Date restent dans la fiche)
-    for (int c : {7, 9, 10}) table_->setColumnHidden(c, true);
+    // colonne 0 (ID) cachee : l'ID reste utilise en interne pour modifier / supprimer
+    for (int c : {0, 7, 9, 10}) table_->setColumnHidden(c, true);
     onTri(tri_->currentIndex());
     remplirListes();
     compte_->setText(QString("%1 article(s)").arg(cache_.size()));
@@ -498,7 +514,7 @@ void ModuleArticles::viderFiche()
     nom_->clear();
     prix_->clear();
     origine_->clear();
-    maison_->setCurrentIndex(-1); maison_->setEditText(QString());
+    maison_->setCurrentIndex(0);
     categorie_->setCurrentIndex(-1); if (categorie_->isEditable()) categorie_->setEditText(QString());
     decennie_->setCurrentIndex(0);
     etat_->setCurrentIndex(0);
@@ -516,9 +532,11 @@ void ModuleArticles::remplirFiche(const Article &a)
 {
     idCourant_ = a.getId();
     touches_.clear();
-    ficheTitre_->setText(QString("Fiche article n° %1").arg(a.getId()));
+    ficheTitre_->setText("Fiche : " + a.getNom());
     nom_->setText(a.getNom());
-    maison_->setEditText(a.getMaison());
+    int im = maison_->findText(a.getMaison(), Qt::MatchFixedString);   // insensible a la casse
+    if (im < 0) { maison_->addItem(a.getMaison(), a.getMaison()); im = maison_->count() - 1; }
+    maison_->setCurrentIndex(im);
     if (categorie_->isEditable()) categorie_->setEditText(a.getCategorie());
     else categorie_->setCurrentIndex(categorie_->findText(a.getCategorie()));
     decennie_->setCurrentIndex(std::max(0, decennie_->findData(QString::number(a.getDecennie()))));
@@ -537,7 +555,7 @@ Article::Saisie ModuleArticles::lireSaisie() const
 {
     Article::Saisie s;
     s.nom = nom_->text();
-    s.maison = maison_->currentText();
+    s.maison = maison_->currentData().toString();
     s.decennie = decennie_->currentData().toString();
     s.etat = etat_->currentData().toString();
     s.prix = prix_->text();
