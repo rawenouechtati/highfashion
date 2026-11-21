@@ -15,6 +15,23 @@ QLineEdit:focus, QComboBox:focus {
     border: 1px solid #B39B6A;
 }
 
+/* liste deroulante : pas de cadre epais a droite, le champ ressemble aux champs texte */
+QComboBox {
+    padding-right: 30px;
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 28px;
+    border: none;
+    background: transparent;
+}
+QComboBox::down-arrow {
+    image: url(:/images/fleche_bas.png);
+    width: 12px;
+    height: 7px;
+}
+
 QPushButton {
     border-radius: 7px;
     padding: 7px 16px;

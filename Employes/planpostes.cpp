@@ -1,4 +1,5 @@
 #include "planpostes.h"
+#include "atelier3d.h"
 #include "pictogrammes.h"
 #include "posteTravail.h"
 
@@ -11,6 +12,7 @@
 #include <QPushButton>
 #include <QEvent>
 #include <QScrollArea>
+#include <QStackedWidget>
 #include <QVBoxLayout>
 
 namespace {
@@ -49,13 +51,15 @@ PlanPostes::PlanPostes(bool actions, QWidget *parent)
 
     // --- en-tete : titre a gauche, 3 indicateurs a droite ---
     auto *entete = new QHBoxLayout();
-    auto *titres = new QVBoxLayout();
+    m_blocTitre = new QWidget();
+    auto *titres = new QVBoxLayout(m_blocTitre);
+    titres->setContentsMargins(0, 0, 0, 0);
     titres->setSpacing(2);
     titres->addWidget(etiquette("Plan de l'atelier",
         QString("font-family: 'Playfair Display'; font-weight: bold; font-size: 22pt; color: %1;").arg(kMarine)));
     titres->addWidget(etiquette("Vue d'ensemble des postes et des affectations",
         QString("font-size: 10pt; color: %1;").arg(kGris)));
-    entete->addLayout(titres);
+    entete->addWidget(m_blocTitre);
     entete->addStretch();
     m_entete = entete;
     m_tuiles.append(creerTuile("total", &m_valeurTotal, &m_legendeTotal));
@@ -114,13 +118,44 @@ PlanPostes::PlanPostes(bool actions, QWidget *parent)
         const Filtre filtre = entree.second;
         connect(puce, &QPushButton::clicked, this, [this, filtre]() {
             m_filtre = filtre;
+            m_atelier3d->setFiltre(int(filtre));
             reconstruireCartes();
         });
     }
     ligneFiltres->addWidget(cadreFiltres);
     principal->addLayout(ligneFiltres);
 
-    // --- cartes dans une zone defilante (beaucoup de postes ou petite fenetre) ---
+    // --- bascule de vue : plan 3D (par defaut) ou liste de cartes ---
+    QFrame *cadreVue = new QFrame();
+    m_cadreVue = cadreVue;
+    cadreVue->setObjectName("cadreVue");
+    cadreVue->setStyleSheet("QFrame#cadreVue { background-color: #FFFDF9; border: 1px solid #EADFD0; border-radius: 10px; }");
+    auto *lVue = new QHBoxLayout(cadreVue);
+    lVue->setContentsMargins(14, 6, 14, 6);
+    lVue->setSpacing(6);
+    lVue->addWidget(etiquette("Vue :", QString("font-size: 9pt; color: %1;").arg(kMarine)));
+    auto *groupeVue = new QButtonGroup(this);
+    const QString styleVue = QString(
+        "QPushButton { background-color: #F3ECE2; color: %1; border: none; border-radius: 13px; "
+        "padding: 5px 14px; font-size: 9pt; }"
+        "QPushButton:checked { background-color: %1; color: white; font-weight: bold; }").arg(kMarine);
+    m_bouton3D = new QPushButton("3D");
+    m_boutonListe = new QPushButton("Liste");
+    for (QPushButton *bouton : {m_bouton3D, m_boutonListe}) {
+        bouton->setCheckable(true);
+        bouton->setCursor(Qt::PointingHandCursor);
+        bouton->setStyleSheet(styleVue);
+        groupeVue->addButton(bouton);
+        lVue->addWidget(bouton);
+    }
+    m_bouton3D->setChecked(true);
+    ligneFiltres->insertWidget(1, cadreVue);   // entre le taux d'occupation et les filtres
+
+    // --- plan 3D et cartes (zone defilante : beaucoup de postes ou petite fenetre) ---
+    m_vues = new QStackedWidget();
+    m_atelier3d = new Atelier3D(m_actions);
+    connect(m_atelier3d, &Atelier3D::changerPosteDemande, this, &PlanPostes::changerPosteDemande);
+    m_vues->addWidget(m_atelier3d);
     m_zoneCartes = new QScrollArea();
     m_zoneCartes->setWidgetResizable(true);
     m_zoneCartes->setFrameShape(QFrame::NoFrame);
@@ -131,7 +166,14 @@ PlanPostes::PlanPostes(bool actions, QWidget *parent)
     m_grille->setSpacing(14);
     m_zoneCartes->setWidget(m_contenuCartes);
     m_zoneCartes->viewport()->installEventFilter(this);
-    principal->addWidget(m_zoneCartes, 1);
+    m_vues->addWidget(m_zoneCartes);
+    principal->addWidget(m_vues, 1);
+
+    connect(m_bouton3D, &QPushButton::clicked, this, [this]() { m_vues->setCurrentWidget(m_atelier3d); });
+    connect(m_boutonListe, &QPushButton::clicked, this, [this]() {
+        m_vues->setCurrentWidget(m_zoneCartes);
+        reconstruireCartes();   // la largeur de la zone n'est connue qu'une fois la liste affichee
+    });
 }
 
 QFrame *PlanPostes::creerTuile(const QString &icone, QLabel **valeur, QLabel **legende)
@@ -175,7 +217,7 @@ void PlanPostes::setDonnees(const QStringList &postes, const QMap<QString, Emplo
     for (const QString &poste : postes) {
         const Employe occupant = occupants.value(poste);
         signature += "|" + poste + ";" + QString::number(occupant.id()) + ";" + occupant.prenom()
-                     + ";" + occupant.nom() + ";" + occupant.poste();
+                     + ";" + occupant.nom() + ";" + occupant.poste() + ";" + QString::number(occupant.idService());
     }
     if (signature == m_signature)
         return;
@@ -203,7 +245,13 @@ void PlanPostes::setDonnees(const QStringList &postes, const QMap<QString, Emplo
     m_pourcentage->setText(m_compact ? QString("%1% (%2/%3)").arg(taux).arg(occupes).arg(total)
                                      : QString::number(taux) + "%");
 
+    m_atelier3d->setDonnees(m_postes, m_occupants, m_monPoste);
     reconstruireCartes();
+}
+
+void PlanPostes::setServices(const QMap<int, QString> &services)
+{
+    m_atelier3d->setServices(services);
 }
 
 void PlanPostes::setCompact(bool actif)
@@ -213,19 +261,24 @@ void PlanPostes::setCompact(bool actif)
     m_compact = actif;
     for (QFrame *tuile : std::as_const(m_tuiles))
         tuile->setVisible(!actif);
+    m_blocTitre->setVisible(!actif);   // compact : une seule ligne (taux, vue, filtres), la place va au plan
 
-    // en compact, le taux et les filtres passent sur la ligne du titre
+    // en compact, le titre disparait : taux, bascule de vue et filtres passent sur la ligne d'en-tete
     m_ligneFiltres->removeWidget(m_cadreTaux);
+    m_ligneFiltres->removeWidget(m_cadreVue);
     m_ligneFiltres->removeWidget(m_cadreFiltres);
     if (actif) {
-        m_cadreTaux->setMinimumWidth(300);
-        m_entete->addWidget(m_cadreTaux);
+        m_cadreTaux->setMinimumWidth(240);
+        m_entete->addWidget(m_cadreTaux, 1);
+        m_entete->addWidget(m_cadreVue);
         m_entete->addWidget(m_cadreFiltres);
     } else {
         m_entete->removeWidget(m_cadreTaux);
+        m_entete->removeWidget(m_cadreVue);
         m_entete->removeWidget(m_cadreFiltres);
         m_cadreTaux->setMinimumWidth(0);
         m_ligneFiltres->addWidget(m_cadreTaux, 1);
+        m_ligneFiltres->addWidget(m_cadreVue);
         m_ligneFiltres->addWidget(m_cadreFiltres);
     }
     m_signature.clear();   // force la reconstruction des cartes avec les nouvelles dimensions
@@ -239,10 +292,13 @@ void PlanPostes::setDefilementInterne(bool actif)
     reconstruireCartes();
 }
 
-int PlanPostes::colonnesPourLargeur() const
+int PlanPostes::colonnesPour(int visibles) const
 {
     const int largeur = m_zoneCartes->viewport()->width();
-    return qBound(1, largeur / (m_compact ? 150 : 215), 6);
+    const int maximum = qBound(1, largeur / 230, 6);
+    const int n = qMax(1, visibles);
+    const int lignes = (n + maximum - 1) / maximum;
+    return (n + lignes - 1) / lignes;   // cartes reparties a parts egales : 3 + 3 plutot que 4 + 2
 }
 
 bool PlanPostes::eventFilter(QObject *objet, QEvent *evenement)
@@ -250,7 +306,7 @@ bool PlanPostes::eventFilter(QObject *objet, QEvent *evenement)
     // La largeur utile est celle de la zone defilante : on re-dispose les cartes quand
     // elle change assez pour modifier le nombre de colonnes.
     if (objet == m_zoneCartes->viewport() && evenement->type() == QEvent::Resize
-        && colonnesPourLargeur() != m_colonnes)
+        && colonnesPour(m_visibles) != m_colonnes)
         reconstruireCartes();
     return QWidget::eventFilter(objet, evenement);
 }
@@ -265,35 +321,35 @@ QFrame *PlanPostes::creerCarte(const QString &poste)
 
     QFrame *carte = new QFrame();
     carte->setObjectName("carte");
-    carte->setMinimumWidth(m_compact ? 150 : 200);
+    carte->setMinimumWidth(190);
     // hauteur minimale : sans elle les cartes s'ecrasent (texte et bouton superposes)
     // quand la zone est trop basse ; la zone defilante prend alors le relais.
-    carte->setMinimumHeight(m_compact ? (m_actions ? 192 : 150) : (m_actions ? 205 : 170));
+    // Les cartes grandissent avec la zone (jusqu'a 340 px) pour ne pas laisser de grand vide.
+    carte->setMinimumHeight(m_actions ? 215 : 190);
+    carte->setMaximumHeight(m_actions ? 300 : 210);
     carte->setStyleSheet(QString(
         "QFrame#carte { background-color: #FFFDF9; border: 1px solid #EADFD0; "
-        "border-top: 3px solid %1; border-radius: 10px; }").arg(accent));
+        "border-top: 3px solid %1; border-radius: 12px; }").arg(accent));
 
     auto *colonne = new QVBoxLayout(carte);
-    colonne->setContentsMargins(m_compact ? 9 : 16, m_compact ? 10 : 14, m_compact ? 9 : 16, m_compact ? 8 : 12);
-    colonne->setSpacing(m_compact ? 6 : 8);
+    colonne->setContentsMargins(18, 16, 18, 14);
+    colonne->setSpacing(10);
 
     auto *entete = new QHBoxLayout();
-    entete->setSpacing(m_compact ? 6 : 12);
-    entete->addWidget(m_compact
-        ? pastille(pixmapPictogrammePoste(PosteTravail::type(poste), QColor(accent), 24), 38, occupe ? "#F6EDE4" : "#E8F1E9")
-        : pastille(pixmapPictogrammePoste(PosteTravail::type(poste), QColor(accent), 34), 52, occupe ? "#F6EDE4" : "#E8F1E9"));
-    QLabel *nom = etiquette(m_compact ? PosteTravail::libelleCourt(poste) : PosteTravail::libelle(poste), QString(
-        "font-family: 'Playfair Display'; font-weight: bold; font-size: %2pt; color: %1;")
-        .arg(kMarine).arg(m_compact ? 8 : 11));
+    entete->setSpacing(12);
+    entete->addWidget(pastille(pixmapPictogrammePoste(PosteTravail::type(poste), QColor(accent), 36), 56,
+                               occupe ? "#F6EDE4" : "#E8F1E9"));
+    QLabel *nom = etiquette(PosteTravail::libelle(poste), QString(
+        "font-family: 'Playfair Display'; font-weight: bold; font-size: 12pt; color: %1;").arg(kMarine));
     nom->setWordWrap(true);
     entete->addWidget(nom, 1);
     colonne->addLayout(entete);
 
     QLabel *badge = etiquette(occupe ? QString::fromUtf8("●  Occupé") : QString::fromUtf8("●  Libre"), QString(
-        "background-color: %1; color: white; border-radius: 11px; padding: 0px 14px; "
-        "font-size: 9pt; font-weight: bold;").arg(accent));
+        "background-color: %1; color: white; border-radius: 12px; padding: 0px 16px; "
+        "font-size: 10pt; font-weight: bold;").arg(accent));
     badge->setAlignment(Qt::AlignCenter);
-    badge->setFixedHeight(22);
+    badge->setFixedHeight(24);
     auto *ligneBadge = new QHBoxLayout();
     ligneBadge->addStretch();
     ligneBadge->addWidget(badge);
@@ -306,29 +362,31 @@ QFrame *PlanPostes::creerCarte(const QString &poste)
     colonne->addWidget(separateur);
 
     auto *ligneOccupant = new QHBoxLayout();
-    ligneOccupant->setSpacing(10);
+    ligneOccupant->setSpacing(12);
     QLabel *icone = new QLabel();
-    icone->setPixmap(pixmapIcone(Icone::Personne, QColor(occupe ? kBordeaux : kGris), 26));
-    icone->setFixedSize(30, 30);
+    icone->setPixmap(pixmapIcone(Icone::Personne, QColor(occupe ? kBordeaux : kGris), 30));
+    icone->setFixedSize(34, 34);
     ligneOccupant->addWidget(icone);
     auto *textes = new QVBoxLayout();
-    textes->setSpacing(0);
+    textes->setSpacing(1);
     if (occupe) {
-        textes->addWidget(etiquette(occupant, QString("font-weight: bold; font-size: 10pt; color: %1;").arg(kMarine)));
+        textes->addWidget(etiquette(occupant, QString("font-weight: bold; font-size: 11pt; color: %1;").arg(kMarine)));
         textes->addWidget(etiquette(monPoste ? employe.poste() + QString::fromUtf8(" · vous") : employe.poste(),
-                                    QString("font-size: 9pt; color: %1;").arg(monPoste ? kBordeaux : kGris)));
+                                    QString("font-size: 10pt; color: %1;").arg(monPoste ? kBordeaux : kGris)));
     } else {
-        textes->addWidget(etiquette("Aucun employé", QString("font-size: 10pt; color: %1;").arg(kGris)));
-        textes->addWidget(etiquette(QString::fromUtf8("—"), QString("font-size: 9pt; color: %1;").arg(kGris)));
+        textes->addWidget(etiquette("Aucun employé", QString("font-size: 11pt; color: %1;").arg(kGris)));
+        textes->addWidget(etiquette(QString::fromUtf8("—"), QString("font-size: 10pt; color: %1;").arg(kGris)));
     }
     ligneOccupant->addLayout(textes, 1);
     colonne->addLayout(ligneOccupant);
+    colonne->addStretch(1);   // l'espace en trop reste en bas de la carte, le bouton s'y ancre
 
     // Espace employe : prendre un poste libre, ou liberer le sien. Un poste occupe par
     // quelqu'un d'autre n'a pas de bouton. Prendre un autre poste libere l'ancien.
     if (m_actions && (monPoste || !occupe)) {
         QPushButton *bouton = new QPushButton(monPoste ? QString::fromUtf8("Libérer mon poste") : "Prendre ce poste");
         bouton->setCursor(Qt::PointingHandCursor);
+        bouton->setMinimumHeight(36);
         bouton->setStyleSheet(QString(
             "QPushButton { background-color: %1; color: white; border: none; border-radius: 6px; "
             "padding: 6px 10px; font-weight: bold; }"
@@ -337,6 +395,13 @@ QFrame *PlanPostes::creerCarte(const QString &poste)
         const QString cible = monPoste ? QString() : poste;
         connect(bouton, &QPushButton::clicked, this, [this, cible]() { emit changerPosteDemande(cible); });
         colonne->addWidget(bouton);
+    } else if (m_actions) {
+        // poste pris par un collegue : une ligne d'information a la place du bouton, les cartes gardent la meme structure
+        QLabel *info = etiquette(QString::fromUtf8("Poste occupé par un collègue"), QString(
+            "background-color: #F6EFE6; color: %1; border-radius: 6px; padding: 6px 10px; font-size: 10pt;").arg(kGris));
+        info->setAlignment(Qt::AlignCenter);
+        info->setMinimumHeight(36);
+        colonne->addWidget(info);
     }
     return carte;
 }
@@ -348,33 +413,42 @@ void PlanPostes::reconstruireCartes()
         delete item;
     }
 
-    m_colonnes = colonnesPourLargeur();
-    for (int r = 0; r < m_grille->rowCount(); ++r)
-        m_grille->setRowStretch(r, 0);
-    int index = 0;
-    int hauteurCarte = 0;
+    QStringList visibles;
     for (const QString &poste : std::as_const(m_postes)) {
         const bool occupe = m_occupants.contains(poste);
         if ((m_filtre == Filtre::Occupes && !occupe) || (m_filtre == Filtre::Libres && occupe))
             continue;
+        visibles.append(poste);
+    }
+    m_visibles = visibles.size();
+    m_colonnes = colonnesPour(m_visibles);
+
+    for (int r = 0; r < m_grille->rowCount(); ++r)
+        m_grille->setRowStretch(r, 0);
+    int index = 0;
+    int hauteurCarte = 0;
+    for (const QString &poste : std::as_const(visibles)) {
         QFrame *carte = creerCarte(poste);
         hauteurCarte = qMax(hauteurCarte, qMax(carte->sizeHint().height(), carte->minimumHeight()));
         m_grille->addWidget(carte, index / m_colonnes, index % m_colonnes);
         ++index;
     }
+    const int lignes = qMax(1, (index + m_colonnes - 1) / m_colonnes);
 
     if (m_defilementInterne) {
         m_zoneCartes->setMinimumHeight(0);
         m_zoneCartes->setMaximumHeight(QWIDGETSIZE_MAX);
     } else {
         // hauteur exacte de toutes les cartes : c'est la page qui defile, pas cette zone
-        const int lignes = qMax(1, (index + m_colonnes - 1) / m_colonnes);
         const int hauteur = lignes * hauteurCarte + (lignes - 1) * m_grille->spacing() + 16;
         m_zoneCartes->setFixedHeight(hauteur);
     }
 
     for (int c = 0; c < m_colonnes; ++c)
         m_grille->setColumnStretch(c, 1);
-    // pousse les cartes vers le haut quand il y en a peu
-    m_grille->setRowStretch((index + m_colonnes - 1) / m_colonnes, 1);
+    // les lignes de cartes se partagent la hauteur ; une ligne vide en dessous absorbe le reste
+    // quand les cartes ont atteint leur hauteur maximale
+    for (int r = 0; r < lignes; ++r)
+        m_grille->setRowStretch(r, 100);
+    m_grille->setRowStretch(lignes, 1);
 }

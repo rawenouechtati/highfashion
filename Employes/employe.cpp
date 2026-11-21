@@ -92,7 +92,7 @@ QMap<QString, Employe> Employe::occupantsParPoste(QString *erreur)
     QMap<QString, Employe> occupants;
 
     QSqlQuery requete;
-    if (!requete.exec("SELECT POSTE_TRAVAIL, ID, NOM, PRENOM, POSTE FROM EMPLOYE "
+    if (!requete.exec("SELECT POSTE_TRAVAIL, ID, NOM, PRENOM, POSTE, ID_SERVICE FROM EMPLOYE "
                        "WHERE POSTE_TRAVAIL IS NOT NULL")) {
         if (erreur)
             *erreur = erreurLisible(requete.lastError());
@@ -106,6 +106,8 @@ QMap<QString, Employe> Employe::occupantsParPoste(QString *erreur)
         e.setNom(requete.value(2).toString());
         e.setPrenom(requete.value(3).toString());
         e.setPoste(requete.value(4).toString());
+        if (!requete.value(5).isNull())
+            e.setIdService(requete.value(5).toInt());
         e.setPosteTravail(poste);
         occupants.insert(poste, e);
     }

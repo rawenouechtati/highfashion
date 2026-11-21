@@ -124,7 +124,6 @@ private slots:
 
 private:
     void initialiserModuleService();
-    void remplirListesService();   // combos Article / Client / Employé lues dans Oracle
     void setupSidebar();
     void setupHeader();
     void setupFiche();
@@ -209,8 +208,14 @@ private:
     QComboBox *m_comboServiceEmploye = nullptr;         // liste des services (SERVICE.ID memorise, TYPE_SERVICE affiche)
     ValidationFormulaire *m_validationEmploye = nullptr; // messages d'erreur sous les champs de la fiche
     RepartitionPostes *m_repartition = nullptr;   // "Statistiques des employes" : barre de repartition par poste
-    PlanPostes *m_planPostesGerant = nullptr;   // tableau de bord (page Gerant, lecture seule)
-    PlanPostes *m_planPostesEmploye = nullptr;  // tableau de bord (Mon espace, avec Prendre/Liberer)
+    PlanPostes *m_planPostesGerant = nullptr;   // plan de l'atelier (page Gerant, lecture seule)
+    PlanPostes *m_planPostesEmploye = nullptr;  // plan de l'atelier (Mon espace, avec Prendre/Liberer)
+    QPushButton *m_boutonMonPoste = nullptr;    // puce "Mon poste : ..." (Mon espace), ouvre le plan 3D
+    QLabel *m_pictoMonPoste = nullptr;          // carte "Mon poste de travail" (Mon espace)
+    QLabel *m_titreMonPoste = nullptr;
+    QLabel *m_detailMonPoste = nullptr;
+    QLabel *m_valeursStatut[3] = {nullptr, nullptr, nullptr};   // tuiles "Actifs / En conge / Inactifs"
+    QMap<int, QString> m_libellesServices;      // ID_SERVICE -> type de service (fiche d'un poste en 3D)
     QTimer *m_timerPostes = nullptr;        // rafraichit le plan : plusieurs instances partagent la base
     // === FIN MODULE EMPLOYE ===
 

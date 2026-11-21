@@ -9,5 +9,6 @@
         <file>images/logo.png</file>
         <file>images/fond_connexion.png</file>
         <file>images/logo_smartstitch.png</file>
+        <file>images/fleche_bas.png</file>
     </qresource>
 </RCC>

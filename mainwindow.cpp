@@ -40,6 +40,7 @@
 #include <QTextEdit>
 #include <QtMath>
 #include <QStackedWidget>
+#include <QButtonGroup>
 #include <QStatusBar>
 // --- includes du module Client ---
 #include "client.h"
@@ -106,6 +107,16 @@
 #include <QCalendarWidget>
 #include <QListWidget>
 #include <climits>
+
+// C++11 : remplace std::as_const (C++17). Donne une reference constante
+// pour qu'une boucle "for (x : conteneur)" ne provoque pas de copie (detach) Qt.
+template <typename T>
+static const T &constRef(const T &t) { return t; }
+
+// Qt 5 : les classes QChart, QBarSet... sont dans l'espace de noms QtCharts
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+QT_CHARTS_USE_NAMESPACE
+#endif
 
 // ====================================================================================
 // === SLOTS GÉNÉRAUX ===
@@ -208,11 +219,7 @@ void MainWindow::connecterNavigation()
 }
 
 void MainWindow::allerVersEmployes()   { ui->SWSmartStitch->setCurrentIndex(PageEmploye); }
-void MainWindow::allerVersServices()
-{
-    remplirListesService();   // relit articles, clients et employés à chaque ouverture de la page
-    ui->SWSmartStitch->setCurrentIndex(PageService);
-}
+void MainWindow::allerVersServices()   { ui->SWSmartStitch->setCurrentIndex(PageService); }
 void MainWindow::allerVersClients()    { ui->SWSmartStitch->setCurrentIndex(PageClient); }
 void MainWindow::allerVersArticles()   { ui->SWSmartStitch->setCurrentIndex(PageArticle); }
 void MainWindow::allerVersMatieres()   { ui->SWSmartStitch->setCurrentIndex(PageMatiere); }
@@ -286,44 +293,6 @@ static QString dt(double v)
     return QString("%1 DT").arg(v, 0, 'f', (v == qFloor(v)) ? 0 : 2);
 }
 
-// Libellé affiché à l'utilisateur pour un service : la référence (jamais l'ID interne)
-static QString refService(const Service &s)
-{
-    return s.reference.isEmpty() ? s.type : s.reference;
-}
-
-// Remplit les combos Article / Client / Employé avec les données Oracle (en gardant la sélection)
-void MainWindow::remplirListesService()
-{
-    auto remplir = [](QComboBox *c, const QStringList &liste, bool ligneVide) {
-        if (!c || liste.isEmpty()) return;          // base injoignable : on ne vide pas la liste
-        const QString courant = c->currentText();
-        QSignalBlocker blocage(c);
-        c->clear();
-        if (ligneVide) c->addItem("");              // première ligne vide (champ facultatif)
-        c->addItems(liste);
-        if (courant.isEmpty())
-            c->setCurrentIndex(ligneVide ? 0 : -1);
-        else
-            c->setCurrentIndex(c->findText(courant));
-    };
-    remplir(ui->cmbArticle, Service::listerArticles(), false);
-    {   // Client : l'ID Oracle de chaque client est mémorisé dans les données de la ligne
-        const ListeChoix clients = Service::listerClients();
-        if (!clients.isEmpty()) {
-            const int courant = ui->cmbClient->currentData().toInt();
-            QSignalBlocker blocage(ui->cmbClient);
-            ui->cmbClient->clear();
-            ui->cmbClient->addItem("", 0);               // ligne vide : client facultatif
-            for (const auto &c : clients)
-                ui->cmbClient->addItem(c.second, c.first);
-            const int i = ui->cmbClient->findData(courant);
-            ui->cmbClient->setCurrentIndex(i >= 0 ? i : 0);
-        }
-    }
-    remplir(cmbEmploye,     Service::listerEmployes(), false);
-}
-
 void MainWindow::initialiserModuleService()
 {
     // métier innovant : planning intelligent (remplace les notifications système)
@@ -338,14 +307,8 @@ void MainWindow::initialiserModuleService()
     setupStatusBar();
     setupLayout();      // assemble tous les layouts (responsive)
 
-    remplirListesService();   // Article / Client / Employé depuis la base
-
     // Chargement via la classe Service
     m_services = Service::chargerDepuisDb();
-    for (Service &sv : m_services) {             // nom du client lié (table PASSER)
-        const int ic = ui->cmbClient->findData(sv.idClient);
-        if (sv.idClient > 0 && ic >= 0) sv.client = ui->cmbClient->itemText(ic);
-    }
     ui->tableServices->setRowCount(m_services.size());
     for (int r = 0; r < m_services.size(); ++r) fillRow(r);
 
@@ -467,7 +430,8 @@ void MainWindow::setupFiche()
     lblEmp->setFont(ui->lblType->font());
 
     cmbEmploye = new QComboBox(f);
-    // la liste des employés vient d'Oracle : voir remplirListesService()
+    cmbEmploye->addItems({"Mouna Ayari", "Sami Guesmi", "Karim Fekih",
+                          "Amine Sassi", "Salma Trabelsi"});
 
     for (QWidget *w : {(QWidget *)ui->lblSoldeTitre, (QWidget *)ui->lblSolde,
                        (QWidget *)ui->lblBenefice, (QWidget *)ui->lblValeurBenefice})
@@ -497,13 +461,6 @@ void MainWindow::setupFiche()
 
     connect(ui->spinTarif,   QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
     connect(ui->spinCout,    QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
-    // Par défaut un QDoubleSpinBox est limité à 99,99 : un tarif de 300 était écrasé en 99.99
-    // à l'affichage, puis enregistré tel quel dans Oracle. On élargit les limites (NUMBER(10,2)).
-    for (QDoubleSpinBox *sp : {ui->spinTarif, ui->spinCout, ui->spinAcompte}) {
-        sp->setDecimals(2);
-        sp->setRange(0.0, 99999999.99);
-    }
-
     connect(ui->spinAcompte, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::recalc);
 
     // --- reçu
@@ -634,7 +591,7 @@ void MainWindow::setupFiche()
 void MainWindow::setupTable()
 {
     auto *t = ui->tableServices;
-    t->setHorizontalHeaderLabels({"Référence", "Article", "Client", "Type", "Employé",
+    t->setHorizontalHeaderLabels({"ID", "Article", "Client", "Type", "Employé",
                                   "Fin prévue", "Tarif", "Statut"});
     t->setSelectionBehavior(QAbstractItemView::SelectRows);
     t->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -695,7 +652,7 @@ void MainWindow::loadDemoData()
 void MainWindow::fillRow(int r)
 {
     const Service &s = m_services[r];
-    const QStringList v = { s.reference.isEmpty() ? QString("Nouveau") : s.reference, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
+    const QStringList v = { s.id, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
                            s.employe, s.fin.toString("dd/MM/yyyy"),
                            QString::number(s.tarif, 'f', 0), s.statut };
     for (int c = 0; c < v.size(); ++c)
@@ -722,10 +679,9 @@ void MainWindow::fillForm(int i)
 {
     if (i < 0 || i >= m_services.size()) return;
     const Service &s = m_services[i];
-    ui->frameDetails->setTitle(s.reference.isEmpty() ? QString("Fiche service") : "Fiche service · " + s.reference);
+    ui->frameDetails->setTitle("Fiche service · " + s.id);
     setCombo(ui->cmbArticle, s.article);
-    const int ic = ui->cmbClient->findData(s.idClient);
-    ui->cmbClient->setCurrentIndex(ic >= 0 ? ic : 0);   // 0 = ligne vide
+    setCombo(ui->cmbClient,  s.client);
     setCombo(ui->cmdType,    s.type);
     setCombo(cmbEmploye,     s.employe);
     setCombo(ui->cmbStatut,  s.statut);
@@ -750,7 +706,6 @@ void MainWindow::onSave()
     Service s = m_services[m_current];   // copie : rien n'est modifié tant que tout n'est pas valide
     s.article = ui->cmbArticle->currentText();
     s.client  = ui->cmbClient->currentText();
-    s.idClient = ui->cmbClient->currentData().toInt();
     s.type    = ui->cmdType->currentText();
     s.employe = cmbEmploye->currentText();
     s.statut  = ui->cmbStatut->currentText();
@@ -774,7 +729,7 @@ void MainWindow::onSave()
         QDate libre = s.debut;
         for (int i : conflits) {
             const Service &o = m_services[i];
-            lignes << QString("• %1 (%2 → %3, %4)").arg(refService(o), o.debut.toString("dd/MM/yyyy"),
+            lignes << QString("• %1 (%2 → %3, %4)").arg(o.id, o.debut.toString("dd/MM/yyyy"),
                                                         o.fin.toString("dd/MM/yyyy"), o.type);
             libre = qMax(libre, o.fin.addDays(1));
         }
@@ -785,22 +740,32 @@ void MainWindow::onSave()
         return;
     }
 
-    // 1) Base de données d'abord : INSERT si le service n'a pas encore d'ID, sinon UPDATE
-    const bool ok = s.id.isEmpty() ? s.ajouter() : s.modifier();
-    if (!ok) {
-        QMessageBox::critical(this, "Oracle",
-                              "Échec de l'enregistrement dans la base.\nVoir la console pour le détail.");
-        return;
-    }
-
-    // 2) Puis l'interface (s.id contient maintenant l'ID généré, jamais affiché)
     m_services[m_current] = s;
     fillRow(m_current);
     ui->tableServices->selectRow(m_current);
     updateChart();
     updateBanner();
-    updateCount();
-    statusBar()->showMessage("Service " + s.reference + " enregistré", 3000);
+    statusBar()->showMessage("Service " + s.id + " enregistré", 3000);
+
+    // Enregistrement via la classe Service (INSERT si nouveau, UPDATE sinon)
+    bool ok = false;
+    if (s.id.isEmpty()) {
+        ok = s.ajouter();
+    } else {
+        QSqlQuery check;
+        check.prepare("select count(*) from service where id = :id");
+        check.bindValue(":id", s.id);
+        if (check.exec() && check.next() && check.value(0).toInt() > 0)
+            ok = s.modifier();
+        else
+            ok = s.ajouter();
+    }
+
+    if (!ok) {
+        QMessageBox::critical(this, "Oracle",
+                              "Échec de l'enregistrement dans la base.");
+        return;
+    }
 }
 
 void MainWindow::onCancel() { fillForm(m_current); }
@@ -810,7 +775,7 @@ void MainWindow::onSearch(const QString &text)
     auto *t = ui->tableServices;
     for (int r = 0; r < t->rowCount(); ++r) {
         bool ok = text.isEmpty();
-        for (int c : {0, 1, 2, 6})
+        for (int c : {1, 2, 6})
             if (t->item(r, c) && t->item(r, c)->text().contains(text, Qt::CaseInsensitive))
                 ok = true;
         t->setRowHidden(r, !ok);
@@ -830,8 +795,8 @@ void MainWindow::updateCount()
 void MainWindow::updateBanner()
 {
     QStringList ids;
-    for (const Service &s : std::as_const(m_services))
-        if (s.statut == "En retard") ids << refService(s);
+    for (const Service &s : constRef(m_services))
+        if (s.statut == "En retard") ids << s.id;
     ui->lblAlerte->setText(ids.isEmpty()
                                ? "Aucun service en retard"
                                : QString("⚠ %1 services dépassent leur date de fin prévue (%2)")
@@ -954,7 +919,7 @@ void MainWindow::updateChart()
         double total = 0;
         for (const QString &t : types) {
             double v = 0;
-            for (const Service &s : std::as_const(m_services))
+            for (const Service &s : constRef(m_services))
                 if (s.type == t) v += profit ? (s.tarif - s.cout) : 1;
             rows.append({t, v});
             total += v;
@@ -1144,7 +1109,7 @@ void MainWindow::verifierConflit()
 
     QStringList ids;
     QDate libre = tmp.debut;
-    for (int i : c) { ids << refService(m_services[i]); libre = qMax(libre, m_services[i].fin.addDays(1)); }
+    for (int i : c) { ids << m_services[i].id; libre = qMax(libre, m_services[i].fin.addDays(1)); }
     lblConflit->setText(QString("⚠ Conflit : article déjà engagé dans %1. Prochaine disponibilité : %2")
                             .arg(ids.join(", "), libre.toString("dd/MM/yyyy")));
     lblConflit->show();
@@ -1208,7 +1173,7 @@ void MainWindow::onPlanning()
     cal->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // 1) un point coloré par service actif, chaque jour
-    for (const Service &sv : std::as_const(m_services)) {
+    for (const Service &sv : constRef(m_services)) {
         if (!sv.debut.isValid() || !sv.fin.isValid()) continue;
         int garde = 0;
         for (QDate d = sv.debut; d <= sv.fin && garde < 800; d = d.addDays(1), ++garde)
@@ -1230,7 +1195,7 @@ void MainWindow::onPlanning()
                 cal->conflits.insert(d);
             if (!premier.isValid() || dbt < premier) premier = dbt;
             resumes << QString("• %1 ⟷ %2 · %3 · libre le %4")
-                           .arg(refService(a), refService(b), a.article,
+                           .arg(a.id, b.id, a.article,
                                 qMax(a.fin, b.fin).addDays(1).toString("dd/MM/yyyy"));
         }
 
@@ -1282,7 +1247,7 @@ void MainWindow::onPlanning()
                             && o.debut <= d && d <= o.fin);
                 }
             auto *it = new QListWidgetItem(QString("%1%2 · %3 · %4")
-                                               .arg(conf ? "⚠ " : "", refService(sv), sv.article, sv.statut));
+                                               .arg(conf ? "⚠ " : "", sv.id, sv.article, sv.statut));
             it->setForeground(conf ? QColor("#8B1E2D") : statutColor(sv.statut));
             it->setData(Qt::UserRole, i);
             liste->addItem(it);
@@ -1365,7 +1330,7 @@ void MainWindow::genererRecu()
 {
     if (m_current < 0) return;
     const Service &s = m_services[m_current];
-    QString file = QFileDialog::getSaveFileName(this, "Reçu de service", "recu_" + s.reference + ".pdf", "PDF (*.pdf)");
+    QString file = QFileDialog::getSaveFileName(this, "Reçu de service", "recu_" + s.id + ".pdf", "PDF (*.pdf)");
     if (file.isEmpty()) return;
 
     QString html = QString("<h2>Atelier Vintage Couture</h2><h3>Reçu de service %1</h3>"
@@ -1374,7 +1339,7 @@ void MainWindow::genererRecu()
                            "<tr><td>Tarif</td><td>%6</td></tr>"
                            "<tr><td>Acompte versé</td><td>%7</td></tr>"
                            "<tr><td><b>Solde restant</b></td><td><b>%8</b></td></tr></table>")
-                       .arg(refService(s), s.article, s.client.isEmpty() ? "—" : s.client, s.type,
+                       .arg(s.id, s.article, s.client.isEmpty() ? "—" : s.client, s.type,
                             s.fin.toString("dd/MM/yyyy"), dt(s.tarif), dt(s.acompte), dt(s.tarif - s.acompte));
 
     QPdfWriter w(file);
@@ -1382,15 +1347,15 @@ void MainWindow::genererRecu()
     QTextDocument doc;
     doc.setHtml(html);
     doc.print(&w);
-    txtAlertes->append("● Reçu généré pour " + refService(s));
+    txtAlertes->append("● Reçu généré pour " + s.id);
 }
 
 void MainWindow::envoyerRappels()
 {
     int n = 0;
-    for (const Service &s : std::as_const(m_services))
+    for (const Service &s : constRef(m_services))
         if (s.statut == "En retard") {
-            txtAlertes->append(QString("● Rappel envoyé à %1 — %2 en retard.").arg(s.employe, refService(s)));
+            txtAlertes->append(QString("● Rappel envoyé à %1 — %2 en retard.").arg(s.employe, s.id));
             ++n;
         }
     // TODO : envoi réel par e-mail (SMTP) ici
@@ -1400,7 +1365,12 @@ void MainWindow::envoyerRappels()
 // ---------- Ajouter / Modifier / Supprimer ----------
 void MainWindow::onAjouter()
 {
-    Service s;               // id vide : l'ID Oracle est généré à l'enregistrement
+    int n = 0;
+    for (const Service &x : constRef(m_services))
+        n = qMax(n, x.id.mid(2).toInt());
+
+    Service s;
+    s.id      = QString("SV%1").arg(n + 1, 3, 10, QChar('0'));
     s.type    = "Location";
     s.employe = cmbEmploye->itemText(0);
     s.debut   = QDate::currentDate();
@@ -1417,7 +1387,9 @@ void MainWindow::onAjouter()
     updateChart();
     updateCount();
     ui->cmbArticle->setFocus();
-    statusBar()->showMessage("Nouveau service : remplissez la fiche puis cliquez sur Enregistrer", 6000);
+    statusBar()->showMessage("Nouveau service " + s.id +
+                                 " : remplissez la fiche puis cliquez sur Enregistrer", 6000);
+    // TODO : INSERT dans Oracle au moment de Enregistrer
 }
 
 void MainWindow::onModifier()
@@ -1436,19 +1408,10 @@ void MainWindow::onSupprimer()
         QMessageBox::information(this, "Supprimer", "Sélectionnez d'abord un service dans le tableau.");
         return;
     }
-    if (QMessageBox::question(this, "Supprimer", "Supprimer ce service ?") != QMessageBox::Yes)
-        return;
-
-    // Base d'abord (un service jamais enregistré n'a pas d'ID : rien à supprimer dans Oracle)
     const QString id = m_services[m_current].id;
-    if (!id.isEmpty()) {
-        Service svc;
-        if (!svc.supprimer(id)) {
-            QMessageBox::critical(this, "Oracle",
-                                  "Échec de la suppression dans la base.\nDes articles ou des employés sont peut-être encore liés à ce service.\nVoir la console pour le détail.");
-            return;
-        }
-    }
+    if (QMessageBox::question(this, "Supprimer", "Supprimer le service " + id + " ?")
+        != QMessageBox::Yes)
+        return;
 
     int row = m_current;
     {
@@ -1463,7 +1426,15 @@ void MainWindow::onSupprimer()
     updateChart();
     updateBanner();
     updateCount();
-    statusBar()->showMessage("Service supprimé", 4000);
+    statusBar()->showMessage("Service " + id + " supprimé", 4000);
+
+    // Suppression via la classe Service
+    Service svc;
+    if (!svc.supprimer(id)) {
+        QMessageBox::critical(this, "Oracle",
+                              "Échec de la suppression dans la base.");
+        return;
+    }
 }
 // === FIN MODULE SERVICE ===
 
@@ -1497,12 +1468,13 @@ void MainWindow::initialiserModuleEmploye()
     viderFormulaireEmploye();
     chargerEmployesDepuisBase(); // charge les employes existants depuis Oracle (construit aussi le graphique)
 
-    // Plan de l'atelier : un seul tableau de bord, en lecture seule pour le gerant, avec
-    // "Prendre / Liberer mon poste" pour les autres employes.
+    // Plan de l'atelier (3D ou liste) : en lecture seule pour le gerant, avec "Prendre / Liberer
+    // mon poste" pour les autres employes. Il occupe une vue entiere de la page (version
+    // compacte : une seule ligne de commandes), sans defilement ni fenetre.
     m_planPostesGerant = new PlanPostes(false);
-    m_planPostesGerant->setDefilementInterne(false); // la page Gerant defile deja en entier
+    m_planPostesGerant->setCompact(true);
     m_planPostesEmploye = new PlanPostes(true);
-    m_planPostesEmploye->setDefilementInterne(false); // pas de defilement : le plan prend la hauteur de ses cartes
+    m_planPostesEmploye->setCompact(true);
     connect(m_planPostesEmploye, &PlanPostes::changerPosteDemande, this, &MainWindow::changerMonPosteTravail);
     adapterMiseEnPageEmploye();
     configurerFormulaireEmploye();
@@ -1599,6 +1571,19 @@ void MainWindow::construireGraphiqueStatistiquesEmploye()
     for (auto it = nombreParPoste.constBegin(); it != nombreParPoste.constEnd(); ++it)   // ancienne valeur hors liste
         parts.append({it.key().isEmpty() ? QString("Non renseigné") : it.key(), it.value()});
     m_repartition->setDonnees(parts);
+
+    int actifs = 0, conges = 0, inactifs = 0;
+    for (const Employe &e : m_employes) {
+        if (e.statut().compare("Actif", Qt::CaseInsensitive) == 0)
+            ++actifs;
+        else if (e.statut().startsWith("Cong", Qt::CaseInsensitive))
+            ++conges;
+        else
+            ++inactifs;
+    }
+    m_valeursStatut[0]->setText(QString::number(actifs));
+    m_valeursStatut[1]->setText(QString::number(conges));
+    m_valeursStatut[2]->setText(QString::number(inactifs));
 }
 
 void MainWindow::chargerEmployesDepuisBase()
@@ -1895,14 +1880,22 @@ void MainWindow::remplirComboServicesEmploye()
     const QString selection = m_comboServiceEmploye->currentData().toString();
     QString erreur;
     QSqlQueryModel *services = Employe::listerServices(&erreur);
+    QMap<int, QString> libelles;
     m_comboServiceEmploye->clear();
     for (int i = 0; i < services->rowCount(); ++i)
     {
         const QString id = services->data(services->index(i, 0)).toString();
         const QString type = services->data(services->index(i, 1)).toString();
         m_comboServiceEmploye->addItem(id + " - " + type, id);   // affiche "1 - Nettoyage", memorise l'ID
+        libelles.insert(id.toInt(), type);
     }
     delete services;
+    // la fiche d'un poste (plan 3D) indique le service de l'occupant
+    m_libellesServices = libelles;
+    if (m_planPostesGerant)
+        m_planPostesGerant->setServices(libelles);
+    if (m_planPostesEmploye)
+        m_planPostesEmploye->setServices(libelles);
     m_comboServiceEmploye->setCurrentIndex(m_comboServiceEmploye->findData(selection));   // -1 = "Choisir..."
     if (!erreur.isEmpty())
         QMessageBox::warning(this, "Services", "Impossible de lire les services : " + erreur);
@@ -1937,10 +1930,28 @@ void MainWindow::rafraichirPostesTravail()
 
 void MainWindow::construirePlanDisponibilitePostes()
 {
-    // Les deux tableaux de bord (gerant / employe) recoivent les memes donnees ; PlanPostes
-    // ne reconstruit ses cartes que si quelque chose a change.
+    // Les deux plans (gerant / employe) recoivent les memes donnees ; PlanPostes
+    // ne reconstruit sa vue que si quelque chose a change.
     m_planPostesGerant->setDonnees(PosteTravail::tous(), m_occupants, QString());
     m_planPostesEmploye->setDonnees(PosteTravail::tous(), m_occupants, m_employeConnecte.posteTravail());
+    if (m_boutonMonPoste) {
+        const QString monPoste = m_employeConnecte.posteTravail();
+        m_boutonMonPoste->setText(monPoste.isEmpty() ? QString::fromUtf8("Aucun poste de travail")
+                                                     : "Mon poste : " + PosteTravail::libelleCourt(monPoste));
+        const bool aUnPoste = !monPoste.isEmpty();
+        m_pictoMonPoste->setPixmap(pixmapPictogrammePoste(aUnPoste ? PosteTravail::type(monPoste) : QString("Couture"),
+                                                          QColor(aUnPoste ? "#8B1E2F" : "#8A8375"), 34));
+        m_pictoMonPoste->setStyleSheet(QString("background-color: %1; border-radius: 27px; border: none;")
+                                           .arg(aUnPoste ? "#F6EDE4" : "#EFEAE2"));
+        m_titreMonPoste->setText(aUnPoste ? PosteTravail::libelle(monPoste) : QString::fromUtf8("Aucun poste de travail"));
+        const QString service = m_libellesServices.value(m_employeConnecte.idService());
+        if (!aUnPoste)
+            m_detailMonPoste->setText(QString::fromUtf8("Choisissez un poste libre sur le plan 3D de l'atelier."));
+        else if (!service.isEmpty())
+            m_detailMonPoste->setText(QString::fromUtf8("Vous y êtes affecté(e) · Service : ") + service);
+        else
+            m_detailMonPoste->setText(QString::fromUtf8("Vous y êtes affecté(e)."));
+    }
 }
 
 // Carte de section : fond creme arrondi, titre en Playfair suivi d'un filet dore, puis le contenu.
@@ -1953,7 +1964,30 @@ static QWidget *creerCellule(QLabel *libelle, QWidget *champ)
     v->setSpacing(4);
     v->addWidget(libelle);
     v->addWidget(champ);
+    v->addStretch(1);   // le libelle reste colle a son champ, l'espace libre va en dessous
     return cellule;
+}
+
+// Petite tuile de statistique (nombre + legende) de la carte "Statistiques des employes".
+static QFrame *creerTuileStatistique(const QString &legende, const QString &couleur, const QString &fond,
+                                     const QString &bordure, QLabel **valeur)
+{
+    auto *tuile = new QFrame();
+    tuile->setObjectName("tuileStatistique");
+    tuile->setMinimumWidth(130);
+    tuile->setStyleSheet(QString("QFrame#tuileStatistique { background-color: %1; border: 1px solid %2; border-radius: 10px; }")
+                             .arg(fond, bordure));
+    auto *colonne = new QVBoxLayout(tuile);
+    colonne->setContentsMargins(18, 8, 18, 8);
+    colonne->setSpacing(0);
+    *valeur = new QLabel("0");
+    (*valeur)->setStyleSheet(QString("font-family: 'Playfair Display'; font-weight: bold; font-size: 20pt; "
+                                     "color: %1; background: transparent; border: none;").arg(couleur));
+    auto *texte = new QLabel(legende);
+    texte->setStyleSheet(QString("font-size: 9pt; color: %1; background: transparent; border: none;").arg(couleur));
+    colonne->addWidget(*valeur);
+    colonne->addWidget(texte);
+    return tuile;
 }
 
 // "compact" : marges et titre reduits, pour les cartes qui doivent rester basses.
@@ -1990,6 +2024,51 @@ static QFrame *creerCarteSection(const QString &titre, QWidget *contenu, bool co
     colonne->addLayout(entete);
     colonne->addWidget(contenu, 1);
     return carte;
+}
+
+// Bascule en pilule a deux onglets : choisit la page visible d'une pile. Les vues sont rangees dans le
+// meme conteneur (ni fenetre, ni defilement). Avec "boutonInfo", un bouton discret a droite
+// (par exemple "Mon poste : Couture 2") renvoie vers la 2e vue.
+static QWidget *creerBasculeVues(QStackedWidget *pile, const QString &texte1, const QString &texte2,
+                                 QPushButton **boutonInfo = nullptr)
+{
+    auto *ligne = new QWidget();
+    auto *disposition = new QHBoxLayout(ligne);
+    disposition->setContentsMargins(0, 0, 8, 0);
+    disposition->setSpacing(8);
+    auto *groupe = new QButtonGroup(ligne);
+    const QString style =
+        "QPushButton { background-color: #F3ECE2; color: #1F3A4D; border: none; border-radius: 17px; "
+        "padding: 0px 22px; font-size: 10pt; }"
+        "QPushButton:hover { background-color: #E7DAC8; }"
+        "QPushButton:checked { background-color: #1F3A4D; color: white; font-weight: bold; }";
+    QPushButton *boutons[2];
+    const QString textes[2] = {texte1, texte2};
+    for (int i = 0; i < 2; ++i) {
+        boutons[i] = new QPushButton(textes[i]);
+        boutons[i]->setCheckable(true);
+        boutons[i]->setChecked(i == 0);
+        boutons[i]->setCursor(Qt::PointingHandCursor);
+        boutons[i]->setFixedHeight(34);
+        boutons[i]->setStyleSheet(style);
+        groupe->addButton(boutons[i]);
+        disposition->addWidget(boutons[i]);
+        QObject::connect(boutons[i], &QPushButton::clicked, pile, [pile, i]() { pile->setCurrentIndex(i); });
+    }
+    disposition->addStretch();
+    if (boutonInfo) {
+        *boutonInfo = new QPushButton();
+        (*boutonInfo)->setCursor(Qt::PointingHandCursor);
+        (*boutonInfo)->setFixedHeight(34);
+        (*boutonInfo)->setToolTip(QString::fromUtf8("Ouvrir le plan 3D de l'atelier"));
+        (*boutonInfo)->setStyleSheet(
+            "QPushButton { background-color: #F8E7E9; color: #8B1E2F; border: 1px solid #E5B9BF; border-radius: 17px; "
+            "padding: 0px 18px; font-size: 10pt; font-weight: bold; }"
+            "QPushButton:hover { background-color: #F1D4D8; }");
+        QObject::connect(*boutonInfo, &QPushButton::clicked, boutons[1], &QPushButton::click);
+        disposition->addWidget(*boutonInfo);
+    }
+    return ligne;
 }
 
 void MainWindow::adapterMiseEnPageEmploye()
@@ -2031,8 +2110,9 @@ void MainWindow::adapterMiseEnPageEmploye()
     principal->addWidget(ui->sidebarEmpl);
     principal->addWidget(zoneDroite, 1);
 
-    // --- page Gerant : cartes "Gestion des employes" / "Statistiques" a gauche, fiche a droite,
-    // plan de l'atelier compact en bas ; la page defile verticalement si l'ecran est petit ---
+    // --- page Gerant : deux vues dans la meme page (bascule en haut) : la gestion des employes
+    // (cartes "Gestion des employes" / "Statistiques" a gauche, fiche a droite) et le plan 3D de
+    // l'atelier. Chaque vue prend toute la hauteur : la page ne defile qu'en dernier recours ---
     auto *defilement = new QScrollArea(ui->pageGestionEmpl);
     defilement->setWidgetResizable(true);
     defilement->setFrameShape(QFrame::NoFrame);
@@ -2041,10 +2121,17 @@ void MainWindow::adapterMiseEnPageEmploye()
     contenu->setObjectName("contenuGerant");
     contenu->setStyleSheet("QWidget#contenuGerant { background: transparent; }");
     defilement->setWidget(contenu);
+    // deux vues dans la meme page : la gestion des employes, ou le plan 3D de l'atelier
     auto *lPage = new QVBoxLayout(ui->pageGestionEmpl);
     lPage->setContentsMargins(0, 0, 0, 0);
-    lPage->addWidget(defilement);
+    lPage->setSpacing(10);
+    auto *pileGerant = new QStackedWidget(ui->pageGestionEmpl);
+    pileGerant->addWidget(defilement);
+    pileGerant->addWidget(m_planPostesGerant);
+    lPage->addWidget(creerBasculeVues(pileGerant, QString::fromUtf8("Gestion des employés"), QString::fromUtf8("Plan 3D de l'atelier")));
+    lPage->addWidget(pileGerant, 1);
 
+    ui->champRecherche->setMinimumWidth(130);
     // loupe dans le champ de recherche
     ui->champRecherche->addAction(QIcon(pixmapIcone(Icone::Loupe, QColor("#5F707D"), 18)), QLineEdit::LeadingPosition);
 
@@ -2060,10 +2147,19 @@ void MainWindow::adapterMiseEnPageEmploye()
     QFrame *carteEmployes = creerCarteSection("Gestion des employés", contenuEmployes);
 
     // carte 2 : repartition par poste (a la place de l'ancien histogramme)
+    // sur toute la largeur de la page : la barre de repartition s'etire, les tuiles comptent les statuts
     m_repartition = new RepartitionPostes();
     ui->groupStatistiques->hide();
+    auto *contenuStatistiques = new QWidget();
+    auto *lStatistiques = new QHBoxLayout(contenuStatistiques);
+    lStatistiques->setContentsMargins(0, 0, 0, 0);
+    lStatistiques->setSpacing(14);
+    lStatistiques->addWidget(m_repartition, 1);
+    lStatistiques->addWidget(creerTuileStatistique("Actifs", "#4F7857", "#E8F1E9", "#BFD8C3", &m_valeursStatut[0]), 0, Qt::AlignVCenter);
+    lStatistiques->addWidget(creerTuileStatistique(QString::fromUtf8("En congé"), "#8B5A2B", "#FAF1DC", "#E6D3A3", &m_valeursStatut[1]), 0, Qt::AlignVCenter);
+    lStatistiques->addWidget(creerTuileStatistique("Inactifs", "#8A8375", "#EFEAE2", "#DDD4C6", &m_valeursStatut[2]), 0, Qt::AlignVCenter);
     const Icone iconeStatistiques = Icone::Repartition;
-    QFrame *carteStatistiques = creerCarteSection("Statistiques des employés", m_repartition, true, &iconeStatistiques);
+    QFrame *carteStatistiques = creerCarteSection("Statistiques des employés", contenuStatistiques, true, &iconeStatistiques);
 
     // carte 3 : fiche employe sur deux colonnes. Chaque champ est range avec son libelle dans
     // une cellule ; le message de validation vient se glisser sous le champ, dans la cellule.
@@ -2071,9 +2167,10 @@ void MainWindow::adapterMiseEnPageEmploye()
         auto *c = new QWidget();
         auto *v = new QVBoxLayout(c);
         v->setContentsMargins(0, 0, 0, 0);
-        v->setSpacing(4);
+        v->setSpacing(3);
         v->addWidget(libelle);
         v->addWidget(champ);
+        v->addStretch(1);   // le libelle reste colle a son champ, l'espace libre va entre les lignes
         return c;
     };
     delete ui->groupFiche->layout();   // l'ancienne pile verticale ; les widgets restent dans le groupe
@@ -2082,7 +2179,7 @@ void MainWindow::adapterMiseEnPageEmploye()
     auto *fiche = new QGridLayout(ui->groupFiche);
     fiche->setContentsMargins(0, 0, 0, 0);
     fiche->setHorizontalSpacing(14);
-    fiche->setVerticalSpacing(12);
+    fiche->setVerticalSpacing(8);
     fiche->addWidget(cellule(ui->labelNomEmpl, ui->champNom), 0, 0);
     fiche->addWidget(cellule(ui->labelPrenomEmpl, ui->champPrenom), 0, 1);
     fiche->addWidget(cellule(ui->labelPosteEmpl, ui->comboPoste), 1, 0);
@@ -2098,8 +2195,8 @@ void MainWindow::adapterMiseEnPageEmploye()
     fiche->addWidget(cellule(ui->labelMotDePasseEmpl, ui->champMotDePasse), 4, 0, 1, 2);
     auto *boutons = new QHBoxLayout();
     boutons->setSpacing(14);
-    ui->btnEnregistrerEmploye->setMinimumHeight(40);
-    ui->btnAnnulerEmploye->setMinimumHeight(40);
+    ui->btnEnregistrerEmploye->setMinimumHeight(38);
+    ui->btnAnnulerEmploye->setMinimumHeight(38);
     boutons->addWidget(ui->btnEnregistrerEmploye, 1);
     boutons->addWidget(ui->btnAnnulerEmploye, 1);
     // l'espace libre se repartit entre les lignes de champs ; les boutons restent en bas
@@ -2109,20 +2206,29 @@ void MainWindow::adapterMiseEnPageEmploye()
     for (QWidget *champ : std::initializer_list<QWidget *>{
              ui->champNom, ui->champPrenom, ui->comboPoste, ui->comboStatut, ui->champEmail,
              ui->champTelephone, ui->comboPosteTravail, m_comboServiceEmploye, ui->champMotDePasse})
-        champ->setMinimumHeight(38);
+        champ->setMinimumHeight(36);
+    // les listes ne reclament pas la largeur de leur plus long libelle : la fiche reste compacte
+    for (QComboBox *liste : {ui->comboPoste, ui->comboStatut, ui->comboPosteTravail, m_comboServiceEmploye}) {
+        liste->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+        liste->setMinimumContentsLength(8);
+    }
     QFrame *carteFiche = creerCarteSection("Fiche employé", ui->groupFiche);
-
-    // plan de l'atelier : version compacte, sur toute la largeur
-    m_planPostesGerant->setCompact(true);
 
     auto *grille = new QGridLayout(contenu);
     grille->setContentsMargins(0, 4, 8, 8);
     grille->setHorizontalSpacing(18);
-    grille->setVerticalSpacing(16);
+    grille->setVerticalSpacing(12);
+    // la fiche suit la hauteur de la ligne mais garde des proportions harmonieuses sur grand ecran :
+    // au-dela de 600 px elle reste calee en haut
+    carteFiche->setMaximumHeight(600);
+    auto *colonneFiche = new QWidget();
+    auto *lColonneFiche = new QVBoxLayout(colonneFiche);
+    lColonneFiche->setContentsMargins(0, 0, 0, 0);
+    lColonneFiche->addWidget(carteFiche, 1);
+    lColonneFiche->addStretch(0);
     grille->addWidget(carteEmployes, 0, 0);
-    grille->addWidget(carteStatistiques, 1, 0);
-    grille->addWidget(carteFiche, 0, 1, 2, 1);
-    grille->addWidget(m_planPostesGerant, 2, 0, 1, 2);
+    grille->addWidget(colonneFiche, 0, 1);
+    grille->addWidget(carteStatistiques, 1, 0, 1, 2);   // statistiques sur toute la largeur
     grille->setColumnStretch(0, 3);
     grille->setColumnStretch(1, 2);
     grille->setColumnMinimumWidth(1, 440);
@@ -2130,11 +2236,10 @@ void MainWindow::adapterMiseEnPageEmploye()
     grille->setRowStretch(1, 0);
     construireGraphiqueStatistiquesEmploye();
 
-    // --- page employe : tout tient a l'ecran, sans defilement. Le plan est compact (une seule
-    // ligne de cartes) et les trois blocs du bas rangent leurs champs par layouts : ils
-    // s'adaptent a la largeur de la fenetre au lieu d'avoir une taille fixe. ---
+    // --- page employe : deux vues dans la meme page ("Mon espace" ou plan 3D), donc tout tient a
+    // l'ecran sans defilement. Les blocs de "Mon espace" rangent leurs champs par layouts : ils
+    // s'adaptent a la taille de la fenetre au lieu d'avoir une taille fixe. ---
     ui->groupFileAttenteEmpl->hide();   // ancienne "File d'attente intelligente", remplacee par le plan
-    m_planPostesEmploye->setCompact(true);
 
     auto neutraliser = [](QGroupBox *groupe) {
         groupe->setTitle(QString());   // la carte porte le titre
@@ -2160,11 +2265,18 @@ void MainWindow::adapterMiseEnPageEmploye()
     neutraliser(ui->groupDocumentsRHEmpl);
     ui->labelDocumentRHEmpl->hide();   // "Document pre-rempli..." : la liste se suffit a elle-meme
     auto *documents = grilleDe(ui->groupDocumentsRHEmpl);
-    documents->addWidget(ui->comboDocumentRHEmpl, 0, 0, 1, 2);
+    // chaque champ a son libelle (meme style que "Du" / "Au") : les lignes se repartissent la hauteur de la meme facon
+    auto *labelDocument = new QLabel("Document", ui->groupDocumentsRHEmpl);
+    labelDocument->setStyleSheet(ui->labelDebutConge->styleSheet());
+    labelDocument->setFont(ui->labelDebutConge->font());
+    auto *labelMotif = new QLabel("Motif", ui->groupDocumentsRHEmpl);
+    labelMotif->setStyleSheet(ui->labelDebutConge->styleSheet());
+    labelMotif->setFont(ui->labelDebutConge->font());
+    documents->addWidget(creerCellule(labelDocument, ui->comboDocumentRHEmpl), 0, 0, 1, 2);
     documents->addWidget(creerCellule(ui->labelDebutConge, ui->dateDebutConge), 1, 0);
     documents->addWidget(creerCellule(ui->labelFinConge, ui->dateFinConge), 1, 1);
-    documents->addWidget(ui->champMotifConge, 2, 0, 1, 2);
-    documents->addWidget(ui->btnExporterDocument, 3, 0, 1, 2);
+    documents->addWidget(creerCellule(labelMotif, ui->champMotifConge), 2, 0, 1, 2);
+    documents->addWidget(ui->btnExporterDocument, 3, 0, 1, 2, Qt::AlignBottom);
 
     // Mes statistiques : le diagramme araignee remplit la carte
     neutraliser(ui->groupStatistiquesEmployeEmpl);
@@ -2175,31 +2287,73 @@ void MainWindow::adapterMiseEnPageEmploye()
              ui->lineProfilNomEmpl, ui->comboProfilPosteEmpl, ui->lineProfilEmailEmpl, ui->lineProfilTelEmpl, ui->comboDocumentRHEmpl,
              ui->dateDebutConge, ui->dateFinConge, ui->champMotifConge})
     {
-        champ->setMinimumHeight(38);
-        champ->setMaximumHeight(64);
-        champ->setSizePolicy(champ->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+        champ->setMinimumHeight(40);
+        champ->setMaximumHeight(46);   // la hauteur libre est repartie entre les lignes, pas dans les champs
     }
-    ui->btnExporterDocument->setMinimumHeight(40);
-    ui->btnExporterDocument->setMaximumHeight(64);
-    ui->btnExporterDocument->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->btnExporterDocument->setMinimumHeight(42);
+    ui->btnExporterDocument->setMaximumHeight(48);
+    for (int ligne = 0; ligne < profil->rowCount(); ++ligne)
+        profil->setRowStretch(ligne, 1);
+    for (int ligne = 0; ligne < 3; ++ligne)      // le bouton d'export reste en bas de la carte
+        documents->setRowStretch(ligne, 1);
 
     QFrame *carteProfil = creerCarteSection("Mon profil", ui->groupProfilEmpl, true);
     QFrame *carteDocuments = creerCarteSection("Mes documents RH", ui->groupDocumentsRHEmpl, true);
     QFrame *carteStatsEmploye = creerCarteSection("Mes statistiques", ui->groupStatistiquesEmployeEmpl, true);
 
-    auto *lEmploye = new QGridLayout(ui->pageEspaceEmpl);
+    // carte "Mon poste de travail" : rappelle l'affectation et ouvre le plan 3D
+    auto *contenuPoste = new QWidget();
+    auto *lPoste = new QHBoxLayout(contenuPoste);
+    lPoste->setContentsMargins(0, 0, 0, 0);
+    lPoste->setSpacing(16);
+    m_pictoMonPoste = new QLabel();
+    m_pictoMonPoste->setFixedSize(54, 54);
+    m_pictoMonPoste->setAlignment(Qt::AlignCenter);
+    lPoste->addWidget(m_pictoMonPoste);
+    auto *textesPoste = new QVBoxLayout();
+    textesPoste->setSpacing(2);
+    m_titreMonPoste = new QLabel();
+    m_titreMonPoste->setStyleSheet("font-family: 'Playfair Display'; font-weight: bold; font-size: 13pt; color: #1F3A4D; background: transparent; border: none;");
+    m_detailMonPoste = new QLabel();
+    m_detailMonPoste->setStyleSheet("font-size: 10pt; color: #8A8375; background: transparent; border: none;");
+    textesPoste->addWidget(m_titreMonPoste);
+    textesPoste->addWidget(m_detailMonPoste);
+    lPoste->addLayout(textesPoste, 1);
+    auto *boutonOuvrirPlan = new QPushButton(QString::fromUtf8("Ouvrir le plan 3D"));
+    boutonOuvrirPlan->setCursor(Qt::PointingHandCursor);
+    boutonOuvrirPlan->setFixedHeight(38);
+    boutonOuvrirPlan->setStyleSheet(
+        "QPushButton { background-color: #1F3A4D; color: white; border: none; border-radius: 6px; padding: 0px 22px; font-weight: bold; }"
+        "QPushButton:hover { background-color: #2B4F68; }");
+    lPoste->addWidget(boutonOuvrirPlan);
+    QFrame *cartePoste = creerCarteSection("Mon poste de travail", contenuPoste, true);
+
+    // vue "Mon espace" : les trois cartes se partagent la hauteur, la carte du poste est en bas
+    auto *vueEspace = new QWidget();
+    auto *lEmploye = new QGridLayout(vueEspace);
     lEmploye->setContentsMargins(0, 4, 8, 8);
     lEmploye->setHorizontalSpacing(16);
     lEmploye->setVerticalSpacing(14);
-    lEmploye->addWidget(m_planPostesEmploye, 0, 0, 1, 3);
-    lEmploye->addWidget(carteProfil, 1, 0);
-    lEmploye->addWidget(carteDocuments, 1, 1);
-    lEmploye->addWidget(carteStatsEmploye, 1, 2);
+    lEmploye->addWidget(carteProfil, 0, 0);
+    lEmploye->addWidget(carteDocuments, 0, 1);
+    lEmploye->addWidget(carteStatsEmploye, 0, 2);
+    lEmploye->addWidget(cartePoste, 1, 0, 1, 3);
     lEmploye->setColumnStretch(0, 3);
     lEmploye->setColumnStretch(1, 3);
     lEmploye->setColumnStretch(2, 4);
-    lEmploye->setRowStretch(0, 0);   // le plan prend sa hauteur naturelle
-    lEmploye->setRowStretch(1, 1);   // les trois cartes se partagent le reste de la hauteur
+    lEmploye->setRowStretch(0, 1);
+    lEmploye->setRowStretch(1, 0);
+
+    // deux vues dans la meme page : "Mon espace" ou le plan 3D (prendre / liberer mon poste)
+    auto *lPageEmploye = new QVBoxLayout(ui->pageEspaceEmpl);
+    lPageEmploye->setContentsMargins(0, 0, 0, 0);
+    lPageEmploye->setSpacing(10);
+    auto *pileEmploye = new QStackedWidget(ui->pageEspaceEmpl);
+    pileEmploye->addWidget(vueEspace);
+    pileEmploye->addWidget(m_planPostesEmploye);
+    lPageEmploye->addWidget(creerBasculeVues(pileEmploye, "Mon espace", QString::fromUtf8("Plan 3D de l'atelier"), &m_boutonMonPoste));
+    lPageEmploye->addWidget(pileEmploye, 1);
+    connect(boutonOuvrirPlan, &QPushButton::clicked, m_boutonMonPoste, &QPushButton::click);
 }
 
 void MainWindow::changerMonPosteTravail(const QString &poste)
@@ -3962,7 +4116,7 @@ QDate MainWindow::dateInitialeCalendrierEvenement() const
     }
     if (dates.isEmpty()) return QDate::currentDate();
     std::sort(dates.begin(), dates.end());
-    for (const QDate &d : std::as_const(dates))
+    for (const QDate &d : constRef(dates))
         if (d >= QDate::currentDate()) return d;
     return dates.last();
 }
@@ -4154,7 +4308,7 @@ void MainWindow::ouvrirEvenementDansFiche(int id)
     if (!e)
         return;
     bool visible = false;
-    for (const Evenement &v : std::as_const(m_evenementsVisibles))
+    for (const Evenement &v : constRef(m_evenementsVisibles))
         if (v.id() == id) { visible = true; break; }
     if (!visible)
         onReinitialiserEvenementClicked();                      // un filtre ou une recherche masque l'événement
