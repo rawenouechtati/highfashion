@@ -30,8 +30,14 @@ Article::Article(int id, const QString &nom, const QString &maison, int decennie
 bool Article::ajouter()
 {
     erreur_.clear();
-    const Saisie s{nom, maison, QString::number(decennie), etat, QString::number(prix, 'f', 3), categorie, origine, statut,
-                   idService, date};
+    // C++11 : Saisie a des valeurs par defaut, donc pas d'initialisation { } -> on remplit champ par champ
+    Saisie s;
+    s.nom = nom;            s.maison = maison;
+    s.decennie = QString::number(decennie);
+    s.etat = etat;          s.prix = QString::number(prix, 'f', 3);
+    s.categorie = categorie; s.origine = origine;
+    s.statut = statut;      s.idService = idService;
+    s.date = date;
     const QMap<QString, QString> e = verifier(s);
     if (!e.isEmpty()) { erreur_ = e.first(); return false; }
     if (existe(nom, maison)) { erreur_ = "Cet article existe déjà (même nom et même maison de couture)."; return false; }
@@ -69,8 +75,14 @@ bool Article::modifier()
 {
     erreur_.clear();
     if (id <= 0) { erreur_ = "Aucun article sélectionné."; return false; }
-    const Saisie s{nom, maison, QString::number(decennie), etat, QString::number(prix, 'f', 3), categorie, origine, statut,
-                   idService, date};
+    // C++11 : Saisie a des valeurs par defaut, donc pas d'initialisation { } -> on remplit champ par champ
+    Saisie s;
+    s.nom = nom;            s.maison = maison;
+    s.decennie = QString::number(decennie);
+    s.etat = etat;          s.prix = QString::number(prix, 'f', 3);
+    s.categorie = categorie; s.origine = origine;
+    s.statut = statut;      s.idService = idService;
+    s.date = date;
     const QMap<QString, QString> e = verifier(s);
     if (!e.isEmpty()) { erreur_ = e.first(); return false; }
     if (existe(nom, maison, id)) { erreur_ = "Un autre article porte déjà ce nom pour cette maison de couture."; return false; }
@@ -242,7 +254,13 @@ QStringList Article::categories()
     return v.isEmpty() ? QStringList{"Robe", "Costume", "Manteau", "Tailleur", "Veste", "Jupe", "Accessoire"} : v;
 }
 bool Article::categoriesFermees() { return !valeursAutorisees("CATEGORIE").isEmpty(); }
-QStringList Article::maisons()    { return {"Chanel", "Dior", "Yves Saint Laurent", "Balenciaga", "Givenchy", "Balmain"}; }
+// Grandes maisons de haute couture proposees dans la liste "Maison de couture"
+QStringList Article::maisons()
+{
+    return {"Alexander McQueen", "Armani", "Balenciaga", "Balmain", "Céline", "Chanel", "Christian Lacroix",
+            "Dior", "Dolce & Gabbana", "Fendi", "Givenchy", "Gucci", "Hermès", "Jean Paul Gaultier", "Lanvin",
+            "Louis Vuitton", "Pierre Cardin", "Prada", "Schiaparelli", "Valentino", "Versace", "Yves Saint Laurent"};
+}
 QList<int> Article::decennies()   { return {1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000}; }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -278,7 +296,7 @@ QString Article::verifierChamp(const QString &champ, const Saisie &s)
         if (!contientLettre(v) || !nomRe.match(v).hasMatch()) return "Lettres obligatoires ; chiffres, - ' « » autorisés (pas de symboles).";
     } else if (champ == "maison") {
         const QString v = s.maison.simplified();
-        if (v.isEmpty()) return "Choisissez ou saisissez une maison de couture.";
+        if (v.isEmpty()) return "Choisissez une maison de couture.";
         if (v.size() > 60) return "60 caractères maximum.";
         if (!lettresRe.match(v).hasMatch()) return "La maison ne peut contenir que des lettres.";
     } else if (champ == "decennie") {
@@ -339,10 +357,15 @@ Article::Estimation Article::estimerPrix(const QString &maisonTexte, int decenni
 {
     Estimation e;
     e.base = 1000;
-    if (maisonTexte.contains("Chanel", Qt::CaseInsensitive)) e.maison = 2500;
-    else if (maisonTexte.contains("Dior", Qt::CaseInsensitive)) e.maison = 2000;
-    else if (maisonTexte.contains("Yves", Qt::CaseInsensitive) || maisonTexte.contains("YSL", Qt::CaseInsensitive)) e.maison = 1800;
-    else e.maison = 1000;
+    // cote de la maison sur le marche du vintage (3 niveaux + autres maisons)
+    const QStringList niveau1 = {"Chanel", "Hermès", "Hermes", "Schiaparelli"};
+    const QStringList niveau2 = {"Dior", "Louis Vuitton", "Balenciaga", "Givenchy"};
+    const QStringList niveau3 = {"Yves", "YSL", "Valentino", "Versace", "Jean Paul Gaultier", "Alexander McQueen",
+                                 "Christian Lacroix", "Lanvin", "Balmain"};
+    e.maison = 1000;
+    for (const QString &m : niveau3) if (maisonTexte.contains(m, Qt::CaseInsensitive)) e.maison = 1800;
+    for (const QString &m : niveau2) if (maisonTexte.contains(m, Qt::CaseInsensitive)) e.maison = 2000;
+    for (const QString &m : niveau1) if (maisonTexte.contains(m, Qt::CaseInsensitive)) e.maison = 2500;
 
     if (decennie < 1940) e.decennie = 1800;
     else if (decennie < 1960) e.decennie = 1500;
