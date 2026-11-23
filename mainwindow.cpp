@@ -1592,7 +1592,7 @@ static QString htmlFacture(const Service &s, bool saut)
                  "<span style='color:#EAD9B8; font-size:9pt; letter-spacing:2px;'>ÉLÉGANCE &amp; TRADITION</span></td>"
                  "<td align='right' valign='middle'><span style='color:white; font-size:20pt; font-weight:bold; letter-spacing:3px;'>FACTURE</span><br>"
                  "<span style='color:#EAD9B8;'>N° %2</span></td></tr></table>")
-             .arg(bordeaux, esc(refService(s)));
+             .arg(bordeaux, esc(s.id));
 
     h += "<br>";
 
