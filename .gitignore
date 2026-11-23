@@ -31,4 +31,4 @@ Makefile*
 # --- Base de données : ne jamais la mettre sur GitHub ---
 *.dmp
 *.dbf
-*.sql
+*.sqlhighfashion/

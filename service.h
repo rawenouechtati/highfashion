@@ -10,6 +10,12 @@
 
 typedef QVector<QPair<int, QString>> ListeChoix;
 
+// Alerte intelligente d'un service
+struct AlerteService {
+    int niveau;        // 0 = urgent, 1 = a surveiller, 2 = information
+    QString message;
+};
+
 class Service
 {
 public:
@@ -37,6 +43,9 @@ public:
     // Retourne true si le service est valide.
     // En cas d'erreur, retourne false et remplit "erreur" avec un message clair.
     bool valider(QString &erreur) const;
+
+    // Alertes intelligentes (retard, perte, matiere, solde, marge...), triees par niveau
+    QVector<AlerteService> genererAlertes() const;
 
     static bool existe(const QString &id);
 

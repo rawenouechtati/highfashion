@@ -1,4 +1,4 @@
-QT       += core gui widgets sql charts printsupport network
+QT       += core gui widgets sql charts printsupport network serialport
 # Standard C++ : C++11 avec Qt 5. Qt 6 EXIGE au minimum C++17 (ses en-tetes ne compilent pas en C++11),
 # donc on passe a c++17 seulement si Qt 6 est utilise. Le code du projet, lui, reste ecrit en C++11.
 greaterThan(QT_MAJOR_VERSION, 5) {

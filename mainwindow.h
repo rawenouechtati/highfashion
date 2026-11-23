@@ -142,6 +142,8 @@ private:
     void updateCount();
     QVector<int> trouverConflits(const Service &s, int ignore) const;
     void verifierConflit();
+    void rafraichirAlertes(const Service &s);   // panneau "Alertes du service" (alertes intelligentes)
+    QTimer *m_timerAlertes = nullptr;           // re-verifie les alertes toutes les heures
 
     QVector<Service> m_services;
     int m_current = -1;

@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QStringList>
 #include <QDate>
+#include <algorithm>
 
 // ---------------------------------------------------------------------------
 // Schéma Oracle (export1_corrige v5) :
@@ -335,4 +336,65 @@ ListeChoix Service::listerClients()
 QStringList Service::listerEmployes()
 {
     return lireListe("SELECT TRIM(prenom || ' ' || nom) FROM employe ORDER BY nom, prenom");
+}
+
+// 9. ALERTES INTELLIGENTES
+//    Niveau 0 = urgent, 1 = a surveiller, 2 = information.
+//    Matieres : table UTILISER(id_service, id_matiere, quantite) et MATIERE_PREMIERE(id, nom, quantite)
+//    -> ADAPTER les noms de colonnes a votre schema Oracle si besoin.
+QVector<AlerteService> Service::genererAlertes() const
+{
+    QVector<AlerteService> a;
+    const QDate auj    = QDate::currentDate();
+    const bool termine = (statut == QString::fromUtf8("Terminé"));
+    const double solde = tarif - acompte;
+    const double benef = tarif - cout;
+
+    // ---- URGENT ----
+    if (!termine && fin.isValid() && fin < auj)
+        a.append({0, QString("%1 dépasse la date prévue de %2 jour(s)")
+                         .arg(reference).arg(fin.daysTo(auj))});
+
+    if (benef < 0)
+        a.append({0, QString("Perte : le coût dépasse le tarif de %1 DT").arg(-benef, 0, 'f', 2)});
+
+    if (!termine && !id.isEmpty()) {
+        QSqlQuery q;
+        q.prepare("SELECT m.nom, m.quantite, u.quantite "
+                  "FROM utiliser u JOIN matiere_premiere m ON m.id = u.id_matiere "
+                  "WHERE u.id_service = :id AND m.quantite < u.quantite");
+        q.bindValue(":id", id.toInt());
+        if (q.exec()) {
+            while (q.next())
+                a.append({0, QString("%1 : besoin %2, reste %3")
+                                 .arg(q.value(0).toString())
+                                 .arg(q.value(2).toDouble()).arg(q.value(1).toDouble())});
+        } else {
+            qDebug() << "Erreur alerte matière :" << q.lastError().text();
+        }
+    }
+
+    // ---- A SURVEILLER ----
+    if (!termine && fin.isValid()) {
+        const int j = auj.daysTo(fin);
+        if (j == 0)
+            a.append({1, "Échéance aujourd'hui"});
+        else if (j > 0 && j <= 2)
+            a.append({1, QString("Échéance dans %1 jour(s)").arg(j)});
+    }
+    if (termine && solde > 0)
+        a.append({1, QString("Le client doit encore %1 DT : ne pas remettre l'article")
+                         .arg(solde, 0, 'f', 2)});
+    if (tarif > 0 && benef >= 0 && benef < 0.10 * tarif)
+        a.append({1, "Marge faible (moins de 10 % du tarif)"});
+
+    // ---- INFORMATION ----
+    if (termine)
+        a.append({2, "Service terminé : prévenir le client que son article est prêt"});
+    if (statut == "En cours" && acompte <= 0)
+        a.append({2, "Aucun acompte versé pour un service en cours"});
+
+    std::stable_sort(a.begin(), a.end(),
+                     [](const AlerteService &x, const AlerteService &y) { return x.niveau < y.niveau; });
+    return a;
 }

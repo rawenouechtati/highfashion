@@ -90,6 +90,17 @@
 #include "documentrh.h"
 #include "radarstatistiques.h"
 #include <QChartView>
+#include <QLineSeries>
+#include <QSplineSeries>
+#include <QCategoryAxis>
+#include <QTextBrowser>
+#include <QPainterPath>
+#include <QStyle>
+#include <QToolTip>
+#include <QCursor>
+#include <QButtonGroup>
+#include <QPageLayout>
+#include <QMarginsF>
 #include <QDate>
 #include <QDesktopServices>
 #include <QDir>
@@ -317,57 +328,122 @@ void MainWindow::initialiserModuleService()
     updateCount();
     if (ui->tableServices->rowCount() > 0)
         ui->tableServices->selectRow(0);
+
+    // alertes intelligentes : re-verifiees toutes les heures pour le service affiche
+    m_timerAlertes = new QTimer(this);
+    connect(m_timerAlertes, &QTimer::timeout, this, [this]() {
+        if (m_current >= 0 && m_current < m_services.size())
+            rafraichirAlertes(m_services[m_current]);
+    });
+    m_timerAlertes->start(60 * 60 * 1000);
 }
 
-// ---------- Menu latéral : logo + navigation + profil (layout vertical) ----------
+// ---------- Menu latéral : logo + navigation avec pictogrammes (layout vertical) ----------
+// Pictogramme en couleur (emoji) dessiné dans une icône : aucun fichier image à ajouter au projet
+static QIcon iconeEmoji(const QString &emoji, int px = 22)
+{
+    QPixmap pm(px * 2, px * 2);
+    pm.fill(Qt::transparent);
+    pm.setDevicePixelRatio(2.0);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::TextAntialiasing);
+    QFont f;
+    f.setFamilies({"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"});
+    f.setPixelSize(int(px * 0.8));
+    p.setFont(f);
+    p.drawText(QRect(0, 0, px, px), Qt::AlignCenter, emoji);
+    p.end();
+    return QIcon(pm);
+}
+
 void MainWindow::setupSidebar()
 {
     QFrame *sb = ui->frameSidebar;
-    sb->setFixedWidth(190);
+    sb->setFixedWidth(240);
+    sb->setStyleSheet(
+        "QFrame#frameSidebar{background:#1F2E4A;}"
+        "QLabel{background:transparent;}"
+        "QPushButton{background:transparent; color:white; border:none; border-radius:8px;"
+        "            text-align:left; padding:0px 14px; font-size:14px; font-weight:bold;}"
+        "QPushButton:hover{background:#2F4060;}"
+        "QPushButton[actif=\"true\"]{background:#8B1E2D;}"
+        "QPushButton[actif=\"true\"]:hover{background:#A02636;}");
 
     auto *lay = new QVBoxLayout(sb);
-    lay->setContentsMargins(10, 24, 10, 14);
-    lay->setSpacing(10);
+    lay->setContentsMargins(14, 20, 14, 18);
+    lay->setSpacing(6);
 
+    // ---- logo (coins arrondis) ----
     auto *logo = new QLabel(sb);
-    logo->setFixedHeight(72);
+    logo->setFixedHeight(92);
     logo->setAlignment(Qt::AlignCenter);
-    logo->setStyleSheet("background: transparent;");
 
-    // cherche le logo dans les ressources, quel que soit son dossier
-    QString path;
-    QDirIterator it(":/", QStringList() << "logo.jpeg*", QDir::Files,
-                    QDirIterator::Subdirectories);
+    QString path;                       // cherche le logo dans les ressources, quel que soit son dossier
+    QDirIterator it(":/", QStringList() << "logo.jpeg*", QDir::Files, QDirIterator::Subdirectories);
     if (it.hasNext()) path = it.next();
-    qDebug() << "Logo trouve :" << path;
     QPixmap pm(path);
     if (path.isEmpty() || pm.isNull()) {
         qWarning("Logo introuvable ou illisible");
         logo->setText("Atelier Vintage Couture");
         logo->setWordWrap(true);
-        logo->setStyleSheet("background:transparent; color:white; font-size:16px; font-weight:bold;");
+        logo->setStyleSheet("color:white; font-size:18px; font-weight:bold;");
     } else {
-        logo->setPixmap(pm.scaled(QSize(170, 72), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        const qreal dpr = logo->devicePixelRatioF();
+        QPixmap img = pm.scaled(QSize(212, 88) * dpr, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img.setDevicePixelRatio(dpr);
+        QPixmap arrondi(img.size());
+        arrondi.setDevicePixelRatio(dpr);
+        arrondi.fill(Qt::transparent);
+        QPainter p(&arrondi);
+        p.setRenderHint(QPainter::Antialiasing);
+        QPainterPath clip;
+        clip.addRoundedRect(QRectF(QPointF(0, 0), QSizeF(img.size()) / dpr), 14, 14);
+        p.setClipPath(clip);
+        p.drawPixmap(0, 0, img);
+        p.end();
+        logo->setPixmap(arrondi);
     }
     lay->addWidget(logo);
-    lay->addSpacing(30);
+    lay->addSpacing(22);
 
-    const QList<QPushButton *> nav = {ui->navTableauBordServ, ui->navArticlesServ, ui->navServicesServ,
-                                      ui->navClientsServ, ui->navEmployesServ,
-                                      ui->navEvenementsServ, ui->navMatieresServ};
-    for (QPushButton *b : nav) {
-        b->setMinimumHeight(46);
+    // ---- navigation : Événements, Articles, Services, Clients, Employés, Matières premières ----
+    ui->navTableauBordServ->hide();     // remplacé par ce nouveau menu (le bouton reste dans le .ui)
+
+    struct Entree { QPushButton *btn; QString texte; QString emoji; bool actif; };
+    const QList<Entree> entrees = {
+        {ui->navEvenementsServ, "Événements",       "📅", false},
+        {ui->navArticlesServ,   "Articles",         "👗", false},
+        {ui->navServicesServ,   "Services",         "⚙️", true},
+        {ui->navClientsServ,    "Clients",          "👥", false},
+        {ui->navEmployesServ,   "Employés",         "👤", false},
+        {ui->navMatieresServ,   "Matières premières","🧵", false},
+    };
+    auto styliser = [](QPushButton *b, const QString &texte, const QString &emoji, bool actif) {
+        b->setText("  " + texte);
+        b->setIcon(iconeEmoji(emoji));
+        b->setIconSize(QSize(22, 22));
+        b->setCursor(Qt::PointingHandCursor);
+        b->setFlat(true);
+        b->setMinimumHeight(48);
         b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        lay->addWidget(b);
+        b->setProperty("actif", actif);
+        b->style()->unpolish(b);
+        b->style()->polish(b);
+    };
+    for (const Entree &e : entrees) {
+        styliser(e.btn, e.texte, e.emoji, e.actif);
+        lay->addWidget(e.btn);
     }
+
     lay->addStretch(1);
 
+    // ---- profil + déconnexion, en bas du menu ----
     auto *profilRow = new QHBoxLayout;
     profilRow->setSpacing(8);
     auto *avatar = new QLabel("RS", sb);
-    avatar->setFixedSize(36, 36);
+    avatar->setFixedSize(38, 38);
     avatar->setAlignment(Qt::AlignCenter);
-    avatar->setStyleSheet("background:#B39B6A; color:white; font-weight:bold; border-radius:18px;");
+    avatar->setStyleSheet("background:#B39B6A; color:white; font-weight:bold; border-radius:19px;");
     auto *profil = new QLabel("<b>r.services</b><br><small>Responsable des services</small>", sb);
     profil->setWordWrap(true);
     profil->setStyleSheet("background:transparent; color:white;");
@@ -376,9 +452,11 @@ void MainWindow::setupSidebar()
     lay->addLayout(profilRow);
 
     auto *logout = new QPushButton("Déconnexion", sb);
-    logout->setMinimumHeight(30);
+    logout->setMinimumHeight(32);
     logout->setFlat(true);
-    logout->setStyleSheet("QPushButton{background:transparent; color:#D8CFBC; text-align:left; padding-left:8px;}"
+    logout->setCursor(Qt::PointingHandCursor);
+    logout->setStyleSheet("QPushButton{background:transparent; color:#D8CFBC; text-align:left; padding-left:8px;"
+                          "            font-size:13px; font-weight:bold;}"
                           "QPushButton:hover{color:white; background:transparent;}");
     lay->addWidget(logout);
     connect(logout, &QPushButton::clicked, this, &MainWindow::deconnexionDemandee);
@@ -391,7 +469,7 @@ void MainWindow::setupHeader()
                               "planning intelligent et alertes par e-mail",
                               ui->contenuServices);
     lblSousTitre->setWordWrap(true);
-    lblSousTitre->setStyleSheet("color:#6B7A88; font-size:11px; background:transparent;");
+    lblSousTitre->setStyleSheet("color:#6B7A88; font-size:14px; font-weight:bold; background:transparent;");
 
     ui->txtRecherche->setPlaceholderText("Rechercher par client ou tarif...");
     ui->txtRecherche->setMinimumHeight(32);
@@ -493,7 +571,6 @@ void MainWindow::setupFiche()
     txtAlertes->setReadOnly(true);
     txtAlertes->setMinimumHeight(54);
     txtAlertes->setStyleSheet("QTextEdit{background:#FFF8F0; border:1px solid #E2D9C6; border-radius:6px;}");
-    txtAlertes->setPlainText("● Rappel envoyé par e-mail à Mouna Ayari — échéance dans 2 jours.");
     al->addWidget(txtAlertes, 1);
     ui->btnConfigurerAlertes->setText("Configurer");
     ui->btnConfigurerAlertes->setMinimumHeight(29);
@@ -692,6 +769,7 @@ void MainWindow::fillForm(int i)
     ui->spinAcompte->setValue(s.acompte);
     recalc();
     verifierConflit();
+    rafraichirAlertes(s);
 }
 
 void MainWindow::recalc()
@@ -745,6 +823,8 @@ void MainWindow::onSave()
     ui->tableServices->selectRow(m_current);
     updateChart();
     updateBanner();
+    updateCount();
+    rafraichirAlertes(s);
     statusBar()->showMessage("Service " + s.id + " enregistré", 3000);
 
     // Enregistrement via la classe Service (INSERT si nouveau, UPDATE sinon)
@@ -803,7 +883,275 @@ void MainWindow::updateBanner()
                                      .arg(ids.size()).arg(ids.join(" · ")));
 }
 
-// ---------- Statistiques : le plus demandé / le plus rentable ----------
+// ---------- Alertes intelligentes du service selectionne ----------
+void MainWindow::rafraichirAlertes(const Service &s)
+{
+    const QVector<AlerteService> alertes = s.genererAlertes();
+    if (alertes.isEmpty()) {
+        txtAlertes->setHtml("<span style='color:#2E7D32;'>● Aucune alerte pour ce service.</span>");
+        return;
+    }
+    static const char *icones[]   = {"🔴", "🟠", "🟢"};
+    static const char *couleurs[] = {"#8B1E2D", "#B26A00", "#2E7D32"};
+    QString html;
+    for (const AlerteService &al : alertes)
+        html += QString("<div style='color:%1; margin-bottom:3px;'>%2 %3</div>")
+                    .arg(couleurs[al.niveau], icones[al.niveau], al.message.toHtmlEscaped());
+    txtAlertes->setHtml(html);
+}
+
+// ---------- Statistiques : 2 boutons -> fenêtre de courbes ----------
+namespace {
+
+// Chiffres de l'année en cours pour un type de statistique (demande ou rentabilité)
+struct StatsAnnee {
+    int annee = 0;
+    QStringList types;
+    QVector<QVector<double>> val;      // val[type][mois]
+    QVector<double> totaux;            // total par type
+    int meilleur = 0;                  // index du type gagnant
+    double somme = 0;                  // somme de tous les types
+    int nbServices = 0;
+};
+
+StatsAnnee calculerStats(const QVector<Service> &services, bool profit)
+{
+    StatsAnnee st;
+    st.annee = QDate::currentDate().year();
+    st.types = {"Location", "Restauration", "Nettoyage", "Authentification"};
+    st.val = QVector<QVector<double>>(st.types.size(), QVector<double>(12, 0.0));
+    st.totaux = QVector<double>(st.types.size(), 0.0);
+    for (const Service &sv : services) {
+        if (!sv.debut.isValid() || sv.debut.year() != st.annee) continue;
+        const int t = st.types.indexOf(sv.type);
+        if (t < 0) continue;
+        const double v = profit ? (sv.tarif - sv.cout) : 1.0;
+        st.val[t][sv.debut.month() - 1] += v;
+        st.totaux[t] += v;
+        st.somme += v;
+        ++st.nbServices;
+    }
+    for (int t = 1; t < st.types.size(); ++t)
+        if (st.totaux[t] > st.totaux[st.meilleur]) st.meilleur = t;
+    return st;
+}
+
+// Dessine les courbes (une par type de service) dans un QChart existant
+void dessinerCourbes(QChart *chart, const StatsAnnee &st, bool profit)
+{
+    static const QStringList mois = {"Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
+                                     "Juil", "Août", "Sep", "Oct", "Nov", "Déc"};
+    static const QList<QColor> couleurs = {QColor("#8B1E2D"), QColor("#1F3A4D"),
+                                           QColor("#C9971C"), QColor("#4E8B5F")};
+    const QColor encre("#1F3A4D");
+
+    chart->removeAllSeries();
+    const auto anciens = chart->axes();
+    for (QAbstractAxis *ax : anciens) { chart->removeAxis(ax); delete ax; }
+
+    double mn = 0, mx = 0;
+    for (const auto &ligne : st.val)
+        for (double v : ligne) { mn = qMin(mn, v); mx = qMax(mx, v); }
+
+    // axe X : mois
+    auto *axeX = new QCategoryAxis;
+    axeX->setStartValue(0.5);
+    for (int m = 0; m < 12; ++m) axeX->append(mois[m], m + 1);
+    axeX->setLabelsPosition(QCategoryAxis::AxisLabelsPositionOnValue);
+    axeX->setRange(0.5, 12.5);
+    axeX->setGridLineVisible(false);
+    axeX->setLabelsColor(encre);
+    axeX->setLinePenColor(QColor("#CFC6B2"));
+    chart->addAxis(axeX, Qt::AlignBottom);
+
+    // axe Y
+    auto *axeY = new QValueAxis;
+    const double haut = (mx <= 0) ? (profit ? 100.0 : 3.0) : (profit ? mx * 1.2 : mx + 1);
+    const double bas  = (mn < 0) ? mn * 1.2 : 0.0;
+    axeY->setRange(bas, haut);
+    if (profit) {
+        axeY->setLabelFormat("%.0f");
+        axeY->setTitleText("Bénéfice (DT)");
+    } else {
+        axeY->setLabelFormat("%d");
+        axeY->setTitleText("Nombre de services");
+        axeY->setTickType(QValueAxis::TicksDynamic);
+        axeY->setTickAnchor(0);
+        axeY->setTickInterval(haut <= 10 ? 1 : qCeil(haut / 6));
+    }
+    axeY->setLabelsColor(encre);
+    axeY->setTitleBrush(QBrush(encre));
+    axeY->setGridLineColor(QColor("#E8E0CF"));
+    axeY->setLinePenColor(QColor("#CFC6B2"));
+    chart->addAxis(axeY, Qt::AlignLeft);
+
+    for (int t = 0; t < st.types.size(); ++t) {
+        auto *ser = new QLineSeries;          // segments droits : pas de dépassement entre les points
+        ser->setName(st.types[t]);
+        QPen pen(couleurs[t]);
+        pen.setWidth(t == st.meilleur && st.totaux[t] > 0 ? 4 : 2);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        ser->setPen(pen);
+        ser->setPointsVisible(true);
+        for (int m = 0; m < 12; ++m)
+            ser->append(m + 1, st.val[t][m]);
+        chart->addSeries(ser);
+        ser->attachAxis(axeX);
+        ser->attachAxis(axeY);
+
+        // infobulle au survol d'un point
+        const QString nom = st.types[t];
+        QObject::connect(ser, &QLineSeries::hovered, chart, [nom, profit](const QPointF &p, bool entre) {
+            if (!entre) { QToolTip::hideText(); return; }
+            const int m = qBound(1, qRound(p.x()), 12);
+            const QString v = profit ? QString("%1 DT").arg(p.y(), 0, 'f', 0)
+                                     : QString("%1 service(s)").arg(qRound(p.y()));
+            QToolTip::showText(QCursor::pos(), QString("%1 · %2 : %3").arg(nom, mois[m - 1], v));
+        });
+    }
+
+    chart->setTitle(QString());
+    chart->setBackgroundBrush(Qt::transparent);
+    chart->setBackgroundPen(Qt::NoPen);
+    chart->setMargins(QMargins(6, 6, 6, 6));
+    chart->legend()->setVisible(true);
+    chart->legend()->setAlignment(Qt::AlignBottom);
+    chart->legend()->setLabelColor(encre);
+    chart->setAnimationOptions(QChart::NoAnimation);
+}
+
+QString resumeBouton(const StatsAnnee &st, bool profit)
+{
+    if (st.totaux[st.meilleur] <= 0) return "Aucune donnée cette année";
+    return profit ? QString("%1 · %2").arg(st.types[st.meilleur], dt(st.totaux[st.meilleur]))
+                  : QString("%1 · %2 service(s)").arg(st.types[st.meilleur]).arg(int(st.totaux[st.meilleur]));
+}
+
+// Fenêtre « Statistiques annuelles » : cartes de synthèse + courbes, bascule Demande / Rentabilité
+void ouvrirFenetreStatistiques(QWidget *parent, const QVector<Service> &services, bool profitInitial)
+{
+    const QString bordeaux = "#8B1E2D", marine = "#1F3A4D", gris = "#6B7A88", beige = "#F5EFE4";
+    const StatsAnnee stDem = calculerStats(services, false);
+    const StatsAnnee stRen = calculerStats(services, true);
+
+    QDialog dlg(parent);
+    dlg.setWindowTitle("Statistiques annuelles — Atelier Vintage Couture");
+    dlg.setStyleSheet(QString("QDialog{background:%1;} QLabel{background:transparent; border:none;}").arg(beige));
+    dlg.resize(1000, 680);
+
+    auto *lay = new QVBoxLayout(&dlg);
+    lay->setContentsMargins(22, 18, 22, 18);
+    lay->setSpacing(14);
+
+    // ---- en-tête ----
+    auto *titre = new QLabel(QString("Statistiques annuelles %1").arg(stDem.annee), &dlg);
+    titre->setStyleSheet(QString("font-size:22px; font-weight:bold; color:%1;").arg(marine));
+    auto *sous = new QLabel("Demande et rentabilité de chaque type de service, mois par mois", &dlg);
+    sous->setStyleSheet(QString("font-size:12px; color:%1;").arg(gris));
+    lay->addWidget(titre);
+    lay->addWidget(sous);
+
+    // ---- cartes de synthèse ----
+    auto *cartes = new QHBoxLayout;
+    cartes->setSpacing(14);
+    auto carte = [&](const QString &titreCarte, const QString &valeur, const QString &detail, const QString &couleur) {
+        auto *c = new QFrame(&dlg);
+        c->setStyleSheet(QString("QFrame#kpi{background:white; border:1px solid #E2D9C6; border-top:4px solid %1; border-radius:10px;}")
+                             .arg(couleur));
+        c->setObjectName("kpi");
+        auto *v = new QVBoxLayout(c);
+        v->setContentsMargins(16, 10, 16, 10);
+        v->setSpacing(2);
+        auto *t = new QLabel(titreCarte.toUpper(), c);
+        t->setStyleSheet(QString("font-size:10px; font-weight:bold; letter-spacing:1px; color:%1;").arg(gris));
+        auto *val = new QLabel(valeur, c);
+        val->setStyleSheet(QString("font-size:22px; font-weight:bold; color:%1;").arg(couleur));
+        auto *d = new QLabel(detail, c);
+        d->setStyleSheet(QString("font-size:11px; color:%1;").arg(gris));
+        v->addWidget(t); v->addWidget(val); v->addWidget(d);
+        cartes->addWidget(c, 1);
+    };
+    const double totDem = stDem.somme;
+    carte("Service le plus demandé",
+          stDem.totaux[stDem.meilleur] > 0 ? stDem.types[stDem.meilleur] : "—",
+          QString("%1 service(s) · %2 % des demandes").arg(int(stDem.totaux[stDem.meilleur]))
+              .arg(totDem > 0 ? qRound(stDem.totaux[stDem.meilleur] * 100 / totDem) : 0),
+          bordeaux);
+    carte("Service le plus rentable",
+          stRen.totaux[stRen.meilleur] > 0 ? stRen.types[stRen.meilleur] : "—",
+          QString("Bénéfice : %1").arg(dt(stRen.totaux[stRen.meilleur])),
+          marine);
+    carte("Bénéfice total de l'année", dt(stRen.somme),
+          QString("%1 service(s) enregistré(s) en %2").arg(stRen.nbServices).arg(stRen.annee),
+          "#C9971C");
+    lay->addLayout(cartes);
+
+    // ---- bascule Demande / Rentabilité ----
+    auto *bascule = new QHBoxLayout;
+    bascule->setSpacing(8);
+    auto *btnDem = new QPushButton("📈  Demande", &dlg);
+    auto *btnRen = new QPushButton("💰  Rentabilité", &dlg);
+    for (auto *b : {btnDem, btnRen}) {
+        b->setCheckable(true);
+        b->setCursor(Qt::PointingHandCursor);
+        b->setMinimumHeight(34);
+        b->setMinimumWidth(150);
+    }
+    btnDem->setStyleSheet(QString("QPushButton{background:white; color:%1; border:2px solid %1; border-radius:8px; font-weight:bold; padding:4px 16px;}"
+                                  "QPushButton:hover{background:#F6EFE0;} QPushButton:checked{background:%1; color:white;}").arg(bordeaux));
+    btnRen->setStyleSheet(QString("QPushButton{background:white; color:%1; border:2px solid %1; border-radius:8px; font-weight:bold; padding:4px 16px;}"
+                                  "QPushButton:hover{background:#F6EFE0;} QPushButton:checked{background:%1; color:white;}").arg(marine));
+    bascule->addWidget(btnDem);
+    bascule->addWidget(btnRen);
+    bascule->addStretch(1);
+    lay->addLayout(bascule);
+
+    // ---- graphique dans une carte blanche ----
+    auto *cadre = new QFrame(&dlg);
+    cadre->setStyleSheet("QFrame#cadreCourbes{background:white; border:1px solid #E2D9C6; border-radius:10px;}");
+    cadre->setObjectName("cadreCourbes");
+    auto *cl = new QVBoxLayout(cadre);
+    cl->setContentsMargins(12, 12, 12, 12);
+    auto *titreGraph = new QLabel(cadre);
+    titreGraph->setStyleSheet(QString("font-size:14px; font-weight:bold; color:%1;").arg(marine));
+    auto *vue = new QChartView(new QChart, cadre);
+    vue->setRenderHint(QPainter::Antialiasing);
+    vue->setStyleSheet("background: transparent; border: none;");
+    vue->setMinimumHeight(260);
+    cl->addWidget(titreGraph);
+    cl->addWidget(vue, 1);
+    lay->addWidget(cadre, 1);
+
+    auto afficher = [&](bool profit) {
+        btnDem->setChecked(!profit);
+        btnRen->setChecked(profit);
+        const StatsAnnee &st = profit ? stRen : stDem;
+        titreGraph->setText(profit ? QString("Bénéfice mensuel par service (DT) — %1").arg(st.annee)
+                                   : QString("Nombre de services demandés par mois — %1").arg(st.annee));
+        dessinerCourbes(vue->chart(), st, profit);
+    };
+    QObject::connect(btnDem, &QPushButton::clicked, &dlg, [&]() { afficher(false); });
+    QObject::connect(btnRen, &QPushButton::clicked, &dlg, [&]() { afficher(true); });
+    afficher(profitInitial);
+
+    // ---- bas ----
+    auto *bas = new QHBoxLayout;
+    bas->addStretch(1);
+    auto *btnFermer = new QPushButton("Fermer", &dlg);
+    btnFermer->setCursor(Qt::PointingHandCursor);
+    btnFermer->setStyleSheet(QString("QPushButton{background:%1; color:white; font-weight:bold; border:none; border-radius:8px; padding:9px 26px;}"
+                                     "QPushButton:hover{background:#A02636;}").arg(bordeaux));
+    QObject::connect(btnFermer, &QPushButton::clicked, &dlg, &QDialog::accept);
+    bas->addWidget(btnFermer);
+    lay->addLayout(bas);
+
+    dlg.exec();
+}
+
+} // namespace
+
+// Dans la page Services : seulement deux gros boutons ; le clic ouvre la fenêtre des courbes.
 void MainWindow::setupChart()
 {
     ui->frameStats->setTitle("Statistiques annuelles : demande et rentabilité");
@@ -813,147 +1161,37 @@ void MainWindow::setupChart()
         w->hide();
 
     auto *row = new QHBoxLayout(ui->frameStats);
-    row->setContentsMargins(10, 30, 10, 10);
-    row->setSpacing(12);
+    row->setContentsMargins(12, 28, 12, 12);
+    row->setSpacing(14);
 
-    auto makeCard = [this, row](const QString &prefix, const QString &titre,
-                                const QString &main, const QString &tint) {
-        auto *card = new QFrame(ui->frameStats);
-        card->setObjectName(prefix + "_card");
-        card->setProperty("main", main);
-        card->setProperty("tint", tint);
-        card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        card->setStyleSheet(QString("QFrame#%1_card{background:white; border:1px solid #E2D9C6; border-radius:10px;}"
-                                    "QLabel{background:transparent; border:none;}").arg(prefix));
-
-        auto *outer = new QVBoxLayout(card);
-        outer->setContentsMargins(1, 1, 1, 1);
-        outer->setSpacing(0);
-
-        auto *accent = new QFrame(card);
-        accent->setFixedHeight(5);
-        accent->setStyleSheet(QString("background:%1; border:none; border-top-left-radius:9px; border-top-right-radius:9px;").arg(main));
-        outer->addWidget(accent);
-
-        auto *body = new QVBoxLayout;
-        body->setContentsMargins(17, 12, 17, 12);
-        body->setSpacing(4);
-        outer->addLayout(body, 1);
-
-        auto *t = new QLabel(titre.toUpper(), card);
-        QFont ft = t->font();
-        ft.setBold(true);
-        ft.setPixelSize(11);
-        ft.setLetterSpacing(QFont::AbsoluteSpacing, 1.2);
-        t->setFont(ft);
-        t->setStyleSheet("color:#6B7A88;");
-        body->addWidget(t);
-
-        auto *name = new QLabel("—", card);
-        name->setObjectName(prefix + "_name");
-        name->setStyleSheet(QString("font-size:26px; font-weight:bold; color:%1;").arg(main));
-        body->addWidget(name);
-
-        auto *sub = new QLabel("", card);
-        sub->setObjectName(prefix + "_sub");
-        sub->setStyleSheet("font-size:12px; color:#6B7A88;");
-        body->addWidget(sub);
-
-        auto *line = new QFrame(card);
-        line->setFixedHeight(1);
-        line->setStyleSheet("background:#EFE7D6; border:none;");
-        body->addWidget(line);
-        body->addSpacing(6);
-
-        // 4 lignes : libellé | barre (s'étire) | valeur
-        auto *grid = new QGridLayout;
-        grid->setHorizontalSpacing(12);
-        grid->setVerticalSpacing(10);
-        grid->setColumnStretch(1, 1);
-        for (int i = 0; i < 4; ++i) {
-            auto *lbl = new QLabel("", card);
-            lbl->setObjectName(QString("%1_lbl_%2").arg(prefix).arg(i));
-            lbl->setMinimumWidth(110);
-            lbl->setStyleSheet("font-size:12px; color:#1F3A4D;");
-
-            auto *bar = new QProgressBar(card);
-            bar->setObjectName(QString("%1_bar_%2").arg(prefix).arg(i));
-            bar->setRange(0, 1000);
-            bar->setValue(0);
-            bar->setTextVisible(false);
-            bar->setFixedHeight(14);
-            bar->setMinimumWidth(40);
-
-            auto *val = new QLabel("", card);
-            val->setObjectName(QString("%1_val_%2").arg(prefix).arg(i));
-            val->setMinimumWidth(70);
-            val->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-            val->setStyleSheet("font-size:12px; font-weight:bold; color:#1F3A4D;");
-
-            grid->addWidget(lbl, i, 0);
-            grid->addWidget(bar, i, 1);
-            grid->addWidget(val, i, 2);
-        }
-        body->addLayout(grid);
-        body->addStretch(1);
-
-        row->addWidget(card, 1);
+    auto makeBtn = [this, row](const QString &nom, const QString &couleur, bool profit) {
+        auto *b = new QPushButton(ui->frameStats);
+        b->setObjectName(nom);
+        b->setCursor(Qt::PointingHandCursor);
+        b->setMinimumHeight(64);
+        b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        b->setStyleSheet(QString(
+            "QPushButton{background:white; color:%1; border:1px solid #E2D9C6; border-left:6px solid %1;"
+            "            border-radius:10px; font-size:14px; font-weight:bold; text-align:left; padding:8px 18px;}"
+            "QPushButton:hover{background:%1; color:white;}").arg(couleur));
+        connect(b, &QPushButton::clicked, this, [this, profit]() {
+            ouvrirFenetreStatistiques(this, m_services, profit);
+        });
+        row->addWidget(b, 1);
     };
-
-    makeCard("dem", "Service le plus demandé",  "#8B1E2D", "#D9A9B0");
-    makeCard("ren", "Service le plus rentable", "#1F3A4D", "#A9B8C4");
+    makeBtn("stat_btn_dem", "#8B1E2D", false);
+    makeBtn("stat_btn_ren", "#1F3A4D", true);
 }
 
+// Met à jour le texte des deux boutons (service gagnant) quand les données changent
 void MainWindow::updateChart()
 {
-    const QStringList types = {"Location", "Restauration", "Nettoyage", "Authentification"};
-    struct Row { QString type; double val; };
-
-    auto refresh = [&](const QString &prefix, bool profit) {
-        auto *card = ui->frameStats->findChild<QFrame *>(prefix + "_card");
-        if (!card) return;
-        const QString main = card->property("main").toString();
-        const QString tint = card->property("tint").toString();
-
-        QVector<Row> rows;
-        double total = 0;
-        for (const QString &t : types) {
-            double v = 0;
-            for (const Service &s : constRef(m_services))
-                if (s.type == t) v += profit ? (s.tarif - s.cout) : 1;
-            rows.append({t, v});
-            total += v;
-        }
-
-        std::sort(rows.begin(), rows.end(),
-                  [](const Row &a, const Row &b) { return a.val > b.val; });
-
-        const double mx = rows.first().val;
-        card->findChild<QLabel *>(prefix + "_name")
-            ->setText(mx > 0 ? rows.first().type : "—");
-        card->findChild<QLabel *>(prefix + "_sub")->setText(
-            profit ? QString("Bénéfice total : %1").arg(dt(mx))
-                   : QString("%1 service(s) · %2 % des demandes")
-                         .arg(int(mx)).arg(total > 0 ? qRound(mx * 100 / total) : 0));
-
-        for (int i = 0; i < 4; ++i) {
-            card->findChild<QLabel *>(QString("%1_lbl_%2").arg(prefix).arg(i))->setText(rows[i].type);
-            card->findChild<QLabel *>(QString("%1_val_%2").arg(prefix).arg(i))
-                ->setText(profit ? dt(rows[i].val) : QString::number(int(rows[i].val)));
-
-            // la QProgressBar suit automatiquement la largeur de la carte
-            auto *bar = card->findChild<QProgressBar *>(QString("%1_bar_%2").arg(prefix).arg(i));
-            const int pv = (mx > 0 && rows[i].val > 0)
-                               ? qMax(30, int(1000 * rows[i].val / mx)) : 0;
-            bar->setValue(pv);
-            bar->setStyleSheet(QString("QProgressBar{background:#F1ECE0; border:none; border-radius:7px;}"
-                                       "QProgressBar::chunk{background:%1; border-radius:7px;}")
-                                   .arg(i == 0 ? main : tint));
-        }
-    };
-
-    refresh("dem", false);
-    refresh("ren", true);
+    const StatsAnnee dem = calculerStats(m_services, false);
+    const StatsAnnee ren = calculerStats(m_services, true);
+    if (auto *b = ui->frameStats->findChild<QPushButton *>("stat_btn_dem"))
+        b->setText("📈  Service le plus demandé  ›  voir les courbes\n" + resumeBouton(dem, false));
+    if (auto *b = ui->frameStats->findChild<QPushButton *>("stat_btn_ren"))
+        b->setText("💰  Service le plus rentable  ›  voir les courbes\n" + resumeBouton(ren, true));
 }
 
 // ---------- Assemblage des layouts ----------
@@ -976,7 +1214,7 @@ void MainWindow::setupLayout()
     row1->addLayout(titres, 1);
     for (QPushButton *b : {ui->btnAjouter, ui->btnModifier, ui->btnSupprimer, ui->btnNotifications}) {
         b->setMinimumSize(90, 32);
-        row1->addWidget(b, 0, Qt::AlignTop);
+        row1->addWidget(b, 0, Qt::AlignVCenter);   // boutons descendus au niveau du titre
     }
     vm->addLayout(row1);
 
@@ -1001,7 +1239,7 @@ void MainWindow::setupLayout()
     vm->addWidget(lblCount);
 
     // statistiques : hauteur naturelle, largeur partagée entre les 2 cartes
-    ui->frameStats->setMinimumHeight(270);
+    ui->frameStats->setMinimumHeight(130);
     vm->addWidget(ui->frameStats, 0);
 
     // panneau de droite : scrollable si la fenêtre est trop basse
@@ -1056,9 +1294,9 @@ void MainWindow::applyResponsive()
 
     const bool compact = (state >= 1);
     lblSousTitre->setVisible(!compact);
-    QFont f = ui->lblTitle->font();
-    f.setPointSize(compact ? 16 : 20);
-    ui->lblTitle->setFont(f);
+    // la feuille de style fixe la taille (elle l'emporte sur setFont)
+    ui->lblTitle->setStyleSheet(QString("font-size:%1px; font-weight:bold; color:#1F3A4D; background:transparent;")
+                                    .arg(compact ? 24 : 30));
 
     if (state == 2) {
         m_content->setDirection(QBoxLayout::TopToBottom);
@@ -1171,6 +1409,38 @@ void MainWindow::onPlanning()
     cal->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
     cal->setGridVisible(true);
     cal->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // couleurs de l'interface (beige / bleu marine / bordeaux) à la place du fond sombre
+    cal->setStyleSheet(
+        "QCalendarWidget{background:#FBF8F1;}"
+        "QCalendarWidget QWidget#qt_calendar_navigationbar{background:#1F3A4D; min-height:38px;}"
+        "QCalendarWidget QToolButton{color:white; background:transparent; border:none; border-radius:6px;"
+        "                            font-size:15px; font-weight:bold; padding:4px 10px; icon-size:20px;}"
+        "QCalendarWidget QToolButton:hover{background:#8B1E2D;}"
+        "QCalendarWidget QToolButton::menu-indicator{image:none;}"
+        "QCalendarWidget QMenu{background:#FBF8F1; color:#1F3A4D;}"
+        "QCalendarWidget QMenu::item:selected{background:#8B1E2D; color:white;}"
+        "QCalendarWidget QSpinBox{color:white; background:transparent; font-size:15px; font-weight:bold;"
+        "                         selection-background-color:#8B1E2D; selection-color:white;}"
+        "QCalendarWidget QAbstractItemView:enabled{background:#FBF8F1; color:#1F3A4D; font-size:14px;"
+        "                         selection-background-color:#8B1E2D; selection-color:white;"
+        "                         gridline-color:#E2D9C6; outline:0;}"
+        "QCalendarWidget QAbstractItemView:disabled{color:#BDB5A2;}");
+    {
+        QTextCharFormat entete;                         // lun. mar. mer. ...
+        entete.setBackground(QColor("#EFE7D6"));
+        entete.setForeground(QColor("#1F3A4D"));
+        entete.setFontWeight(QFont::Bold);
+        cal->setHeaderTextFormat(entete);
+        QTextCharFormat semaine;                        // jours de semaine
+        semaine.setForeground(QColor("#1F3A4D"));
+        for (Qt::DayOfWeek j : {Qt::Monday, Qt::Tuesday, Qt::Wednesday, Qt::Thursday, Qt::Friday})
+            cal->setWeekdayTextFormat(j, semaine);
+        QTextCharFormat weekend;                        // samedi, dimanche
+        weekend.setForeground(QColor("#8B1E2D"));
+        cal->setWeekdayTextFormat(Qt::Saturday, weekend);
+        cal->setWeekdayTextFormat(Qt::Sunday, weekend);
+    }
 
     // 1) un point coloré par service actif, chaque jour
     for (const Service &sv : constRef(m_services)) {
@@ -1296,34 +1566,156 @@ void MainWindow::setupStatusBar()
 }
 
 // ---------- Export PDF, reçu, rappels ----------
+// Feuille de style commune (aperçu + PDF) : texte toujours foncé, jamais hérité du thème sombre
+static const char *kStyleFacture =
+    "body, p, td, th, div { color:#1F3A4D; font-family:'Segoe UI', Arial, sans-serif; font-size:10.5pt; }"
+    "h1, h2, h3 { margin:0; }";
+
+// Une facture (une par service). 'saut' = nouvelle page avant la facture.
+static QString htmlFacture(const Service &s, bool saut)
+{
+    const auto esc = [](const QString &t) { return t.isEmpty() ? QString("—") : t.toHtmlEscaped(); };
+    const double solde = s.tarif - s.acompte;
+    const bool solde0 = solde <= 0.0001;
+    const QString beige = "#F5EFE4", papier = "#FFFDF8", bordeaux = "#8B1E2D", marine = "#1F3A4D",
+                  trait = "#E2D9C6", gris = "#6B7A88";
+
+    QString h;
+    if (saut) h += "<div style='page-break-before:always;'>&nbsp;</div>";
+
+    // cadre beige autour de la facture
+    h += QString("<table width='100%' cellspacing='0' cellpadding='16' bgcolor='%1'><tr><td>").arg(beige);
+
+    // ---- bandeau d'en-tête ----
+    h += QString("<table width='100%' cellspacing='0' cellpadding='14' bgcolor='%1'><tr>"
+                 "<td valign='middle'><span style='color:white; font-size:18pt; font-weight:bold;'>Atelier Vintage Couture</span><br>"
+                 "<span style='color:#EAD9B8; font-size:9pt; letter-spacing:2px;'>ÉLÉGANCE &amp; TRADITION</span></td>"
+                 "<td align='right' valign='middle'><span style='color:white; font-size:20pt; font-weight:bold; letter-spacing:3px;'>FACTURE</span><br>"
+                 "<span style='color:#EAD9B8;'>N° %2</span></td></tr></table>")
+             .arg(bordeaux, esc(refService(s)));
+
+    h += "<br>";
+
+    // ---- informations : client / facture ----
+    h += QString("<table width='100%' cellspacing='0' cellpadding='0'><tr>"
+                 "<td width='49%' valign='top'>"
+                 "<table width='100%' cellspacing='0' cellpadding='10' bgcolor='%1'><tr><td>"
+                 "<span style='color:%2; font-size:8.5pt; font-weight:bold; letter-spacing:1px;'>FACTURÉ À</span><br>"
+                 "<span style='font-size:13pt; font-weight:bold;'>%3</span></td></tr></table></td>"
+                 "<td width='2%'></td>"
+                 "<td width='49%' valign='top'>"
+                 "<table width='100%' cellspacing='0' cellpadding='10' bgcolor='%1'><tr><td>"
+                 "<span style='color:%2; font-size:8.5pt; font-weight:bold; letter-spacing:1px;'>DÉTAILS DE LA FACTURE</span><br>"
+                 "Date d'émission : <b>%4</b><br>Statut du service : <b>%5</b><br>Employé assigné : <b>%6</b>"
+                 "</td></tr></table></td></tr></table>")
+             .arg(papier, bordeaux, esc(s.client), QDate::currentDate().toString("dd/MM/yyyy"),
+                  esc(s.statut), esc(s.employe));
+
+    h += "<br>";
+
+    // ---- lignes de la facture ----
+    h += QString("<table width='100%' cellspacing='0' cellpadding='9' bgcolor='%1'>"
+                 "<tr bgcolor='%2'>"
+                 "<th align='left'><span style='color:white;'>Désignation</span></th>"
+                 "<th align='left'><span style='color:white;'>Période</span></th>"
+                 "<th align='right'><span style='color:white;'>Montant</span></th></tr>")
+             .arg(papier, marine);
+    h += QString("<tr><td style='border-bottom:1px solid %1;'><b>Service « %2 »</b><br>"
+                 "<span style='color:%3;'>Article : %4</span></td>"
+                 "<td style='border-bottom:1px solid %1;'>du %5<br>au %6</td>"
+                 "<td align='right' style='border-bottom:1px solid %1;'><b>%7</b></td></tr>")
+             .arg(trait, esc(s.type), gris, esc(s.article),
+                  s.debut.toString("dd/MM/yyyy"), s.fin.toString("dd/MM/yyyy"), dt(s.tarif));
+    h += "</table>";
+
+    h += "<br>";
+
+    // ---- totaux (alignés à droite) ----
+    h += QString("<table width='100%' cellspacing='0' cellpadding='0'><tr><td width='50%'></td><td width='50%'>"
+                 "<table width='100%' cellspacing='0' cellpadding='8' bgcolor='%1'>"
+                 "<tr><td>Total</td><td align='right'><b>%2</b></td></tr>"
+                 "<tr><td>Acompte versé</td><td align='right'>− %3</td></tr>"
+                 "<tr bgcolor='%4'><td><span style='color:white; font-weight:bold;'>SOLDE RESTANT</span></td>"
+                 "<td align='right'><span style='color:white; font-weight:bold; font-size:12pt;'>%5</span></td></tr>"
+                 "</table></td></tr></table>")
+             .arg(papier, dt(s.tarif), dt(s.acompte), solde0 ? "#2E7D32" : bordeaux, dt(solde));
+
+    h += "<br>";
+
+    // ---- état du paiement + pied de page ----
+    h += QString("<table width='100%' cellspacing='0' cellpadding='10' bgcolor='%1'><tr>"
+                 "<td><b>État du paiement :</b> <span style='color:%2; font-weight:bold;'>%3</span></td>"
+                 "<td align='right'><span style='color:%4;'>Merci de votre confiance.</span></td></tr></table>")
+             .arg(papier, solde0 ? "#2E7D32" : bordeaux, solde0 ? "Soldé" : "Solde dû", gris);
+
+    h += "</td></tr></table>";
+    return h;
+}
+
+// Export PDF : affiche d'abord les factures (une par service) dans une fenêtre d'aperçu aux couleurs
+// de l'interface ; le bouton "Enregistrer en PDF" crée ensuite le fichier.
 void MainWindow::exportPdf()
 {
-    QString file = QFileDialog::getSaveFileName(this, "Export PDF", "services.pdf", "PDF (*.pdf)");
-    if (file.isEmpty()) return;
-
-    QString html = "<h2>Atelier Vintage Couture — Services</h2>"
-                   "<table border='1' cellspacing='0' cellpadding='4' width='100%'>"
-                   "<tr bgcolor='#1F3A4D'>";
-    for (int c = 0; c < ui->tableServices->columnCount(); ++c)
-        html += "<th><font color='white'>" + ui->tableServices->horizontalHeaderItem(c)->text() + "</font></th>";
-    html += "</tr>";
-
-    for (int r = 0; r < ui->tableServices->rowCount(); ++r) {
-        if (ui->tableServices->isRowHidden(r)) continue;
-        html += "<tr>";
-        for (int c = 0; c < ui->tableServices->columnCount(); ++c)
-            html += "<td>" + ui->tableServices->item(r, c)->text().toHtmlEscaped() + "</td>";
-        html += "</tr>";
+    QVector<int> lignes;                     // services visibles dans le tableau (filtre de recherche respecté)
+    for (int r = 0; r < ui->tableServices->rowCount() && r < m_services.size(); ++r)
+        if (!ui->tableServices->isRowHidden(r))
+            lignes << r;
+    if (lignes.isEmpty()) {
+        QMessageBox::information(this, "Export PDF", "Aucun service à exporter.");
+        return;
     }
-    html += "</table>";
 
-    QPdfWriter w(file);
-    w.setPageSize(QPageSize(QPageSize::A4));
-    w.setPageOrientation(QPageLayout::Landscape);
-    QTextDocument doc;
-    doc.setHtml(html);
-    doc.print(&w);
-    statusBar()->showMessage("PDF exporté : " + file, 4000);
+    QString html;
+    for (int i = 0; i < lignes.size(); ++i)
+        html += htmlFacture(m_services[lignes[i]], i > 0);
+
+    // ---- fenêtre d'aperçu (fond beige comme l'interface) ----
+    QDialog dlg(this);
+    dlg.setWindowTitle("Aperçu — factures des services");
+    dlg.setStyleSheet("QDialog{background:#F5EFE4;}");
+    dlg.resize(860, 760);
+    auto *lay = new QVBoxLayout(&dlg);
+    lay->setContentsMargins(14, 14, 14, 14);
+    lay->setSpacing(10);
+
+    auto *vue = new QTextBrowser(&dlg);
+    vue->setFrameShape(QFrame::NoFrame);
+    vue->setStyleSheet("QTextBrowser{background:#F5EFE4; color:#1F3A4D; border:1px solid #D9CFB8; border-radius:8px;}");
+    vue->document()->setDefaultStyleSheet(kStyleFacture);
+    vue->setHtml(html);
+    lay->addWidget(vue, 1);
+
+    auto *bas = new QHBoxLayout;
+    bas->addStretch(1);
+    auto *btnSave  = new QPushButton("📄  Enregistrer en PDF", &dlg);
+    auto *btnClose = new QPushButton("Fermer", &dlg);
+    btnSave->setCursor(Qt::PointingHandCursor);
+    btnClose->setCursor(Qt::PointingHandCursor);
+    btnSave->setStyleSheet("QPushButton{background:#8B1E2D; color:white; font-weight:bold; border:none; border-radius:8px; padding:9px 22px;}"
+                           "QPushButton:hover{background:#A02636;}");
+    btnClose->setStyleSheet("QPushButton{background:white; color:#1F3A4D; font-weight:bold; border:2px solid #1F3A4D;"
+                            "            border-radius:8px; padding:7px 22px;}"
+                            "QPushButton:hover{background:#F6EFE0;}");
+    bas->addWidget(btnSave);
+    bas->addWidget(btnClose);
+    lay->addLayout(bas);
+
+    connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::reject);
+    connect(btnSave, &QPushButton::clicked, &dlg, [&]() {
+        const QString file = QFileDialog::getSaveFileName(&dlg, "Export PDF", "factures_services.pdf", "PDF (*.pdf)");
+        if (file.isEmpty()) return;
+        QPdfWriter w(file);
+        w.setPageSize(QPageSize(QPageSize::A4));
+        w.setPageOrientation(QPageLayout::Portrait);
+        w.setPageMargins(QMarginsF(12, 12, 12, 12), QPageLayout::Millimeter);
+        QTextDocument doc;
+        doc.setDefaultStyleSheet(kStyleFacture);
+        doc.setHtml(html);
+        doc.print(&w);
+        statusBar()->showMessage("PDF exporté : " + file, 4000);
+        dlg.accept();
+    });
+    dlg.exec();
 }
 
 void MainWindow::genererRecu()
